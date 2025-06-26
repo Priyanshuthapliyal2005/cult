@@ -4,6 +4,20 @@ import { prisma } from '@/lib/prisma';
 import { getCulturalInsights, generateChatResponse } from '@/lib/openai';
 import { getCulturalDataByLocation, getChatResponse, getAllDestinations } from '@/lib/mockData';
 
+// Define explicit types to prevent deep type instantiation
+type CulturalInsightData = {
+  customs: any;
+  laws: any;
+  events: any;
+  phrases: any;
+  recommendations: any;
+};
+
+type MessageResponse = {
+  conversationId: string;
+  response: string;
+};
+
 export const appRouter = router({
   // Test endpoint to verify database connection
   testConnection: publicProcedure
@@ -54,12 +68,12 @@ export const appRouter = router({
 
   getCulturalInsights: publicProcedure
     .input(z.object({
-      location: z.string(),
+      location: z.string().min(1, "Location is required"),
       latitude: z.number().optional(),
       longitude: z.number().optional(),
       category: z.string().optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input }): Promise<CulturalInsightData> => {
       try {
         // First try to get mock data
         const mockData = getCulturalDataByLocation(input.location);
@@ -108,7 +122,7 @@ export const appRouter = router({
           });
 
           if (cached && cached.createdAt > new Date(Date.now() - 24 * 60 * 60 * 1000)) {
-            return cached.content;
+            return cached.content as CulturalInsightData;
           }
         } catch (dbError) {
           console.log('Database not available for cache check');
@@ -128,7 +142,7 @@ export const appRouter = router({
                 category: input.category || 'general',
                 title: `Cultural Insights for ${input.location}`,
                 description: `Comprehensive cultural information for ${input.location}`,
-                content: insights,
+                content: insights as any,
                 embedding: [],
               },
             });
@@ -150,12 +164,12 @@ export const appRouter = router({
   sendMessage: publicProcedure
     .input(z.object({
       conversationId: z.string().optional(),
-      message: z.string(),
+      message: z.string().min(1, "Message cannot be empty"),
       location: z.string().optional(),
       latitude: z.number().optional(),
       longitude: z.number().optional(),
     }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input }): Promise<MessageResponse> => {
       try {
         let conversationId = input.conversationId;
         
@@ -198,17 +212,18 @@ export const appRouter = router({
         if (process.env.OPENAI_API_KEY) {
           try {
             // Get conversation history if database is available
-            let chatMessages = [{ role: 'user', content: input.message }];
+            let chatMessages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }> = [
+              { role: 'user', content: input.message }
+            ];
             try {
               const messages = await prisma.message.findMany({
                 where: { conversationId },
                 orderBy: { createdAt: 'asc' },
                 take: 10,
-              });
-              chatMessages = messages.map(msg => ({
-                role: msg.role,
-                content: msg.content,
-              }));
+              });            chatMessages = messages.map(msg => ({
+              role: msg.role as 'user' | 'assistant' | 'system',
+              content: msg.content,
+            }));
             } catch (dbError) {
               console.log('Database not available for conversation history');
             }
@@ -270,7 +285,9 @@ export const appRouter = router({
     }),
 
   getConversation: publicProcedure
-    .input(z.object({ id: z.string() }))
+    .input(z.object({ 
+      id: z.string().min(1, "Conversation ID is required")
+    }))
     .query(async ({ input }) => {
       try {
         return await prisma.conversation.findUnique({

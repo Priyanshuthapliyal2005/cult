@@ -104,7 +104,7 @@ export async function getCulturalInsights(
 
   try {
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-3.5-turbo',
       messages: [
         {
           role: 'system',
@@ -140,7 +140,7 @@ export async function getCulturalInsights(
 }
 
 export async function generateChatResponse(
-  messages: Array<{ role: string; content: string }>,
+  messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>,
   context?: any
 ): Promise<string> {
   if (!process.env.OPENAI_API_KEY) {
@@ -158,7 +158,7 @@ export async function generateChatResponse(
     };
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-3.5-turbo',
       messages: [systemMessage, ...messages],
       temperature: 0.8,
       max_tokens: 1000,
