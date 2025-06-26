@@ -11,6 +11,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { trpc } from '@/lib/trpc';
+import AudioPlayer from '@/components/AudioPlayer';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
 
@@ -31,6 +32,7 @@ export default function ExplorePage() {
 
   const getCulturalInsights = trpc.getCulturalInsights.useMutation();
   const { data: destinations = [], isLoading: destinationsLoading } = trpc.getDestinations.useQuery();
+  const testElevenLabs = trpc.audio.testElevenLabs.useQuery();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,15 +65,6 @@ export default function ExplorePage() {
       setError(error instanceof Error ? error.message : 'Failed to load cultural insights');
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const playPronunciation = (audioUrl?: string) => {
-    if (audioUrl) {
-      // In a real implementation, this would play the audio file
-      console.log('Playing pronunciation:', audioUrl);
-      // For demo, we'll show an alert
-      alert('🔊 Audio pronunciation would play here in the full version!');
     }
   };
 
@@ -114,8 +107,11 @@ export default function ExplorePage() {
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
-            Demo Mode
+          <Badge 
+            variant={testElevenLabs.data?.status === 'success' ? "default" : "secondary"} 
+            className={testElevenLabs.data?.status === 'success' ? "bg-green-50 text-green-700 border-green-200" : "bg-blue-50 text-blue-700 border-blue-200"}
+          >
+            Audio: {testElevenLabs.isLoading ? 'Testing...' : testElevenLabs.data?.status || 'Demo'}
           </Badge>
         </div>
       </header>
@@ -192,6 +188,16 @@ export default function ExplorePage() {
               <Alert className="border-red-200 bg-red-50">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            {/* Audio Status */}
+            {testElevenLabs.data?.status === 'demo' && (
+              <Alert className="border-blue-200 bg-blue-50">
+                <Volume2 className="h-4 w-4" />
+                <AlertDescription>
+                  Audio pronunciation is in demo mode. Add your ElevenLabs API key for real voice synthesis.
+                </AlertDescription>
               </Alert>
             )}
 
@@ -320,14 +326,11 @@ export default function ExplorePage() {
                                   <p className="text-lg text-blue-600 font-semibold">{phrase.local}</p>
                                   <p className="text-sm text-gray-500 italic">Pronunciation: {phrase.pronunciation}</p>
                                 </div>
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={() => playPronunciation(phrase.audio)}
+                                <AudioPlayer
+                                  text={phrase.local}
+                                  language="hi"
                                   className="ml-4 hover:bg-blue-100"
-                                >
-                                  <Volume2 className="w-4 h-4" />
-                                </Button>
+                                />
                               </div>
                             ))}
                           </div>

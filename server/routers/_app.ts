@@ -3,6 +3,7 @@ import { router, publicProcedure } from '../trpc';
 import { prisma } from '@/lib/prisma';
 import { getCulturalInsights, generateChatResponse } from '@/lib/openai';
 import { getCulturalDataByLocation, getChatResponse, getAllDestinations } from '@/lib/mockData';
+import { audioRouter } from './audio';
 
 // Define explicit types to prevent deep type instantiation
 type CulturalInsightData = {
@@ -19,6 +20,9 @@ type MessageResponse = {
 };
 
 export const appRouter = router({
+  // Include audio router
+  audio: audioRouter,
+
   // Test endpoint to verify database connection
   testConnection: publicProcedure
     .query(async () => {
@@ -220,10 +224,11 @@ export const appRouter = router({
                 where: { conversationId },
                 orderBy: { createdAt: 'asc' },
                 take: 10,
-              });            chatMessages = messages.map(msg => ({
-              role: msg.role as 'user' | 'assistant' | 'system',
-              content: msg.content,
-            }));
+              });
+              chatMessages = messages.map(msg => ({
+                role: msg.role as 'user' | 'assistant' | 'system',
+                content: msg.content,
+              }));
             } catch (dbError) {
               console.log('Database not available for conversation history');
             }
