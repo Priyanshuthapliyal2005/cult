@@ -63,6 +63,10 @@ export interface CulturalInsightResponse {
 export async function getCulturalInsights(
   request: CulturalInsightRequest
 ): Promise<CulturalInsightResponse> {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OpenAI API key is not configured');
+  }
+
   const prompt = `Provide comprehensive cultural insights for ${request.location}. 
   Include local customs, important laws, current events, essential phrases with pronunciation, 
   and local recommendations. Format as JSON with the following structure:
@@ -70,31 +74,33 @@ export async function getCulturalInsights(
   {
     "customs": {
       "title": "Local Customs & Etiquette",
-      "description": "Brief overview",
-      "dos": ["List of things to do"],
-      "donts": ["List of things to avoid"]
+      "description": "Brief overview of cultural norms and social expectations",
+      "dos": ["List of respectful behaviors and customs to follow"],
+      "donts": ["List of behaviors to avoid or cultural taboos"]
     },
     "laws": {
       "title": "Important Laws & Regulations",
-      "important_regulations": ["Key laws to know"],
-      "legal_considerations": ["Legal considerations for tourists"]
+      "important_regulations": ["Key laws tourists should be aware of"],
+      "legal_considerations": ["Legal considerations and requirements for visitors"]
     },
     "events": {
       "title": "Cultural Events & Festivals",
-      "current_events": [{"name": "", "date": "", "description": ""}],
-      "seasonal_festivals": [{"name": "", "season": "", "description": ""}]
+      "current_events": [{"name": "Event name", "date": "Date/period", "description": "Brief description"}],
+      "seasonal_festivals": [{"name": "Festival name", "season": "Season/time", "description": "Cultural significance"}]
     },
     "phrases": {
       "title": "Essential Phrases",
-      "essential_phrases": [{"english": "", "local": "", "pronunciation": ""}]
+      "essential_phrases": [{"english": "English phrase", "local": "Local language", "pronunciation": "Phonetic pronunciation"}]
     },
     "recommendations": {
       "title": "Local Recommendations",
-      "restaurants": [{"name": "", "type": "", "description": ""}],
-      "attractions": [{"name": "", "type": "", "description": ""}],
-      "local_tips": ["Helpful local tips"]
+      "restaurants": [{"name": "Restaurant name", "type": "Cuisine type", "description": "Why it's recommended"}],
+      "attractions": [{"name": "Attraction name", "type": "Type of attraction", "description": "Cultural significance"}],
+      "local_tips": ["Practical tips for visitors"]
     }
-  }`;
+  }
+
+  Provide accurate, respectful, and helpful information. Include at least 3-5 items in each array.`;
 
   try {
     const completion = await openai.chat.completions.create({
@@ -118,10 +124,18 @@ export async function getCulturalInsights(
       throw new Error('No response from OpenAI');
     }
 
-    return JSON.parse(content);
+    try {
+      return JSON.parse(content);
+    } catch (parseError) {
+      console.error('Failed to parse OpenAI response:', content);
+      throw new Error('Invalid response format from AI service');
+    }
   } catch (error) {
     console.error('Error getting cultural insights:', error);
-    throw error;
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Failed to get cultural insights');
   }
 }
 
@@ -129,13 +143,18 @@ export async function generateChatResponse(
   messages: Array<{ role: string; content: string }>,
   context?: any
 ): Promise<string> {
+  if (!process.env.OPENAI_API_KEY) {
+    throw new Error('OpenAI API key is not configured');
+  }
+
   try {
     const systemMessage = {
       role: 'system' as const,
       content: `You are a helpful travel assistant with deep cultural knowledge. 
       Provide accurate, respectful, and practical advice about travel destinations, 
       local customs, and cultural experiences. Be conversational and engaging while 
-      maintaining accuracy. ${context ? `Context: ${JSON.stringify(context)}` : ''}`,
+      maintaining accuracy. Focus on cultural sensitivity and authentic experiences.
+      ${context ? `Context: Location: ${context.location || 'Unknown'}, Coordinates: ${context.latitude || 'N/A'}, ${context.longitude || 'N/A'}` : ''}`,
     };
 
     const completion = await openai.chat.completions.create({
@@ -148,6 +167,9 @@ export async function generateChatResponse(
     return completion.choices[0]?.message?.content || 'I apologize, but I encountered an error processing your request.';
   } catch (error) {
     console.error('Error generating chat response:', error);
-    return 'I apologize, but I encountered an error processing your request. Please try again.';
+    if (error instanceof Error && error.message.includes('API key')) {
+      throw new Error('AI service is not properly configured');
+    }
+    throw new Error('Failed to generate response. Please try again.');
   }
 }

@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, MapPin, Globe, Filter, Star, Clock, Users, ArrowLeft } from 'lucide-react';
+import { Search, MapPin, Globe, Filter, Star, Clock, Users, ArrowLeft, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { trpc } from '@/lib/trpc';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
@@ -16,7 +17,9 @@ import dynamic from 'next/dynamic';
 // Dynamically import map component to avoid SSR issues
 const MapComponent = dynamic(() => import('@/components/MapComponent'), {
   ssr: false,
-  loading: () => <div className="w-full h-96 bg-gray-100 rounded-lg animate-pulse" />
+  loading: () => <div className="w-full h-96 bg-gray-100 rounded-lg animate-pulse flex items-center justify-center">
+    <div className="text-gray-500">Loading map...</div>
+  </div>
 });
 
 const destinations = [
@@ -105,6 +108,7 @@ export default function ExplorePage() {
   const [selectedDestination, setSelectedDestination] = useState(destinations[0]);
   const [isLoading, setIsLoading] = useState(false);
   const [culturalInsights, setCulturalInsights] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const getCulturalInsights = trpc.getCulturalInsights.useMutation();
 
@@ -116,6 +120,8 @@ export default function ExplorePage() {
   const handleDestinationSelect = async (destination: typeof destinations[0]) => {
     setSelectedDestination(destination);
     setIsLoading(true);
+    setError(null);
+    setCulturalInsights(null);
     
     try {
       const insights = await getCulturalInsights.mutateAsync({
@@ -126,6 +132,7 @@ export default function ExplorePage() {
       setCulturalInsights(insights);
     } catch (error) {
       console.error('Error fetching cultural insights:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load cultural insights');
     } finally {
       setIsLoading(false);
     }
@@ -241,6 +248,14 @@ export default function ExplorePage() {
         {/* Main Content */}
         <div className="flex-1 p-4 overflow-y-auto">
           <div className="max-w-4xl mx-auto space-y-6">
+            {/* Error Display */}
+            {error && (
+              <Alert className="border-red-200 bg-red-50">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
             {/* Destination Header */}
             <div className="relative">
               <div className="h-64 rounded-xl overflow-hidden">
@@ -333,7 +348,7 @@ export default function ExplorePage() {
                         </div>
                       </div>
                     ) : (
-                      <p className="text-gray-500">Loading cultural insights...</p>
+                      <p className="text-gray-500">Click on a destination to load cultural insights...</p>
                     )}
                   </CardContent>
                 </Card>
@@ -345,7 +360,16 @@ export default function ExplorePage() {
                     <CardTitle>Essential Phrases</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    {culturalInsights?.phrases ? (
+                    {isLoading ? (
+                      <div className="space-y-3">
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className="p-3 bg-gray-50 rounded-lg animate-pulse">
+                            <div className="h-4 bg-gray-200 rounded mb-2" />
+                            <div className="h-3 bg-gray-200 rounded w-2/3" />
+                          </div>
+                        ))}
+                      </div>
+                    ) : culturalInsights?.phrases ? (
                       <div className="space-y-3">
                         {culturalInsights.phrases.essential_phrases.map((phrase: any, index: number) => (
                           <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -374,7 +398,17 @@ export default function ExplorePage() {
                       <CardTitle>Restaurants</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {culturalInsights?.recommendations ? (
+                      {isLoading ? (
+                        <div className="space-y-3">
+                          {[1, 2, 3].map((i) => (
+                            <div key={i} className="border-l-4 border-gray-200 pl-3 animate-pulse">
+                              <div className="h-4 bg-gray-200 rounded mb-1" />
+                              <div className="h-3 bg-gray-200 rounded w-1/2 mb-1" />
+                              <div className="h-3 bg-gray-200 rounded w-3/4" />
+                            </div>
+                          ))}
+                        </div>
+                      ) : culturalInsights?.recommendations ? (
                         <div className="space-y-3">
                           {culturalInsights.recommendations.restaurants.map((restaurant: any, index: number) => (
                             <div key={index} className="border-l-4 border-blue-500 pl-3">
@@ -395,7 +429,17 @@ export default function ExplorePage() {
                       <CardTitle>Attractions</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      {culturalInsights?.recommendations ? (
+                      {isLoading ? (
+                        <div className="space-y-3">
+                          {[1, 2, 3].map((i) => (
+                            <div key={i} className="border-l-4 border-gray-200 pl-3 animate-pulse">
+                              <div className="h-4 bg-gray-200 rounded mb-1" />
+                              <div className="h-3 bg-gray-200 rounded w-1/2 mb-1" />
+                              <div className="h-3 bg-gray-200 rounded w-3/4" />
+                            </div>
+                          ))}
+                        </div>
+                      ) : culturalInsights?.recommendations ? (
                         <div className="space-y-3">
                           {culturalInsights.recommendations.attractions.map((attraction: any, index: number) => (
                             <div key={index} className="border-l-4 border-purple-500 pl-3">

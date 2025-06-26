@@ -2,13 +2,14 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Send, Bot, User, MapPin, Volume2, Copy, ThumbsUp, ThumbsDown, Globe, ArrowLeft } from 'lucide-react';
+import { Send, Bot, User, MapPin, Volume2, Copy, ThumbsUp, ThumbsDown, Globe, ArrowLeft, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { trpc } from '@/lib/trpc';
 import Link from 'next/link';
 
@@ -32,9 +33,12 @@ export default function ChatPage() {
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const sendMessage = trpc.sendMessage.useMutation();
+  const testConnection = trpc.testConnection.useQuery();
+  const testOpenAI = trpc.testOpenAI.useQuery();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -58,6 +62,7 @@ export default function ChatPage() {
     setMessages(prev => [...prev, userMessage]);
     setInput('');
     setIsLoading(true);
+    setError(null);
 
     try {
       const response = await sendMessage.mutateAsync({
@@ -79,6 +84,7 @@ export default function ChatPage() {
       setMessages(prev => [...prev, assistantMessage]);
     } catch (error) {
       console.error('Error sending message:', error);
+      setError(error instanceof Error ? error.message : 'An error occurred');
       const errorMessage: Message = {
         id: Date.now().toString() + '_error',
         role: 'assistant',
@@ -123,10 +129,44 @@ export default function ChatPage() {
             </div>
           </div>
         </div>
-        <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
-          Online
-        </Badge>
+        <div className="flex items-center space-x-2">
+          <Badge 
+            variant={testConnection.data?.status === 'success' ? "default" : "destructive"} 
+            className={testConnection.data?.status === 'success' ? "bg-green-50 text-green-700 border-green-200" : ""}
+          >
+            DB: {testConnection.isLoading ? 'Testing...' : testConnection.data?.status || 'Unknown'}
+          </Badge>
+          <Badge 
+            variant={testOpenAI.data?.status === 'success' ? "default" : "destructive"} 
+            className={testOpenAI.data?.status === 'success' ? "bg-green-50 text-green-700 border-green-200" : ""}
+          >
+            AI: {testOpenAI.isLoading ? 'Testing...' : testOpenAI.data?.status || 'Unknown'}
+          </Badge>
+        </div>
       </header>
+
+      {/* Connection Status */}
+      {(testConnection.data?.status === 'error' || testOpenAI.data?.status === 'error') && (
+        <Alert className="m-4 border-orange-200 bg-orange-50">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            {testConnection.data?.status === 'error' && (
+              <div>Database connection failed. Some features may not work properly.</div>
+            )}
+            {testOpenAI.data?.status === 'error' && (
+              <div>AI service connection failed: {testOpenAI.data?.error}</div>
+            )}
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Error Display */}
+      {error && (
+        <Alert className="m-4 border-red-200 bg-red-50">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -234,6 +274,7 @@ export default function ChatPage() {
                 size="sm"
                 className="text-xs"
                 onClick={() => setInput(question)}
+                disabled={isLoading}
               >
                 {question}
               </Button>
@@ -252,6 +293,7 @@ export default function ChatPage() {
               placeholder="Ask me about cultural insights, local customs, or travel advice..."
               className="min-h-[44px] max-h-32 resize-none pr-12 border-2 border-gray-200 focus:border-blue-500"
               rows={1}
+              disabled={isLoading}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
