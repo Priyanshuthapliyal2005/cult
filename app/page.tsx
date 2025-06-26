@@ -48,11 +48,31 @@ const features = [
   },
 ];
 
-const popularDestinations = [
-  { name: 'Tokyo, Japan', image: 'https://images.pexels.com/photos/2506923/pexels-photo-2506923.jpeg?auto=compress&cs=tinysrgb&w=400', culture: 'Traditional & Modern' },
-  { name: 'Paris, France', image: 'https://images.pexels.com/photos/338515/pexels-photo-338515.jpeg?auto=compress&cs=tinysrgb&w=400', culture: 'Art & Romance' },
-  { name: 'Marrakech, Morocco', image: 'https://images.pexels.com/photos/1534560/pexels-photo-1534560.jpeg?auto=compress&cs=tinysrgb&w=400', culture: 'Vibrant Souks' },
-  { name: 'New York, USA', image: 'https://images.pexels.com/photos/290386/pexels-photo-290386.jpeg?auto=compress&cs=tinysrgb&w=400', culture: 'Urban Energy' },
+const sampleDestinations = [
+  { 
+    name: 'Pushkar, India', 
+    image: 'https://images.pexels.com/photos/3581368/pexels-photo-3581368.jpeg?auto=compress&cs=tinysrgb&w=400', 
+    culture: 'Sacred & Spiritual',
+    description: 'Holy city with Brahma Temple and sacred lake'
+  },
+  { 
+    name: 'Rishikesh, India', 
+    image: 'https://images.pexels.com/photos/3581368/pexels-photo-3581368.jpeg?auto=compress&cs=tinysrgb&w=400', 
+    culture: 'Yoga & Adventure',
+    description: 'Yoga capital with Ganges river activities'
+  },
+  { 
+    name: 'Mussoorie, India', 
+    image: 'https://images.pexels.com/photos/3581368/pexels-photo-3581368.jpeg?auto=compress&cs=tinysrgb&w=400', 
+    culture: 'Colonial & Mountain',
+    description: 'Queen of Hills with colonial charm'
+  },
+  { 
+    name: 'Tokyo, Japan', 
+    image: 'https://images.pexels.com/photos/2506923/pexels-photo-2506923.jpeg?auto=compress&cs=tinysrgb&w=400', 
+    culture: 'Traditional & Modern',
+    description: 'Blend of ancient traditions and technology'
+  },
 ];
 
 export default function Home() {
@@ -89,9 +109,9 @@ export default function Home() {
           <Link href="/chat" className="text-gray-600 hover:text-gray-900 transition-colors">
             Chat
           </Link>
-          <Button variant="outline" size="sm">
-            Sign In
-          </Button>
+          <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
+            Demo Ready
+          </Badge>
         </nav>
       </header>
 
@@ -107,8 +127,8 @@ export default function Home() {
               Explore the World with Cultural Intelligence
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-              Your AI-powered travel companion that provides deep cultural insights, 
-              local customs, and personalized recommendations for every destination.
+              Your AI-powered travel companion with deep cultural insights for destinations like 
+              Pushkar, Rishikesh, and Mussoorie. Experience authentic local culture with confidence.
             </p>
           </motion.div>
 
@@ -121,7 +141,7 @@ export default function Home() {
             <form onSubmit={handleSearch} className="flex gap-2">
               <Input
                 type="text"
-                placeholder="Where are you going?"
+                placeholder="Try 'Pushkar', 'Rishikesh', or 'Mussoorie'"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="flex-1 h-12 text-lg border-2 border-gray-200 focus:border-blue-500"
@@ -137,9 +157,9 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 20 }}
             transition={{ duration: 0.8, delay: 0.4 }}
-            className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto"
+            className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto"
           >
-            {popularDestinations.map((destination, index) => (
+            {sampleDestinations.map((destination, index) => (
               <Card key={index} className="group cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105">
                 <CardContent className="p-4">
                   <div className="aspect-square mb-3 rounded-lg overflow-hidden">
@@ -150,6 +170,7 @@ export default function Home() {
                     />
                   </div>
                   <h3 className="font-semibold text-sm mb-1">{destination.name}</h3>
+                  <p className="text-xs text-gray-600 mb-2">{destination.description}</p>
                   <Badge variant="secondary" className="text-xs">
                     {destination.culture}
                   </Badge>
@@ -160,13 +181,13 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Demo Features Section */}
       <section className="py-20 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Powerful Features for Every Traveler</h2>
+            <h2 className="text-4xl font-bold mb-4">Experience the Full Cultural Intelligence Demo</h2>
             <p className="text-gray-600 text-lg">
-              Discover the world with confidence using our AI-powered cultural intelligence platform
+              Discover authentic cultural insights with our comprehensive demo featuring real data for Indian destinations
             </p>
           </div>
 
@@ -197,7 +218,7 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA Section */}
+      {/* Demo CTA Section */}
       <section className="py-20 px-4 bg-gradient-to-r from-blue-600 to-purple-600">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div
@@ -206,16 +227,16 @@ export default function Home() {
             transition={{ duration: 0.8, delay: 0.6 }}
           >
             <h2 className="text-4xl font-bold text-white mb-6">
-              Ready to Explore with Cultural Intelligence?
+              Ready to Experience Cultural Intelligence?
             </h2>
             <p className="text-xl text-blue-100 mb-8">
-              Join thousands of travelers who trust CulturalCompass for authentic experiences
+              Try our comprehensive demo with real cultural data for Pushkar, Rishikesh, and Mussoorie
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" variant="secondary" className="h-12 px-8 text-lg" asChild>
                 <Link href="/chat">
                   <MessageCircle className="w-5 h-5 mr-2" />
-                  Start Chatting
+                  Start Cultural Chat
                 </Link>
               </Button>
               <Button size="lg" variant="outline" className="h-12 px-8 text-lg border-white text-white hover:bg-white hover:text-blue-600" asChild>
@@ -244,7 +265,7 @@ export default function Home() {
             </p>
           </div>
           <div>
-            <h3 className="font-semibold mb-4">Features</h3>
+            <h3 className="font-semibold mb-4">Demo Features</h3>
             <ul className="space-y-2 text-gray-400">
               <li>Cultural Insights</li>
               <li>AI Chat Assistant</li>
@@ -253,26 +274,26 @@ export default function Home() {
             </ul>
           </div>
           <div>
-            <h3 className="font-semibold mb-4">Company</h3>
+            <h3 className="font-semibold mb-4">Destinations</h3>
             <ul className="space-y-2 text-gray-400">
-              <li>About Us</li>
-              <li>Privacy Policy</li>
-              <li>Terms of Service</li>
-              <li>Contact</li>
+              <li>Pushkar, Rajasthan</li>
+              <li>Rishikesh, Uttarakhand</li>
+              <li>Mussoorie, Uttarakhand</li>
+              <li>More Coming Soon</li>
             </ul>
           </div>
           <div>
-            <h3 className="font-semibold mb-4">Connect</h3>
+            <h3 className="font-semibold mb-4">Experience</h3>
             <ul className="space-y-2 text-gray-400">
-              <li>Twitter</li>
-              <li>LinkedIn</li>
-              <li>Instagram</li>
-              <li>YouTube</li>
+              <li>Cultural Customs</li>
+              <li>Local Phrases</li>
+              <li>Festival Information</li>
+              <li>Authentic Recommendations</li>
             </ul>
           </div>
         </div>
         <div className="max-w-6xl mx-auto mt-8 pt-8 border-t border-gray-800 text-center text-gray-400">
-          <p>&copy; 2024 CulturalCompass. All rights reserved.</p>
+          <p>&copy; 2024 CulturalCompass Demo. Experience authentic cultural intelligence.</p>
         </div>
       </footer>
     </div>

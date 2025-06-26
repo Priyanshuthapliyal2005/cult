@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { router, publicProcedure } from '../trpc';
 import { prisma } from '@/lib/prisma';
 import { getCulturalInsights, generateChatResponse } from '@/lib/openai';
+import { getCulturalDataByLocation, getChatResponse, getAllDestinations } from '@/lib/mockData';
 
 export const appRouter = router({
   // Test endpoint to verify database connection
@@ -12,7 +13,7 @@ export const appRouter = router({
         return { status: 'success', message: 'Database connected successfully' };
       } catch (error) {
         console.error('Database connection error:', error);
-        return { status: 'error', message: 'Database connection failed' };
+        return { status: 'error', message: 'Database connection failed - using demo mode' };
       }
     }),
 
@@ -20,6 +21,13 @@ export const appRouter = router({
   testOpenAI: publicProcedure
     .query(async () => {
       try {
+        if (!process.env.OPENAI_API_KEY) {
+          return { 
+            status: 'demo', 
+            message: 'OpenAI API not configured - using demo responses',
+            response: 'Demo mode active'
+          };
+        }
         const response = await generateChatResponse([
           { role: 'user', content: 'Hello, this is a test message.' }
         ]);
@@ -31,11 +39,17 @@ export const appRouter = router({
       } catch (error) {
         console.error('OpenAI API error:', error);
         return { 
-          status: 'error', 
-          message: 'OpenAI API connection failed',
+          status: 'demo', 
+          message: 'OpenAI API connection failed - using demo responses',
           error: error instanceof Error ? error.message : 'Unknown error'
         };
       }
+    }),
+
+  // Get all sample destinations
+  getDestinations: publicProcedure
+    .query(async () => {
+      return getAllDestinations();
     }),
 
   getCulturalInsights: publicProcedure
@@ -47,40 +61,89 @@ export const appRouter = router({
     }))
     .mutation(async ({ input }) => {
       try {
-        // Check if we have cached insights
-        const cached = await prisma.culturalInsight.findFirst({
-          where: {
-            location: input.location,
-            category: input.category || 'general',
-          },
-          orderBy: { createdAt: 'desc' },
-        });
+        // First try to get mock data
+        const mockData = getCulturalDataByLocation(input.location);
+        if (mockData) {
+          // Store in database if available
+          try {
+            await prisma.culturalInsight.create({
+              data: {
+                location: input.location,
+                latitude: input.latitude || mockData.latitude,
+                longitude: input.longitude || mockData.longitude,
+                category: input.category || 'general',
+                title: `Cultural Insights for ${input.location}`,
+                description: mockData.description,
+                content: {
+                  customs: mockData.customs,
+                  laws: mockData.laws,
+                  events: mockData.events,
+                  phrases: mockData.phrases,
+                  recommendations: mockData.recommendations
+                },
+                embedding: [],
+              },
+            });
+          } catch (dbError) {
+            console.log('Database not available, using mock data only');
+          }
 
-        // Return cached if less than 24 hours old
-        if (cached && cached.createdAt > new Date(Date.now() - 24 * 60 * 60 * 1000)) {
-          return cached.content;
+          return {
+            customs: mockData.customs,
+            laws: mockData.laws,
+            events: mockData.events,
+            phrases: mockData.phrases,
+            recommendations: mockData.recommendations
+          };
         }
 
-        const insights = await getCulturalInsights(input);
-        
-        // Store insights in database for caching
-        await prisma.culturalInsight.create({
-          data: {
-            location: input.location,
-            latitude: input.latitude,
-            longitude: input.longitude,
-            category: input.category || 'general',
-            title: `Cultural Insights for ${input.location}`,
-            description: `Comprehensive cultural information for ${input.location}`,
-            content: insights,
-            embedding: [], // Vector embedding would be generated here
-          },
-        });
+        // Check database cache if mock data not available
+        try {
+          const cached = await prisma.culturalInsight.findFirst({
+            where: {
+              location: input.location,
+              category: input.category || 'general',
+            },
+            orderBy: { createdAt: 'desc' },
+          });
 
-        return insights;
+          if (cached && cached.createdAt > new Date(Date.now() - 24 * 60 * 60 * 1000)) {
+            return cached.content;
+          }
+        } catch (dbError) {
+          console.log('Database not available for cache check');
+        }
+
+        // Try OpenAI if available
+        if (process.env.OPENAI_API_KEY) {
+          const insights = await getCulturalInsights(input);
+          
+          // Try to store in database
+          try {
+            await prisma.culturalInsight.create({
+              data: {
+                location: input.location,
+                latitude: input.latitude,
+                longitude: input.longitude,
+                category: input.category || 'general',
+                title: `Cultural Insights for ${input.location}`,
+                description: `Comprehensive cultural information for ${input.location}`,
+                content: insights,
+                embedding: [],
+              },
+            });
+          } catch (dbError) {
+            console.log('Database not available for storing insights');
+          }
+
+          return insights;
+        }
+
+        // Fallback response
+        throw new Error('No cultural data available for this location. Try Pushkar, Rishikesh, or Mussoorie for demo data.');
       } catch (error) {
         console.error('Error in getCulturalInsights:', error);
-        throw new Error('Failed to get cultural insights. Please try again.');
+        throw new Error(error instanceof Error ? error.message : 'Failed to get cultural insights');
       }
     }),
 
@@ -96,56 +159,85 @@ export const appRouter = router({
       try {
         let conversationId = input.conversationId;
         
-        // Create new conversation if none exists
+        // Try to create conversation in database
         if (!conversationId) {
-          const conversation = await prisma.conversation.create({
+          try {
+            const conversation = await prisma.conversation.create({
+              data: {
+                userId: 'demo-user',
+                title: input.message.slice(0, 50),
+                location: input.location,
+                latitude: input.latitude,
+                longitude: input.longitude,
+              },
+            });
+            conversationId = conversation.id;
+          } catch (dbError) {
+            // Generate a temporary conversation ID if database is not available
+            conversationId = 'temp-' + Date.now().toString();
+            console.log('Database not available, using temporary conversation ID');
+          }
+        }
+
+        // Try to save user message
+        try {
+          await prisma.message.create({
             data: {
-              userId: 'demo-user', // Demo user for testing
-              title: input.message.slice(0, 50),
+              conversationId,
+              role: 'user',
+              content: input.message,
+            },
+          });
+        } catch (dbError) {
+          console.log('Database not available for saving user message');
+        }
+
+        let response: string;
+
+        // Try OpenAI first, then fallback to mock responses
+        if (process.env.OPENAI_API_KEY) {
+          try {
+            // Get conversation history if database is available
+            let chatMessages = [{ role: 'user', content: input.message }];
+            try {
+              const messages = await prisma.message.findMany({
+                where: { conversationId },
+                orderBy: { createdAt: 'asc' },
+                take: 10,
+              });
+              chatMessages = messages.map(msg => ({
+                role: msg.role,
+                content: msg.content,
+              }));
+            } catch (dbError) {
+              console.log('Database not available for conversation history');
+            }
+
+            response = await generateChatResponse(chatMessages, {
               location: input.location,
               latitude: input.latitude,
               longitude: input.longitude,
-            },
-          });
-          conversationId = conversation.id;
+            });
+          } catch (aiError) {
+            console.log('OpenAI not available, using mock response');
+            response = getChatResponse(input.message, input.location);
+          }
+        } else {
+          response = getChatResponse(input.message, input.location);
         }
 
-        // Save user message
-        await prisma.message.create({
-          data: {
-            conversationId,
-            role: 'user',
-            content: input.message,
-          },
-        });
-
-        // Get conversation history (last 10 messages for context)
-        const messages = await prisma.message.findMany({
-          where: { conversationId },
-          orderBy: { createdAt: 'asc' },
-          take: 10,
-        });
-
-        // Generate AI response
-        const chatMessages = messages.map(msg => ({
-          role: msg.role,
-          content: msg.content,
-        }));
-
-        const response = await generateChatResponse(chatMessages, {
-          location: input.location,
-          latitude: input.latitude,
-          longitude: input.longitude,
-        });
-
-        // Save AI response
-        await prisma.message.create({
-          data: {
-            conversationId,
-            role: 'assistant',
-            content: response,
-          },
-        });
+        // Try to save AI response
+        try {
+          await prisma.message.create({
+            data: {
+              conversationId,
+              role: 'assistant',
+              content: response,
+            },
+          });
+        } catch (dbError) {
+          console.log('Database not available for saving AI response');
+        }
 
         return {
           conversationId,
@@ -161,7 +253,7 @@ export const appRouter = router({
     .query(async () => {
       try {
         return await prisma.conversation.findMany({
-          where: { userId: 'demo-user' }, // Demo user for testing
+          where: { userId: 'demo-user' },
           include: {
             messages: {
               orderBy: { createdAt: 'desc' },

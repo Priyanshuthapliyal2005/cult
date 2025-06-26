@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Search, MapPin, Globe, Filter, Star, Clock, Users, ArrowLeft, AlertCircle } from 'lucide-react';
+import { Search, MapPin, Globe, Filter, Star, Clock, Users, ArrowLeft, AlertCircle, Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,102 +22,30 @@ const MapComponent = dynamic(() => import('@/components/MapComponent'), {
   </div>
 });
 
-const destinations = [
-  {
-    id: 1,
-    name: 'Tokyo, Japan',
-    country: 'Japan',
-    image: 'https://images.pexels.com/photos/2506923/pexels-photo-2506923.jpeg?auto=compress&cs=tinysrgb&w=600',
-    description: 'A fascinating blend of ancient traditions and cutting-edge technology',
-    culture: 'Traditional & Modern',
-    highlights: ['Cherry Blossoms', 'Temples', 'Technology', 'Cuisine'],
-    rating: 4.8,
-    latitude: 35.6762,
-    longitude: 139.6503,
-    insights: 'Bow when greeting, remove shoes indoors, and be mindful of noise levels on public transport.',
-  },
-  {
-    id: 2,
-    name: 'Paris, France',
-    country: 'France',
-    image: 'https://images.pexels.com/photos/338515/pexels-photo-338515.jpeg?auto=compress&cs=tinysrgb&w=600',
-    description: 'The City of Light, renowned for art, fashion, and romance',
-    culture: 'Art & Romance',
-    highlights: ['Eiffel Tower', 'Louvre', 'Cafés', 'Architecture'],
-    rating: 4.7,
-    latitude: 48.8566,
-    longitude: 2.3522,
-    insights: 'Greet with "Bonjour" before asking questions, dress elegantly, and appreciate the art of conversation.',
-  },
-  {
-    id: 3,
-    name: 'Marrakech, Morocco',
-    country: 'Morocco',
-    image: 'https://images.pexels.com/photos/1534560/pexels-photo-1534560.jpeg?auto=compress&cs=tinysrgb&w=600',
-    description: 'The Red City with vibrant souks and rich Islamic heritage',
-    culture: 'Vibrant Souks',
-    highlights: ['Medina', 'Souks', 'Palaces', 'Gardens'],
-    rating: 4.6,
-    latitude: 31.6295,
-    longitude: -7.9811,
-    insights: 'Haggle respectfully in markets, dress modestly, and use your right hand for greetings and eating.',
-  },
-  {
-    id: 4,
-    name: 'New York City, USA',
-    country: 'United States',
-    image: 'https://images.pexels.com/photos/290386/pexels-photo-290386.jpeg?auto=compress&cs=tinysrgb&w=600',
-    description: 'The Big Apple, a melting pot of cultures and endless possibilities',
-    culture: 'Urban Energy',
-    highlights: ['Skyline', 'Broadway', 'Museums', 'Diversity'],
-    rating: 4.5,
-    latitude: 40.7128,
-    longitude: -74.0060,
-    insights: 'Walk fast, tip 18-20%, and be direct in communication while remaining friendly.',
-  },
-  {
-    id: 5,
-    name: 'Bali, Indonesia',
-    country: 'Indonesia',
-    image: 'https://images.pexels.com/photos/2474689/pexels-photo-2474689.jpeg?auto=compress&cs=tinysrgb&w=600',
-    description: 'Island paradise with Hindu temples, rice terraces, and spiritual retreats',
-    culture: 'Spiritual & Tropical',
-    highlights: ['Temples', 'Rice Terraces', 'Beaches', 'Yoga'],
-    rating: 4.7,
-    latitude: -8.3405,
-    longitude: 115.0920,
-    insights: 'Respect temple dress codes, use both hands when giving/receiving, and embrace the "go slow" mentality.',
-  },
-  {
-    id: 6,
-    name: 'Istanbul, Turkey',
-    country: 'Turkey',
-    image: 'https://images.pexels.com/photos/1198174/pexels-photo-1198174.jpeg?auto=compress&cs=tinysrgb&w=600',
-    description: 'Where Europe meets Asia, rich with Byzantine and Ottoman history',
-    culture: 'East Meets West',
-    highlights: ['Hagia Sophia', 'Bazaars', 'Bosphorus', 'Cuisine'],
-    rating: 4.6,
-    latitude: 41.0082,
-    longitude: 28.9784,
-    insights: 'Remove shoes when entering mosques, bargain in markets, and enjoy the tea culture.',
-  },
-];
-
 export default function ExplorePage() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedDestination, setSelectedDestination] = useState(destinations[0]);
+  const [selectedDestination, setSelectedDestination] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [culturalInsights, setCulturalInsights] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
 
   const getCulturalInsights = trpc.getCulturalInsights.useMutation();
+  const { data: destinations = [], isLoading: destinationsLoading } = trpc.getDestinations.useQuery();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    // Implement search functionality
+    // Filter destinations based on search query
+    const filtered = destinations.filter(dest => 
+      dest.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      dest.country.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      dest.region.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+    if (filtered.length > 0) {
+      handleDestinationSelect(filtered[0]);
+    }
   };
 
-  const handleDestinationSelect = async (destination: typeof destinations[0]) => {
+  const handleDestinationSelect = async (destination: any) => {
     setSelectedDestination(destination);
     setIsLoading(true);
     setError(null);
@@ -125,7 +53,7 @@ export default function ExplorePage() {
     
     try {
       const insights = await getCulturalInsights.mutateAsync({
-        location: `${destination.name}, ${destination.country}`,
+        location: destination.location,
         latitude: destination.latitude,
         longitude: destination.longitude,
       });
@@ -138,9 +66,31 @@ export default function ExplorePage() {
     }
   };
 
+  const playPronunciation = (audioUrl?: string) => {
+    if (audioUrl) {
+      // In a real implementation, this would play the audio file
+      console.log('Playing pronunciation:', audioUrl);
+      // For demo, we'll show an alert
+      alert('🔊 Audio pronunciation would play here in the full version!');
+    }
+  };
+
   useEffect(() => {
-    handleDestinationSelect(destinations[0]);
-  }, []);
+    if (destinations.length > 0 && !selectedDestination) {
+      handleDestinationSelect(destinations[0]);
+    }
+  }, [destinations]);
+
+  if (destinationsLoading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading destinations...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
@@ -164,20 +114,9 @@ export default function ExplorePage() {
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm">
-            <Filter className="w-4 h-4 mr-2" />
-            Filter
-          </Button>
-          <Select>
-            <SelectTrigger className="w-32">
-              <SelectValue placeholder="Sort by" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="rating">Rating</SelectItem>
-              <SelectItem value="name">Name</SelectItem>
-              <SelectItem value="country">Country</SelectItem>
-            </SelectContent>
-          </Select>
+          <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
+            Demo Mode
+          </Badge>
         </div>
       </header>
 
@@ -199,16 +138,16 @@ export default function ExplorePage() {
             </form>
 
             <div className="space-y-3">
-              {destinations.map((destination) => (
+              {destinations.map((destination: any) => (
                 <motion.div
-                  key={destination.id}
+                  key={destination.location}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
                 >
                   <Card
                     className={`cursor-pointer transition-all duration-200 hover:shadow-md ${
-                      selectedDestination.id === destination.id
+                      selectedDestination?.location === destination.location
                         ? 'ring-2 ring-blue-500 bg-blue-50'
                         : 'hover:bg-gray-50'
                     }`}
@@ -219,19 +158,19 @@ export default function ExplorePage() {
                         <div className="w-16 h-16 rounded-lg overflow-hidden shrink-0">
                           <img
                             src={destination.image}
-                            alt={destination.name}
+                            alt={destination.location}
                             className="w-full h-full object-cover"
                           />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between mb-1">
-                            <h3 className="font-semibold truncate">{destination.name}</h3>
+                            <h3 className="font-semibold truncate">{destination.location}</h3>
                             <div className="flex items-center space-x-1">
                               <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
                               <span className="text-sm font-medium">{destination.rating}</span>
                             </div>
                           </div>
-                          <p className="text-sm text-gray-600 mb-2">{destination.country}</p>
+                          <p className="text-sm text-gray-600 mb-2">{destination.region}, {destination.country}</p>
                           <Badge variant="secondary" className="text-xs">
                             {destination.culture}
                           </Badge>
@@ -256,223 +195,270 @@ export default function ExplorePage() {
               </Alert>
             )}
 
-            {/* Destination Header */}
-            <div className="relative">
-              <div className="h-64 rounded-xl overflow-hidden">
-                <img
-                  src={selectedDestination.image}
-                  alt={selectedDestination.name}
-                  className="w-full h-full object-cover"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-                <div className="absolute bottom-4 left-4 text-white">
-                  <h1 className="text-3xl font-bold mb-2">{selectedDestination.name}</h1>
-                  <p className="text-lg opacity-90">{selectedDestination.description}</p>
-                  <div className="flex items-center space-x-4 mt-2">
-                    <div className="flex items-center space-x-1">
-                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      <span>{selectedDestination.rating}</span>
-                    </div>
-                    <div className="flex items-center space-x-1">
-                      <MapPin className="w-4 h-4" />
-                      <span>{selectedDestination.country}</span>
+            {selectedDestination && (
+              <>
+                {/* Destination Header */}
+                <div className="relative">
+                  <div className="h-64 rounded-xl overflow-hidden">
+                    <img
+                      src={selectedDestination.image}
+                      alt={selectedDestination.location}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+                    <div className="absolute bottom-4 left-4 text-white">
+                      <h1 className="text-3xl font-bold mb-2">{selectedDestination.location}</h1>
+                      <p className="text-lg opacity-90">{selectedDestination.description}</p>
+                      <div className="flex items-center space-x-4 mt-2">
+                        <div className="flex items-center space-x-1">
+                          <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                          <span>{selectedDestination.rating}</span>
+                        </div>
+                        <div className="flex items-center space-x-1">
+                          <MapPin className="w-4 h-4" />
+                          <span>{selectedDestination.region}, {selectedDestination.country}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Cultural Insights */}
-            <Tabs defaultValue="overview" className="w-full">
-              <TabsList className="grid w-full grid-cols-5">
-                <TabsTrigger value="overview">Overview</TabsTrigger>
-                <TabsTrigger value="customs">Customs</TabsTrigger>
-                <TabsTrigger value="phrases">Phrases</TabsTrigger>
-                <TabsTrigger value="recommendations">Places</TabsTrigger>
-                <TabsTrigger value="map">Map</TabsTrigger>
-              </TabsList>
+                {/* Cultural Insights */}
+                <Tabs defaultValue="overview" className="w-full">
+                  <TabsList className="grid w-full grid-cols-5">
+                    <TabsTrigger value="overview">Overview</TabsTrigger>
+                    <TabsTrigger value="customs">Customs</TabsTrigger>
+                    <TabsTrigger value="phrases">Phrases</TabsTrigger>
+                    <TabsTrigger value="recommendations">Places</TabsTrigger>
+                    <TabsTrigger value="map">Map</TabsTrigger>
+                  </TabsList>
 
-              <TabsContent value="overview" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="flex items-center">
-                      <Globe className="w-5 h-5 mr-2" />
-                      Cultural Overview
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="text-gray-600 mb-4">{selectedDestination.insights}</p>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                      {selectedDestination.highlights.map((highlight, index) => (
-                        <Badge key={index} variant="outline" className="justify-center">
-                          {highlight}
-                        </Badge>
-                      ))}
+                  <TabsContent value="overview" className="space-y-4">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center">
+                          <Globe className="w-5 h-5 mr-2" />
+                          Cultural Overview
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-gray-600 mb-4">{selectedDestination.insights}</p>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                          {selectedDestination.highlights.map((highlight: string, index: number) => (
+                            <Badge key={index} variant="outline" className="justify-center">
+                              {highlight}
+                            </Badge>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+
+                  <TabsContent value="customs" className="space-y-4">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Local Customs & Etiquette</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        {isLoading ? (
+                          <div className="space-y-3">
+                            <div className="h-4 bg-gray-200 rounded animate-pulse" />
+                            <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4" />
+                            <div className="h-4 bg-gray-200 rounded animate-pulse w-1/2" />
+                          </div>
+                        ) : culturalInsights?.customs ? (
+                          <div className="space-y-4">
+                            <p className="text-gray-600">{culturalInsights.customs.description}</p>
+                            <div className="grid md:grid-cols-2 gap-4">
+                              <div>
+                                <h4 className="font-semibold text-green-700 mb-2">Do's</h4>
+                                <ul className="space-y-1">
+                                  {culturalInsights.customs.dos.map((item: string, index: number) => (
+                                    <li key={index} className="text-sm text-gray-600">• {item}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                              <div>
+                                <h4 className="font-semibold text-red-700 mb-2">Don'ts</h4>
+                                <ul className="space-y-1">
+                                  {culturalInsights.customs.donts.map((item: string, index: number) => (
+                                    <li key={index} className="text-sm text-gray-600">• {item}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="text-gray-500">Click on a destination to load cultural insights...</p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+
+                  <TabsContent value="phrases" className="space-y-4">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Essential Phrases</CardTitle>
+                        <CardDescription>Learn key phrases with pronunciation guides</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        {isLoading ? (
+                          <div className="space-y-3">
+                            {[1, 2, 3].map((i) => (
+                              <div key={i} className="p-3 bg-gray-50 rounded-lg animate-pulse">
+                                <div className="h-4 bg-gray-200 rounded mb-2" />
+                                <div className="h-3 bg-gray-200 rounded w-2/3" />
+                              </div>
+                            ))}
+                          </div>
+                        ) : culturalInsights?.phrases ? (
+                          <div className="space-y-3">
+                            {culturalInsights.phrases.essential_phrases.map((phrase: any, index: number) => (
+                              <div key={index} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                <div className="flex-1">
+                                  <p className="font-medium text-gray-900">{phrase.english}</p>
+                                  <p className="text-lg text-blue-600 font-semibold">{phrase.local}</p>
+                                  <p className="text-sm text-gray-500 italic">Pronunciation: {phrase.pronunciation}</p>
+                                </div>
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => playPronunciation(phrase.audio)}
+                                  className="ml-4 hover:bg-blue-100"
+                                >
+                                  <Volume2 className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-gray-500">Loading phrases...</p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+
+                  <TabsContent value="recommendations" className="space-y-4">
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Restaurants</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          {isLoading ? (
+                            <div className="space-y-3">
+                              {[1, 2, 3].map((i) => (
+                                <div key={i} className="border-l-4 border-gray-200 pl-3 animate-pulse">
+                                  <div className="h-4 bg-gray-200 rounded mb-1" />
+                                  <div className="h-3 bg-gray-200 rounded w-1/2 mb-1" />
+                                  <div className="h-3 bg-gray-200 rounded w-3/4" />
+                                </div>
+                              ))}
+                            </div>
+                          ) : culturalInsights?.recommendations ? (
+                            <div className="space-y-4">
+                              {culturalInsights.recommendations.restaurants.map((restaurant: any, index: number) => (
+                                <div key={index} className="border-l-4 border-blue-500 pl-4 hover:bg-blue-50 p-2 rounded-r transition-colors">
+                                  <h4 className="font-semibold text-gray-900">{restaurant.name}</h4>
+                                  <p className="text-sm text-blue-600 font-medium">{restaurant.type}</p>
+                                  <p className="text-sm text-gray-600 mt-1">{restaurant.description}</p>
+                                  {restaurant.price_range && (
+                                    <Badge variant="outline" className="mt-2 text-xs">
+                                      {restaurant.price_range}
+                                    </Badge>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-gray-500">Loading recommendations...</p>
+                          )}
+                        </CardContent>
+                      </Card>
+
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Attractions</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          {isLoading ? (
+                            <div className="space-y-3">
+                              {[1, 2, 3].map((i) => (
+                                <div key={i} className="border-l-4 border-gray-200 pl-3 animate-pulse">
+                                  <div className="h-4 bg-gray-200 rounded mb-1" />
+                                  <div className="h-3 bg-gray-200 rounded w-1/2 mb-1" />
+                                  <div className="h-3 bg-gray-200 rounded w-3/4" />
+                                </div>
+                              ))}
+                            </div>
+                          ) : culturalInsights?.recommendations ? (
+                            <div className="space-y-4">
+                              {culturalInsights.recommendations.attractions.map((attraction: any, index: number) => (
+                                <div key={index} className="border-l-4 border-purple-500 pl-4 hover:bg-purple-50 p-2 rounded-r transition-colors">
+                                  <h4 className="font-semibold text-gray-900">{attraction.name}</h4>
+                                  <p className="text-sm text-purple-600 font-medium">{attraction.type}</p>
+                                  <p className="text-sm text-gray-600 mt-1">{attraction.description}</p>
+                                  {attraction.timing && (
+                                    <Badge variant="outline" className="mt-2 text-xs">
+                                      <Clock className="w-3 h-3 mr-1" />
+                                      {attraction.timing}
+                                    </Badge>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-gray-500">Loading attractions...</p>
+                          )}
+                        </CardContent>
+                      </Card>
                     </div>
-                  </CardContent>
-                </Card>
-              </TabsContent>
 
-              <TabsContent value="customs" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Local Customs & Etiquette</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {isLoading ? (
-                      <div className="space-y-3">
-                        <div className="h-4 bg-gray-200 rounded animate-pulse" />
-                        <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4" />
-                        <div className="h-4 bg-gray-200 rounded animate-pulse w-1/2" />
-                      </div>
-                    ) : culturalInsights?.customs ? (
-                      <div className="space-y-4">
-                        <p className="text-gray-600">{culturalInsights.customs.description}</p>
-                        <div className="grid md:grid-cols-2 gap-4">
-                          <div>
-                            <h4 className="font-semibold text-green-700 mb-2">Do's</h4>
-                            <ul className="space-y-1">
-                              {culturalInsights.customs.dos.map((item: string, index: number) => (
-                                <li key={index} className="text-sm text-gray-600">• {item}</li>
-                              ))}
-                            </ul>
+                    {/* Local Tips */}
+                    {culturalInsights?.recommendations?.local_tips && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle>Local Tips</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="grid md:grid-cols-2 gap-3">
+                            {culturalInsights.recommendations.local_tips.map((tip: string, index: number) => (
+                              <div key={index} className="flex items-start space-x-2 p-3 bg-yellow-50 rounded-lg">
+                                <div className="w-2 h-2 bg-yellow-400 rounded-full mt-2 shrink-0" />
+                                <p className="text-sm text-gray-700">{tip}</p>
+                              </div>
+                            ))}
                           </div>
-                          <div>
-                            <h4 className="font-semibold text-red-700 mb-2">Don'ts</h4>
-                            <ul className="space-y-1">
-                              {culturalInsights.customs.donts.map((item: string, index: number) => (
-                                <li key={index} className="text-sm text-gray-600">• {item}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="text-gray-500">Click on a destination to load cultural insights...</p>
+                        </CardContent>
+                      </Card>
                     )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
+                  </TabsContent>
 
-              <TabsContent value="phrases" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Essential Phrases</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    {isLoading ? (
-                      <div className="space-y-3">
-                        {[1, 2, 3].map((i) => (
-                          <div key={i} className="p-3 bg-gray-50 rounded-lg animate-pulse">
-                            <div className="h-4 bg-gray-200 rounded mb-2" />
-                            <div className="h-3 bg-gray-200 rounded w-2/3" />
-                          </div>
-                        ))}
-                      </div>
-                    ) : culturalInsights?.phrases ? (
-                      <div className="space-y-3">
-                        {culturalInsights.phrases.essential_phrases.map((phrase: any, index: number) => (
-                          <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                            <div>
-                              <p className="font-medium">{phrase.english}</p>
-                              <p className="text-gray-600">{phrase.local}</p>
-                              <p className="text-sm text-gray-500 italic">{phrase.pronunciation}</p>
-                            </div>
-                            <Button variant="ghost" size="sm">
-                              <Users className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-gray-500">Loading phrases...</p>
-                    )}
-                  </CardContent>
-                </Card>
-              </TabsContent>
-
-              <TabsContent value="recommendations" className="space-y-4">
-                <div className="grid md:grid-cols-2 gap-4">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Restaurants</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {isLoading ? (
-                        <div className="space-y-3">
-                          {[1, 2, 3].map((i) => (
-                            <div key={i} className="border-l-4 border-gray-200 pl-3 animate-pulse">
-                              <div className="h-4 bg-gray-200 rounded mb-1" />
-                              <div className="h-3 bg-gray-200 rounded w-1/2 mb-1" />
-                              <div className="h-3 bg-gray-200 rounded w-3/4" />
-                            </div>
-                          ))}
-                        </div>
-                      ) : culturalInsights?.recommendations ? (
-                        <div className="space-y-3">
-                          {culturalInsights.recommendations.restaurants.map((restaurant: any, index: number) => (
-                            <div key={index} className="border-l-4 border-blue-500 pl-3">
-                              <h4 className="font-semibold">{restaurant.name}</h4>
-                              <p className="text-sm text-gray-600">{restaurant.type}</p>
-                              <p className="text-sm text-gray-500">{restaurant.description}</p>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-gray-500">Loading recommendations...</p>
-                      )}
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Attractions</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      {isLoading ? (
-                        <div className="space-y-3">
-                          {[1, 2, 3].map((i) => (
-                            <div key={i} className="border-l-4 border-gray-200 pl-3 animate-pulse">
-                              <div className="h-4 bg-gray-200 rounded mb-1" />
-                              <div className="h-3 bg-gray-200 rounded w-1/2 mb-1" />
-                              <div className="h-3 bg-gray-200 rounded w-3/4" />
-                            </div>
-                          ))}
-                        </div>
-                      ) : culturalInsights?.recommendations ? (
-                        <div className="space-y-3">
-                          {culturalInsights.recommendations.attractions.map((attraction: any, index: number) => (
-                            <div key={index} className="border-l-4 border-purple-500 pl-3">
-                              <h4 className="font-semibold">{attraction.name}</h4>
-                              <p className="text-sm text-gray-600">{attraction.type}</p>
-                              <p className="text-sm text-gray-500">{attraction.description}</p>
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <p className="text-gray-500">Loading attractions...</p>
-                      )}
-                    </CardContent>
-                  </Card>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="map" className="space-y-4">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Interactive Map</CardTitle>
-                    <CardDescription>Explore cultural points of interest</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <MapComponent
-                      center={[selectedDestination.latitude, selectedDestination.longitude]}
-                      zoom={13}
-                      destinations={[selectedDestination]}
-                    />
-                  </CardContent>
-                </Card>
-              </TabsContent>
-            </Tabs>
+                  <TabsContent value="map" className="space-y-4">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Interactive Map</CardTitle>
+                        <CardDescription>Explore cultural points of interest</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <MapComponent
+                          center={[selectedDestination.latitude, selectedDestination.longitude]}
+                          zoom={13}
+                          destinations={[{
+                            id: 1,
+                            name: selectedDestination.location,
+                            latitude: selectedDestination.latitude,
+                            longitude: selectedDestination.longitude,
+                            description: selectedDestination.description,
+                            culture: selectedDestination.culture
+                          }]}
+                        />
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+                </Tabs>
+              </>
+            )}
           </div>
         </div>
       </div>

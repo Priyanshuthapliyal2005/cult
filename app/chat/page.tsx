@@ -26,7 +26,7 @@ export default function ChatPage() {
     {
       id: '1',
       role: 'assistant',
-      content: "Hello! I'm your AI travel assistant. I can help you with cultural insights, local recommendations, and travel advice. Where would you like to explore today?",
+      content: "Hello! I'm your AI Cultural Intelligence Assistant. I can help you discover amazing insights about destinations like Pushkar, Rishikesh, and Mussoorie. I can share information about local customs, festivals, essential phrases, and authentic recommendations. What would you like to explore today?",
       timestamp: new Date(),
     },
   ]);
@@ -88,7 +88,7 @@ export default function ChatPage() {
       const errorMessage: Message = {
         id: Date.now().toString() + '_error',
         role: 'assistant',
-        content: 'I apologize, but I encountered an error. Please try again.',
+        content: 'I apologize, but I encountered an error. Please try again. In the meantime, feel free to ask me about Pushkar, Rishikesh, or Mussoorie!',
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, errorMessage]);
@@ -101,11 +101,17 @@ export default function ChatPage() {
     navigator.clipboard.writeText(content);
   };
 
+  const handleQuickQuestion = (question: string) => {
+    setInput(question);
+  };
+
   const quickQuestions = [
-    "What are the customs in Tokyo?",
-    "Best food in Paris?",
-    "How to greet locals in Morocco?",
-    "Cultural events in New York?",
+    "Tell me about Pushkar's cultural customs",
+    "What festivals happen in Rishikesh?",
+    "Best food in Mussoorie?",
+    "Essential Hindi phrases for travelers",
+    "Spiritual experiences in these destinations",
+    "Local etiquette I should know"
   ];
 
   return (
@@ -125,37 +131,39 @@ export default function ChatPage() {
             </div>
             <div>
               <h1 className="font-semibold">Cultural AI Assistant</h1>
-              <p className="text-sm text-gray-500">Get personalized travel insights</p>
+              <p className="text-sm text-gray-500">Get personalized cultural insights</p>
             </div>
           </div>
         </div>
         <div className="flex items-center space-x-2">
           <Badge 
-            variant={testConnection.data?.status === 'success' ? "default" : "destructive"} 
+            variant={testConnection.data?.status === 'success' ? "default" : "secondary"} 
             className={testConnection.data?.status === 'success' ? "bg-green-50 text-green-700 border-green-200" : ""}
           >
-            DB: {testConnection.isLoading ? 'Testing...' : testConnection.data?.status || 'Unknown'}
+            DB: {testConnection.isLoading ? 'Testing...' : testConnection.data?.status || 'Demo'}
           </Badge>
           <Badge 
-            variant={testOpenAI.data?.status === 'success' ? "default" : "destructive"} 
-            className={testOpenAI.data?.status === 'success' ? "bg-green-50 text-green-700 border-green-200" : ""}
+            variant={testOpenAI.data?.status === 'success' ? "default" : "secondary"} 
+            className={testOpenAI.data?.status === 'success' ? "bg-green-50 text-green-700 border-green-200" : "bg-blue-50 text-blue-700 border-blue-200"}
           >
-            AI: {testOpenAI.isLoading ? 'Testing...' : testOpenAI.data?.status || 'Unknown'}
+            AI: {testOpenAI.isLoading ? 'Testing...' : testOpenAI.data?.status || 'Demo'}
           </Badge>
         </div>
       </header>
 
       {/* Connection Status */}
-      {(testConnection.data?.status === 'error' || testOpenAI.data?.status === 'error') && (
-        <Alert className="m-4 border-orange-200 bg-orange-50">
+      {(testConnection.data?.status === 'error' || testOpenAI.data?.status === 'demo') && (
+        <Alert className="m-4 border-blue-200 bg-blue-50">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            {testConnection.data?.status === 'error' && (
-              <div>Database connection failed. Some features may not work properly.</div>
-            )}
-            {testOpenAI.data?.status === 'error' && (
-              <div>AI service connection failed: {testOpenAI.data?.error}</div>
-            )}
+            <div className="space-y-1">
+              {testConnection.data?.status === 'error' && (
+                <div>Database: Using demo mode - conversations won't be saved</div>
+              )}
+              {testOpenAI.data?.status === 'demo' && (
+                <div>AI: Using demo responses - add OpenAI API key for full functionality</div>
+              )}
+            </div>
           </AlertDescription>
         </Alert>
       )}
@@ -207,6 +215,7 @@ export default function ChatPage() {
                             variant="ghost"
                             size="sm"
                             className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
+                            onClick={() => alert('🔊 Text-to-speech would play here!')}
                           >
                             <Volume2 className="w-3 h-3" />
                           </Button>
@@ -263,17 +272,17 @@ export default function ChatPage() {
       </div>
 
       {/* Quick Questions */}
-      {messages.length === 1 && (
+      {messages.length <= 2 && (
         <div className="px-4 py-2 border-t bg-white/50">
-          <p className="text-sm text-gray-600 mb-2">Quick questions to get started:</p>
-          <div className="flex flex-wrap gap-2">
+          <p className="text-sm text-gray-600 mb-2">Try these cultural questions:</p>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {quickQuestions.map((question, index) => (
               <Button
                 key={index}
                 variant="outline"
                 size="sm"
-                className="text-xs"
-                onClick={() => setInput(question)}
+                className="text-xs justify-start h-auto py-2 px-3 whitespace-normal text-left"
+                onClick={() => handleQuickQuestion(question)}
                 disabled={isLoading}
               >
                 {question}
@@ -290,7 +299,7 @@ export default function ChatPage() {
             <Textarea
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              placeholder="Ask me about cultural insights, local customs, or travel advice..."
+              placeholder="Ask me about cultural insights, local customs, festivals, or travel advice for Pushkar, Rishikesh, or Mussoorie..."
               className="min-h-[44px] max-h-32 resize-none pr-12 border-2 border-gray-200 focus:border-blue-500"
               rows={1}
               disabled={isLoading}
@@ -306,6 +315,7 @@ export default function ChatPage() {
               variant="ghost"
               size="sm"
               className="absolute right-2 top-2 h-6 w-6 p-0"
+              onClick={() => alert('📍 Location sharing would be available here!')}
             >
               <MapPin className="w-4 h-4" />
             </Button>
