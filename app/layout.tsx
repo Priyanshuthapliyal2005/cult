@@ -1,35 +1,13 @@
-'use client';
-
 import './globals.css';
 import { Inter } from 'next/font/google';
-import { SessionProvider } from 'next-auth/react';
-import { AuthProvider } from '@/contexts/AuthContext';
-import { trpc } from '@/lib/trpc';
-import { NextIntlClientProvider } from 'next-intl';
-import { useLocale } from 'next-intl';
-import { useEffect, useState } from 'react';
 
 const inter = Inter({ subsets: ['latin'] });
 
-function RootLayout({
+export default function RootLayout({
   children,
-  params: { locale }
 }: {
   children: React.ReactNode;
-  params: { locale: string };
 }) {
-  const [messages, setMessages] = useState({});
-
-  useEffect(() => {
-    // Load messages for the current locale
-    import(`../messages/${locale}.json`)
-      .then((module) => setMessages(module.default))
-      .catch(() => {
-        // Fallback to English if locale not found
-        import('../messages/en.json').then((module) => setMessages(module.default));
-      });
-  }, [locale]);
-
   return (
     <html lang="en">
       <head>
@@ -37,16 +15,8 @@ function RootLayout({
         <meta name="description" content="Your intelligent travel companion with deep cultural insights and personalized recommendations" />
       </head>
       <body className={inter.className}>
-        <NextIntlClientProvider locale={locale} messages={messages}>
-          <SessionProvider>
-            <AuthProvider>
-              {children}
-            </AuthProvider>
-          </SessionProvider>
-        </NextIntlClientProvider>
+        {children}
       </body>
     </html>
   );
 }
-
-export default trpc.withTRPC(RootLayout);
