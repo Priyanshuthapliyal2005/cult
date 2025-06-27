@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { getCulturalInsights, generateChatResponse } from '@/lib/openai';
 import { getCulturalDataByLocation, getChatResponse, getAllDestinations } from '@/lib/mockData';
 import { audioRouter } from './audio';
+import { userRouter } from './user';
 
 // Define explicit types to prevent deep type instantiation
 type CulturalInsightData = {
@@ -22,6 +23,9 @@ type MessageResponse = {
 export const appRouter = router({
   // Include audio router
   audio: audioRouter,
+  
+  // Include user router
+  ...userRouter,
 
   // Test endpoint to verify database connection
   testConnection: publicProcedure

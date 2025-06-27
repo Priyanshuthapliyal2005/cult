@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import UserMenu from '@/components/UserMenu';
 import Link from 'next/link';
 
 const features = [
@@ -109,9 +110,7 @@ export default function Home() {
           <Link href="/chat" className="text-gray-600 hover:text-gray-900 transition-colors">
             Chat
           </Link>
-          <Badge variant="secondary" className="bg-green-50 text-green-700 border-green-200">
-            Demo Ready
-          </Badge>
+          <UserMenu />
         </nav>
       </header>
 

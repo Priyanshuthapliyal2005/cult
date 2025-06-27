@@ -2,6 +2,8 @@
 
 import './globals.css';
 import { Inter } from 'next/font/google';
+import { SessionProvider } from 'next-auth/react';
+import { AuthProvider } from '@/contexts/AuthContext';
 import { trpc } from '@/lib/trpc';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -18,7 +20,11 @@ function RootLayout({
         <meta name="description" content="Your intelligent travel companion with deep cultural insights and personalized recommendations" />
       </head>
       <body className={inter.className}>
-        {children}  
+        <SessionProvider>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </SessionProvider>
       </body>
     </html>
   );
