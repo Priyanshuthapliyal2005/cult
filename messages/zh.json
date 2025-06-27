@@ -1,0 +1,44 @@
+{
+  "common": {
+    "welcome": "欢迎",
+    "loading": "加载中...",
+    "error": "错误",
+    "success": "成功",
+    "save": "保存",
+    "cancel": "取消",
+    "back": "返回",
+    "next": "下一个",
+    "previous": "上一个",
+    "search": "搜索",
+    "language": "语言",
+    "location": "位置",
+    "explore": "探索",
+    "chat": "聊天",
+    "map": "地图",
+    "profile": "个人资料",
+    "signin": "登录",
+    "signup": "注册",
+    "signout": "退出"
+  },
+  "navigation": {
+    "home": "首页",
+    "explore": "探索",
+    "maps": "地图",
+    "chat": "聊天",
+    "admin": "管理",
+    "profile": "个人资料",
+    "favorites": "收藏",
+    "settings": "设置"
+  },
+  "homepage": {
+    "title": "用文化智能探索世界",
+    "subtitle": "您的AI驱动旅行伴侣，为普什卡尔、瑞诗凯诗和马苏里等目的地提供深度文化洞察。自信地体验真正的当地文化。",
+    "searchPlaceholder": "尝试'普什卡尔'、'瑞诗凯诗'或'马苏里'",
+    "featuresTitle": "体验完整的文化智能演示",
+    "featuresSubtitle": "通过我们包含印度目的地真实数据的综合演示发现真正的文化洞察",
+    "ctaTitle": "准备体验文化智能了吗？",
+    "ctaSubtitle": "尝试我们包含普什卡尔、瑞诗凯诗和马苏里真实文化数据的综合演示",
+    "startChat": "开始文化聊天",
+    "exploreDestinations": "探索目的地"
+  }
+}

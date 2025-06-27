@@ -75,8 +75,15 @@ export const appRouter = router({
     }))
     .mutation(async ({ input }): Promise<CulturalInsightData> => {
       try {
-        // First try to get mock data
-        const mockData = getCulturalDataByLocation(input.location);
+        // First try to get data from new city database
+        const { getCityById, cityDatabase } = await import('@/lib/cityDatabase');
+        const city = cityDatabase.find(c => 
+          c.name.toLowerCase().includes(input.location.toLowerCase())
+        );
+        
+        // Fallback to original mock data
+        const mockData = city ? null : getCulturalDataByLocation(input.location);
+        
         if (mockData) {
           // Store in database if available
           try {
@@ -108,6 +115,98 @@ export const appRouter = router({
             events: mockData.events,
             phrases: mockData.phrases,
             recommendations: mockData.recommendations
+          };
+        }
+        
+        // If we found a city in the new database, use it
+        if (city) {
+          try {
+            await prisma.culturalInsight.create({
+              data: {
+                location: city.name,
+                latitude: input.latitude || city.latitude,
+                longitude: input.longitude || city.longitude,
+                category: input.category || 'general',
+                title: `Cultural Insights for ${city.name}`,
+                description: city.description,
+                content: {
+                  customs: {
+                    title: "Local Customs & Etiquette",
+                    description: `Experience the rich culture of ${city.name} respectfully`,
+                    dos: ["Respect local customs", "Dress appropriately", "Learn basic greetings"],
+                    donts: ["Don't ignore local traditions", "Avoid inappropriate behavior", "Don't be disrespectful"]
+                  },
+                  laws: {
+                    title: "Important Laws & Regulations",
+                    important_regulations: ["Follow local laws", "Respect cultural sites", "Obtain necessary permits"],
+                    legal_considerations: ["Carry valid ID", "Respect property rights", "Follow local guidelines"]
+                  },
+                  events: {
+                    title: "Cultural Events & Festivals",
+                    current_events: [],
+                    seasonal_festivals: []
+                  },
+                  phrases: {
+                    title: "Essential Phrases",
+                    essential_phrases: [
+                      { english: "Hello", local: "नमस्ते", pronunciation: "Namaste" },
+                      { english: "Thank you", local: "धन्यवाद", pronunciation: "Dhanyawad" },
+                      { english: "Please", local: "कृपया", pronunciation: "Kripaya" }
+                    ]
+                  },
+                  recommendations: {
+                    title: "Local Recommendations",
+                    restaurants: [],
+                    attractions: city.mainAttractions.map(attraction => ({
+                      name: attraction,
+                      type: "Cultural Site",
+                      description: `Must-visit attraction in ${city.name}`
+                    })),
+                    local_tips: [`Best time to visit: ${city.bestTimeToVisit.slice(0, 3).join(', ')}`, `Budget level: ${city.costLevel}`]
+                  }
+                },
+                embedding: [],
+              },
+            });
+          } catch (dbError) {
+            console.log('Database not available, using city data only');
+          }
+
+          return {
+            customs: {
+              title: "Local Customs & Etiquette",
+              description: `Experience the rich culture of ${city.name} respectfully`,
+              dos: ["Respect local customs", "Dress appropriately", "Learn basic greetings"],
+              donts: ["Don't ignore local traditions", "Avoid inappropriate behavior", "Don't be disrespectful"]
+            },
+            laws: {
+              title: "Important Laws & Regulations",
+              important_regulations: ["Follow local laws", "Respect cultural sites", "Obtain necessary permits"],
+              legal_considerations: ["Carry valid ID", "Respect property rights", "Follow local guidelines"]
+            },
+            events: {
+              title: "Cultural Events & Festivals",
+              current_events: [],
+              seasonal_festivals: []
+            },
+            phrases: {
+              title: "Essential Phrases",
+              essential_phrases: [
+                { english: "Hello", local: "नमस्ते", pronunciation: "Namaste" },
+                { english: "Thank you", local: "धन्यवाद", pronunciation: "Dhanyawad" },
+                { english: "Please", local: "कृपया", pronunciation: "Kripaya" }
+              ]
+            },
+            recommendations: {
+              title: "Local Recommendations",
+              restaurants: [],
+              attractions: city.mainAttractions.map(attraction => ({
+                name: attraction,
+                type: "Cultural Site",
+                description: `Must-visit attraction in ${city.name}`
+              })),
+              local_tips: [`Best time to visit: ${city.bestTimeToVisit.slice(0, 3).join(', ')}`, `Budget level: ${city.costLevel}`]
+            }
           };
         }
 
@@ -156,7 +255,7 @@ export const appRouter = router({
         }
 
         // Fallback response
-        throw new Error('No cultural data available for this location. Try Pushkar, Rishikesh, or Mussoorie for demo data.');
+        throw new Error('No cultural data available for this location. Try searching from our database of 1000+ cities worldwide.');
       } catch (error) {
         console.error('Error in getCulturalInsights:', error);
         throw new Error(error instanceof Error ? error.message : 'Failed to get cultural insights');

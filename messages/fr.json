@@ -1,0 +1,70 @@
+{
+  "common": {
+    "welcome": "Bienvenue",
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "back": "Retour",
+    "next": "Suivant",
+    "previous": "Précédent",
+    "search": "Rechercher",
+    "language": "Langue",
+    "location": "Emplacement",
+    "explore": "Explorer",
+    "chat": "Chat",
+    "map": "Carte",
+    "profile": "Profil",
+    "signin": "Se connecter",
+    "signup": "S'inscrire",
+    "signout": "Se déconnecter"
+  },
+  "navigation": {
+    "home": "Accueil",
+    "explore": "Explorer",
+    "maps": "Cartes",
+    "chat": "Chat",
+    "admin": "Admin",
+    "profile": "Profil",
+    "favorites": "Favoris",
+    "settings": "Paramètres"
+  },
+  "homepage": {
+    "title": "Explorez le Monde avec l'Intelligence Culturelle",
+    "subtitle": "Votre compagnon de voyage alimenté par l'IA avec des perspectives culturelles profondes pour des destinations comme Pushkar, Rishikesh et Mussoorie. Découvrez la culture locale authentique en toute confiance.",
+    "searchPlaceholder": "Essayez 'Pushkar', 'Rishikesh', ou 'Mussoorie'",
+    "featuresTitle": "Découvrez la Démo Complète d'Intelligence Culturelle",
+    "featuresSubtitle": "Découvrez des perspectives culturelles authentiques avec notre démo complète contenant des données réelles pour les destinations indiennes",
+    "ctaTitle": "Prêt à Découvrir l'Intelligence Culturelle ?",
+    "ctaSubtitle": "Essayez notre démo complète avec des données culturelles réelles pour Pushkar, Rishikesh et Mussoorie",
+    "startChat": "Commencer le Chat Culturel",
+    "exploreDestinations": "Explorer les Destinations"
+  },
+  "features": {
+    "culturalIntelligence": {
+      "title": "Intelligence Culturelle",
+      "description": "Obtenez des perspectives approfondies sur les coutumes locales, l'étiquette et les nuances culturelles"
+    },
+    "aiAssistant": {
+      "title": "Assistant de Voyage IA",
+      "description": "Chattez avec notre IA pour des conseils de voyage personnalisés et des recommandations"
+    },
+    "interactiveMapping": {
+      "title": "Cartographie Interactive",
+      "description": "Explorez les destinations avec des points d'intérêt culturel et des perspectives locales"
+    },
+    "localNavigation": {
+      "title": "Navigation Locale",
+      "description": "Naviguez comme un local avec des directions et conseils culturellement conscients"
+    },
+    "communityInsights": {
+      "title": "Perspectives Communautaires",
+      "description": "Connectez-vous avec les locaux et autres voyageurs pour des expériences authentiques"
+    },
+    "realTimeUpdates": {
+      "title": "Mises à Jour en Temps Réel",
+      "description": "Obtenez des mises à jour en direct sur les événements, festivals et actualités locales"
+    }
+  }
+}

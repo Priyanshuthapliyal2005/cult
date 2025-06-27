@@ -1,0 +1,44 @@
+{
+  "common": {
+    "welcome": "ようこそ",
+    "loading": "読み込み中...",
+    "error": "エラー",
+    "success": "成功",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "back": "戻る",
+    "next": "次へ",
+    "previous": "前へ",
+    "search": "検索",
+    "language": "言語",
+    "location": "場所",
+    "explore": "探索",
+    "chat": "チャット",
+    "map": "地図",
+    "profile": "プロフィール",
+    "signin": "サインイン",
+    "signup": "サインアップ",
+    "signout": "サインアウト"
+  },
+  "navigation": {
+    "home": "ホーム",
+    "explore": "探索",
+    "maps": "地図",
+    "chat": "チャット",
+    "admin": "管理",
+    "profile": "プロフィール",
+    "favorites": "お気に入り",
+    "settings": "設定"
+  },
+  "homepage": {
+    "title": "文化的知性で世界を探索",
+    "subtitle": "プシュカル、リシケシュ、マスーリーなどの目的地に対する深い文化的洞察を持つAI搭載の旅行コンパニオン。自信を持って本格的な地元文化を体験してください。",
+    "searchPlaceholder": "'プシュカル'、'リシケシュ'、または'マスーリー'を試してください",
+    "featuresTitle": "完全な文化的知性デモを体験",
+    "featuresSubtitle": "インドの目的地の実際のデータを含む包括的なデモで本格的な文化的洞察を発見",
+    "ctaTitle": "文化的知性を体験する準備はできましたか？",
+    "ctaSubtitle": "プシュカル、リシケシュ、マスーリーの実際の文化データを含む包括的なデモを試してください",
+    "startChat": "文化チャットを開始",
+    "exploreDestinations": "目的地を探索"
+  }
+}

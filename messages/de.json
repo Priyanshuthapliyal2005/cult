@@ -1,0 +1,44 @@
+{
+  "common": {
+    "welcome": "Willkommen",
+    "loading": "Lädt...",
+    "error": "Fehler",
+    "success": "Erfolg",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "previous": "Vorherige",
+    "search": "Suchen",
+    "language": "Sprache",
+    "location": "Standort",
+    "explore": "Erkunden",
+    "chat": "Chat",
+    "map": "Karte",
+    "profile": "Profil",
+    "signin": "Anmelden",
+    "signup": "Registrieren",
+    "signout": "Abmelden"
+  },
+  "navigation": {
+    "home": "Startseite",
+    "explore": "Erkunden",
+    "maps": "Karten",
+    "chat": "Chat",
+    "admin": "Admin",
+    "profile": "Profil",
+    "favorites": "Favoriten",
+    "settings": "Einstellungen"
+  },
+  "homepage": {
+    "title": "Erkunden Sie die Welt mit Kultureller Intelligenz",
+    "subtitle": "Ihr KI-gestützter Reisebegleiter mit tiefen kulturellen Einblicken für Reiseziele wie Pushkar, Rishikesh und Mussoorie. Erleben Sie authentische lokale Kultur mit Vertrauen.",
+    "searchPlaceholder": "Versuchen Sie 'Pushkar', 'Rishikesh', oder 'Mussoorie'",
+    "featuresTitle": "Erleben Sie die Vollständige Kulturelle Intelligenz Demo",
+    "featuresSubtitle": "Entdecken Sie authentische kulturelle Einblicke mit unserer umfassenden Demo mit echten Daten für indische Reiseziele",
+    "ctaTitle": "Bereit, Kulturelle Intelligenz zu Erleben?",
+    "ctaSubtitle": "Probieren Sie unsere umfassende Demo mit echten kulturellen Daten für Pushkar, Rishikesh und Mussoorie",
+    "startChat": "Kulturellen Chat Starten",
+    "exploreDestinations": "Reiseziele Erkunden"
+  }
+}
