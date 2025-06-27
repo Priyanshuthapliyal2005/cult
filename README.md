@@ -41,7 +41,9 @@ A comprehensive travel intelligence platform that provides personalized cultural
 - **tRPC**: Type-safe API routes
 - **Prisma ORM**: Database management
 - **PostgreSQL**: Primary database (Neon)
-- **OpenAI GPT-4**: Cultural analysis and chat responses
+- **Gemini AI**: Advanced cultural analysis and insights
+- **Groq AI**: Fast conversational responses and quick queries
+- **Hybrid AI System**: Automatic fallbacks between AI services
 - **Vector Search**: Semantic search capabilities
 
 ### Integrations
@@ -55,7 +57,8 @@ A comprehensive travel intelligence platform that provides personalized cultural
 ### Prerequisites
 - Node.js 18+ 
 - PostgreSQL database
-- OpenAI API key
+- Gemini API key (Google AI Studio)
+- Groq API key
 
 ### Installation
 
@@ -78,7 +81,8 @@ cp .env.example .env.local
 4. Configure your environment variables in `.env.local`:
 ```env
 DATABASE_URL="your-postgresql-connection-string"
-OPENAI_API_KEY="your-openai-api-key"
+GEMINI_API_KEY="your-gemini-api-key"
+GROQ_API_KEY="your-groq-api-key"
 ELEVENLABS_API_KEY="your-elevenlabs-api-key"
 LINGO_API_KEY="your-lingo-api-key"
 RESEND_API_KEY="your-resend-api-key"
@@ -135,7 +139,8 @@ npm run build
 ### Environment Variables
 ```env
 DATABASE_URL="your-production-database-url"
-OPENAI_API_KEY="your-production-openai-key"
+GEMINI_API_KEY="your-production-gemini-key"
+GROQ_API_KEY="your-production-groq-key"
 NEXTAUTH_URL="https://your-domain.com"
 ```
 

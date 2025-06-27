@@ -33,6 +33,7 @@ export default function ExplorePage() {
   const getCulturalInsights = trpc.getCulturalInsights.useMutation();
   const { data: destinations = [], isLoading: destinationsLoading } = trpc.getDestinations.useQuery();
   const testElevenLabs = trpc.audio.testElevenLabs.useQuery();
+  const testAI = trpc.testAI.useQuery();
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -107,6 +108,16 @@ export default function ExplorePage() {
           </div>
         </div>
         <div className="flex items-center space-x-2">
+          <Badge 
+            variant={testAI.data?.overall?.status === 'success' ? "default" : "secondary"} 
+            className={
+              testAI.data?.overall?.status === 'success' ? "bg-green-50 text-green-700 border-green-200" : 
+              testAI.data?.overall?.status === 'partial' ? "bg-yellow-50 text-yellow-700 border-yellow-200" :
+              "bg-blue-50 text-blue-700 border-blue-200"
+            }
+          >
+            AI: {testAI.isLoading ? 'Testing...' : testAI.data?.overall?.status || 'Demo'}
+          </Badge>
           <Badge 
             variant={testElevenLabs.data?.status === 'success' ? "default" : "secondary"} 
             className={testElevenLabs.data?.status === 'success' ? "bg-green-50 text-green-700 border-green-200" : "bg-blue-50 text-blue-700 border-blue-200"}
@@ -192,11 +203,18 @@ export default function ExplorePage() {
             )}
 
             {/* Audio Status */}
-            {testElevenLabs.data?.status === 'demo' && (
+            {(testAI.data?.overall?.status !== 'success' || testElevenLabs.data?.status === 'demo') && (
               <Alert className="border-blue-200 bg-blue-50">
                 <Volume2 className="h-4 w-4" />
                 <AlertDescription>
-                  Audio pronunciation is in demo mode. Add your ElevenLabs API key for real voice synthesis.
+                  <div className="space-y-1">
+                    {testAI.data?.overall?.status === 'demo' && (
+                      <div>AI services in demo mode - add Gemini/Groq API keys for enhanced cultural insights</div>
+                    )}
+                    {testElevenLabs.data?.status === 'demo' && (
+                      <div>Audio pronunciation is in demo mode - add ElevenLabs API key for real voice synthesis</div>
+                    )}
+                  </div>
                 </AlertDescription>
               </Alert>
             )}
