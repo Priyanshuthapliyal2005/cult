@@ -1,0 +1,169 @@
+{
+  "common": {
+    "welcome": "Welcome",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "save": "Save",
+    "cancel": "Cancel",
+    "back": "Back",
+    "next": "Next",
+    "previous": "Previous",
+    "search": "Search",
+    "language": "Language",
+    "location": "Location",
+    "explore": "Explore",
+    "chat": "Chat",
+    "map": "Map",
+    "profile": "Profile",
+    "signin": "Sign In",
+    "signup": "Sign Up",
+    "signout": "Sign Out"
+  },
+  "navigation": {
+    "home": "Home",
+    "explore": "Explore",
+    "maps": "Maps", 
+    "chat": "Chat",
+    "admin": "Admin",
+    "profile": "Profile",
+    "favorites": "Favorites",
+    "settings": "Settings"
+  },
+  "homepage": {
+    "title": "Explore the World with Cultural Intelligence",
+    "subtitle": "Your AI-powered travel companion with deep cultural insights for destinations like Pushkar, Rishikesh, and Mussoorie. Experience authentic local culture with confidence.",
+    "searchPlaceholder": "Try 'Pushkar', 'Rishikesh', or 'Mussoorie'",
+    "featuresTitle": "Experience the Full Cultural Intelligence Demo",
+    "featuresSubtitle": "Discover authentic cultural insights with our comprehensive demo featuring real data for Indian destinations",
+    "ctaTitle": "Ready to Experience Cultural Intelligence?",
+    "ctaSubtitle": "Try our comprehensive demo with real cultural data for Pushkar, Rishikesh, and Mussoorie",
+    "startChat": "Start Cultural Chat",
+    "exploreDestinations": "Explore Destinations"
+  },
+  "features": {
+    "culturalIntelligence": {
+      "title": "Cultural Intelligence",
+      "description": "Get deep insights into local customs, etiquette, and cultural nuances"
+    },
+    "aiAssistant": {
+      "title": "AI Travel Assistant", 
+      "description": "Chat with our AI for personalized travel advice and recommendations"
+    },
+    "interactiveMapping": {
+      "title": "Interactive Mapping",
+      "description": "Explore destinations with cultural points of interest and local insights"
+    },
+    "localNavigation": {
+      "title": "Local Navigation",
+      "description": "Navigate like a local with culturally-aware directions and tips"
+    },
+    "communityInsights": {
+      "title": "Community Insights",
+      "description": "Connect with locals and fellow travelers for authentic experiences"
+    },
+    "realTimeUpdates": {
+      "title": "Real-time Updates",
+      "description": "Get live updates on events, festivals, and local happenings"
+    }
+  },
+  "chat": {
+    "title": "Cultural AI Assistant",
+    "subtitle": "Get personalized cultural insights",
+    "placeholder": "Ask me about cultural insights, local customs, festivals, or travel advice for Pushkar, Rishikesh, or Mussoorie...",
+    "quickQuestions": {
+      "pushkarCustoms": "Tell me about Pushkar's cultural customs",
+      "rishikeshFestivals": "What festivals happen in Rishikesh?",
+      "mussoorieeFood": "Best food in Mussoorie?",
+      "hindiPhrases": "Essential Hindi phrases for travelers",
+      "spiritualExperiences": "Spiritual experiences in these destinations",
+      "localEtiquette": "Local etiquette I should know"
+    },
+    "greeting": "Hello! I'm your AI Cultural Intelligence Assistant. I can help you discover amazing insights about destinations like Pushkar, Rishikesh, and Mussoorie. I can share information about local customs, festivals, essential phrases, and authentic recommendations. What would you like to explore today?"
+  },
+  "explore": {
+    "title": "Explore Destinations",
+    "subtitle": "Discover cultural insights worldwide",
+    "searchPlaceholder": "Search destinations...",
+    "tabs": {
+      "overview": "Overview",
+      "customs": "Customs",
+      "phrases": "Phrases", 
+      "recommendations": "Places",
+      "map": "Map"
+    },
+    "culturalOverview": "Cultural Overview"
+  },
+  "map": {
+    "title": "Interactive Maps",
+    "subtitle": "Explore destinations with advanced mapping",
+    "searchAndNavigate": "Search & Navigate",
+    "culturalDestinations": "Cultural Destinations Map",
+    "routePlanning": "Route Planning",
+    "mapLayers": "Map Layers"
+  },
+  "auth": {
+    "signIn": {
+      "title": "Welcome Back",
+      "subtitle": "Sign in to your cultural intelligence account",
+      "email": "Email",
+      "password": "Password",
+      "emailPlaceholder": "Enter your email",
+      "passwordPlaceholder": "Enter your password", 
+      "submit": "Sign In",
+      "signingIn": "Signing in...",
+      "noAccount": "Don't have an account?",
+      "signUpLink": "Sign up"
+    },
+    "signUp": {
+      "title": "Join CulturalCompass",
+      "subtitle": "Create your cultural intelligence account",
+      "name": "Full Name",
+      "email": "Email",
+      "password": "Password",
+      "confirmPassword": "Confirm Password",
+      "namePlaceholder": "Enter your full name",
+      "emailPlaceholder": "Enter your email",
+      "passwordPlaceholder": "Enter your password",
+      "confirmPasswordPlaceholder": "Confirm your password",
+      "submit": "Create Account",
+      "creating": "Creating account...",
+      "haveAccount": "Already have an account?",
+      "signInLink": "Sign in"
+    }
+  },
+  "destinations": {
+    "pushkar": {
+      "name": "Pushkar",
+      "description": "Sacred city with the famous Brahma Temple and holy Pushkar Lake",
+      "culture": "Sacred & Spiritual"
+    },
+    "rishikesh": {
+      "name": "Rishikesh", 
+      "description": "Yoga capital of the world nestled in the Himalayan foothills along the Ganges",
+      "culture": "Spiritual & Adventure"
+    },
+    "mussoorie": {
+      "name": "Mussoorie",
+      "description": "Queen of Hills - charming hill station with colonial architecture and mountain views", 
+      "culture": "Colonial & Mountain"
+    }
+  },
+  "cultural": {
+    "customs": "Local Customs & Etiquette",
+    "phrases": "Essential Phrases",
+    "restaurants": "Restaurants",
+    "attractions": "Attractions",
+    "localTips": "Local Tips",
+    "pronunciation": "Pronunciation",
+    "festivals": "Festivals & Cultural Events"
+  },
+  "admin": {
+    "title": "Vector Database Admin",
+    "subtitle": "Manage RAG system and vector content",
+    "vectorSearch": "Vector Search",
+    "manageContent": "Manage Content",
+    "dataIngestion": "Data Ingestion",
+    "analytics": "Analytics"
+  }
+}

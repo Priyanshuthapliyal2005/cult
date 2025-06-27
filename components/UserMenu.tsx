@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { signOut } from 'next-auth/react';
 import { User, Settings, LogOut, Heart, MessageCircle } from 'lucide-react';
+import { useLocale } from 'next-intl';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,6 +20,11 @@ import Link from 'next/link';
 export default function UserMenu() {
   const { user, isAuthenticated } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const locale = useLocale();
+
+  const getLocalizedPath = (path: string) => {
+    return locale === 'en' ? path : `/${locale}${path}`;
+  };
 
   const handleSignOut = async () => {
     setIsLoading(true);
@@ -30,10 +36,10 @@ export default function UserMenu() {
     return (
       <div className="flex items-center space-x-2">
         <Button variant="ghost" asChild>
-          <Link href="/auth/signin">Sign In</Link>
+          <Link href={getLocalizedPath('/auth/signin')}>Sign In</Link>
         </Button>
         <Button asChild>
-          <Link href="/auth/signup">Sign Up</Link>
+          <Link href={getLocalizedPath('/auth/signup')}>Sign Up</Link>
         </Button>
       </div>
     );
@@ -62,25 +68,25 @@ export default function UserMenu() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuItem asChild>
-          <Link href="/profile" className="cursor-pointer">
+          <Link href={getLocalizedPath('/profile')} className="cursor-pointer">
             <User className="mr-2 h-4 w-4" />
             <span>Profile</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/chat" className="cursor-pointer">
+          <Link href={getLocalizedPath('/chat')} className="cursor-pointer">
             <MessageCircle className="mr-2 h-4 w-4" />
             <span>My Conversations</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/favorites" className="cursor-pointer">
+          <Link href={getLocalizedPath('/favorites')} className="cursor-pointer">
             <Heart className="mr-2 h-4 w-4" />
             <span>Favorites</span>
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <Link href="/settings" className="cursor-pointer">
+          <Link href={getLocalizedPath('/settings')} className="cursor-pointer">
             <Settings className="mr-2 h-4 w-4" />
             <span>Settings</span>
           </Link>

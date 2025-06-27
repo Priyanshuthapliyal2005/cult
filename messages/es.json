@@ -1,0 +1,70 @@
+{
+  "common": {
+    "welcome": "Bienvenido",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "search": "Buscar",
+    "language": "Idioma",
+    "location": "Ubicación",
+    "explore": "Explorar",
+    "chat": "Chat",
+    "map": "Mapa",
+    "profile": "Perfil",
+    "signin": "Iniciar Sesión",
+    "signup": "Registrarse",
+    "signout": "Cerrar Sesión"
+  },
+  "navigation": {
+    "home": "Inicio",
+    "explore": "Explorar",
+    "maps": "Mapas",
+    "chat": "Chat",
+    "admin": "Admin",
+    "profile": "Perfil",
+    "favorites": "Favoritos",
+    "settings": "Configuración"
+  },
+  "homepage": {
+    "title": "Explora el Mundo con Inteligencia Cultural",
+    "subtitle": "Tu compañero de viaje impulsado por IA con perspectivas culturales profundas para destinos como Pushkar, Rishikesh y Mussoorie. Experimenta la cultura local auténtica con confianza.",
+    "searchPlaceholder": "Prueba 'Pushkar', 'Rishikesh', o 'Mussoorie'",
+    "featuresTitle": "Experimenta la Demo Completa de Inteligencia Cultural",
+    "featuresSubtitle": "Descubre perspectivas culturales auténticas con nuestra demo completa que incluye datos reales para destinos indios",
+    "ctaTitle": "¿Listo para Experimentar la Inteligencia Cultural?",
+    "ctaSubtitle": "Prueba nuestra demo completa con datos culturales reales para Pushkar, Rishikesh y Mussoorie",
+    "startChat": "Iniciar Chat Cultural",
+    "exploreDestinations": "Explorar Destinos"
+  },
+  "features": {
+    "culturalIntelligence": {
+      "title": "Inteligencia Cultural",
+      "description": "Obtén perspectivas profundas sobre costumbres locales, etiqueta y matices culturales"
+    },
+    "aiAssistant": {
+      "title": "Asistente de Viaje IA",
+      "description": "Chatea con nuestra IA para consejos de viaje personalizados y recomendaciones"
+    },
+    "interactiveMapping": {
+      "title": "Mapeo Interactivo",
+      "description": "Explora destinos con puntos de interés cultural y perspectivas locales"
+    },
+    "localNavigation": {
+      "title": "Navegación Local",
+      "description": "Navega como un local con direcciones y consejos culturalmente conscientes"
+    },
+    "communityInsights": {
+      "title": "Perspectivas de la Comunidad",
+      "description": "Conecta con locales y otros viajeros para experiencias auténticas"
+    },
+    "realTimeUpdates": {
+      "title": "Actualizaciones en Tiempo Real",
+      "description": "Obtén actualizaciones en vivo sobre eventos, festivales y acontecimientos locales"
+    }
+  }
+}
