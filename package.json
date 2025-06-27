@@ -6,9 +6,10 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "next lint", 
     "db:push": "prisma db push",
-    "db:generate": "prisma generate"
+    "db:generate": "prisma generate",
+    "populate:kb": "tsx scripts/populateKnowledgeBase.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.19.0",

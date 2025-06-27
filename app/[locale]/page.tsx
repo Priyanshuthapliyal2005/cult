@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { MapPin, MessageCircle, Globe, Compass, Users, Zap } from 'lucide-react';
+import { MapPin, MessageCircle, Globe, Compass, Users, Zap, Database } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
+import { Badge } from '@/components/ui/badge'; 
 import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import UserMenu from '@/components/UserMenu';
@@ -105,6 +105,9 @@ export default function Home() {
           </Link>
           <Link href={getLocalizedPath('/map')} className="text-gray-600 hover:text-gray-900 transition-colors">
             {tNavigation('maps')}
+          </Link>
+          <Link href={getLocalizedPath('/knowledge-base')} className="text-gray-600 hover:text-gray-900 transition-colors">
+            Knowledge Base
           </Link>
           <Link href={getLocalizedPath('/chat')} className="text-gray-600 hover:text-gray-900 transition-colors">
             {tNavigation('chat')}
@@ -244,6 +247,12 @@ export default function Home() {
                 <Link href={getLocalizedPath('/explore')}>
                   <MapPin className="w-5 h-5 mr-2" />
                   {tHomepage('exploreDestinations')}
+                </Link>
+              </Button>
+              <Button size="lg" variant="outline" className="h-12 px-8 text-lg border-white text-white hover:bg-white hover:text-blue-600" asChild>
+                <Link href={getLocalizedPath('/knowledge-base')}>
+                  <Database className="w-5 h-5 mr-2" />
+                  Knowledge Base
                 </Link>
               </Button>
             </div>

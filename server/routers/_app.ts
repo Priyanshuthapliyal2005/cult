@@ -7,6 +7,7 @@ import { audioRouter } from './audio';
 import { userRouter } from './user';
 import { vectorRouter } from './vector';
 import { ragService } from '@/lib/ragService';
+import { knowledgeBaseRouter } from './knowledgeBase';
 
 // Define explicit types to prevent deep type instantiation
 type CulturalInsightData = {
@@ -31,6 +32,9 @@ export const appRouter = router({
 
   // Include vector router
   vector: vectorRouter,
+
+  // Include knowledge base router
+  knowledgeBase: knowledgeBaseRouter,
 
   // Test endpoint to verify database connection
   testConnection: publicProcedure

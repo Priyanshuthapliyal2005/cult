@@ -199,3 +199,28 @@ model AudioCache {
   @@unique([text, language])
   @@map("audio_cache")
 }
+model UserRating {
+  id        String   @id @default(cuid())
+  cityId    String
+  userId    String
+  rating    Int      @db.SmallInt
+  category  String
+  comment   String?
+  timestamp DateTime @default(now())
+
+  @@map("user_ratings")
+}
+
+model QualityAudit {
+  id          String   @id @default(cuid())
+  cityId      String
+  status      String   // "scheduled", "in_progress", "completed", "failed"
+  scheduledAt DateTime
+  completedAt DateTime?
+  priority    String   // "low", "normal", "high", "critical"
+  results     Json?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("quality_audits")
+}
