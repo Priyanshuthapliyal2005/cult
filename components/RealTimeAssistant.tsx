@@ -320,7 +320,7 @@ export default function RealTimeAssistant({
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <Avatar className="w-12 h-12">
-              <AvatarFallback className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+              <AvatarFallback className="bg-gradient-to-r from-blueberry to-ube text-white">
                 <Bot className="w-6 h-6" />
               </AvatarFallback>
             </Avatar>
@@ -420,16 +420,16 @@ export default function RealTimeAssistant({
                               <div className="flex items-center space-x-1">
                                 <Button
                                   variant="ghost"
-                                  size="sm"
-                                  className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
+                                  size="icon"
+                                  className="h-6 w-6 text-gray-400 hover:text-blueberry transition-colors"
                                   onClick={() => handleCopy(message.content)}
                                 >
                                   <Copy className="w-3 h-3" />
                                 </Button>
                                 <Button
                                   variant="ghost"
-                                  size="sm"
-                                  className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
+                                  size="icon"
+                                  className="h-6 w-6 text-gray-400 hover:text-tangarine transition-colors"
                                   onClick={() => playAudio(message.content)}
                                   disabled={generateAudio.isLoading}
                                 >
@@ -437,15 +437,15 @@ export default function RealTimeAssistant({
                                 </Button>
                                 <Button
                                   variant="ghost"
-                                  size="sm"
-                                  className="h-6 w-6 p-0 text-gray-400 hover:text-green-600"
+                                  size="icon"
+                                  className="h-6 w-6 text-gray-400 hover:text-green-600 transition-colors"
                                 >
                                   <ThumbsUp className="w-3 h-3" />
                                 </Button>
                                 <Button
                                   variant="ghost"
-                                  size="sm"
-                                  className="h-6 w-6 p-0 text-gray-400 hover:text-red-600"
+                                  size="icon"
+                                  className="h-6 w-6 text-gray-400 hover:text-red-600 transition-colors"
                                 >
                                   <ThumbsDown className="w-3 h-3" />
                                 </Button>
@@ -516,7 +516,7 @@ export default function RealTimeAssistant({
                 <Button
                   type="submit"
                   disabled={!input.trim() || isLoading}
-                  className="h-11 px-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                  className="h-11 px-4 bg-gradient-to-r from-blueberry to-ube hover:shadow-md transition-all duration-300"
                 >
                   <Send className="w-4 h-4" />
                 </Button>
