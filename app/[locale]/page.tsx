@@ -103,6 +103,9 @@ export default function Home() {
           <Link href={getLocalizedPath('/explore')} className="text-gray-600 hover:text-gray-900 transition-colors">
             {tNavigation('explore')}
           </Link>
+          <Link href={getLocalizedPath('/laws')} className="text-gray-600 hover:text-gray-900 transition-colors">
+            {tNavigation('laws')}
+          </Link>
           <Link href={getLocalizedPath('/map')} className="text-gray-600 hover:text-gray-900 transition-colors">
             {tNavigation('maps')}
           </Link>
@@ -241,6 +244,12 @@ export default function Home() {
                 <Link href={getLocalizedPath('/chat')}>
                   <MessageCircle className="w-5 h-5 mr-2" />
                   {tHomepage('startChat')}
+                </Link>
+              </Button>
+              <Button size="lg" variant="outline" className="h-12 px-8 text-lg border-white text-white hover:bg-white hover:text-blue-600" asChild>
+                <Link href={getLocalizedPath('/laws')}>
+                  <Scale className="w-5 h-5 mr-2" />
+                  Travel Laws
                 </Link>
               </Button>
               <Button size="lg" variant="outline" className="h-12 px-8 text-lg border-white text-white hover:bg-white hover:text-blue-600" asChild>

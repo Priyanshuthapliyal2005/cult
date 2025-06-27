@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Scale, MapPin, AlertTriangle, Info, Search, Phone, FileText, Shield } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Scale, MapPin, AlertTriangle, Search, FileText, Shield, Book, Filter, Info, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -13,7 +13,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { cityDatabase, type CityData } from '@/lib/cityDatabase';
 import { trpc } from '@/lib/trpc';
-import { useTranslations } from 'next-intl';
 
 interface TravelLawsAssistantProps {
   selectedCity?: CityData;
@@ -31,9 +30,10 @@ export default function TravelLawsAssistant({
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isAsking, setIsAsking] = useState(false);
   const [legalResponse, setLegalResponse] = useState<string>('');
+  const [feedbackGiven, setFeedbackGiven] = useState(false);
   
-  const t = useTranslations();
   const askLegalQuestion = trpc.sendMessage.useMutation();
+  const knowledgeBaseSearch = trpc.knowledgeBase.search.useMutation();
 
   const handleCitySearch = (query: string) => {
     if (!query.trim()) return;
@@ -53,16 +53,68 @@ export default function TravelLawsAssistant({
     if (!legalQuestion.trim() || !selectedCity) return;
     
     setIsAsking(true);
+    setFeedbackGiven(false);
+    
     try {
-      const response = await askLegalQuestion.mutateAsync({
-        message: `Legal Question about ${selectedCity.name}: ${legalQuestion}`,
-        location: selectedCity.name,
-        latitude: selectedCity.latitude,
-        longitude: selectedCity.longitude
-      });
-      setLegalResponse(response.response);
+      // Try to use the knowledge base first
+      try {
+        const response = await knowledgeBaseSearch.mutateAsync({
+          query: `${legalQuestion} in ${selectedCity.name}, ${selectedCity.country}`,
+          context: {
+            interests: ["legal", "safety"],
+            legalConcerns: ["behavior", "alcohol", "dress-codes", "photography"]
+          }
+        });
+        
+        if (response.data?.destination) {
+          // Found relevant information
+          let answer = `Based on our knowledge base for ${selectedCity.name}:\n\n`;
+          
+          // Extract legal alerts
+          if (response.data.legalAlerts && response.data.legalAlerts.length > 0) {
+            const alert = response.data.legalAlerts[0];
+            answer += `${alert.title}\n${alert.description}\n\n`;
+            
+            if (alert.consequences.length > 0) {
+              answer += `Consequences: ${alert.consequences.join(", ")}\n\n`;
+            }
+            
+            if (alert.recommendations.length > 0) {
+              answer += `Recommendations:\n- ${alert.recommendations.join("\n- ")}`;
+            }
+          } else {
+            // Fallback to general legal information
+            answer += `For your question about ${legalQuestion}:\n\n`;
+            
+            const laws = selectedCity.travelLaws?.penalties?.commonViolations || [];
+            if (laws.length > 0) {
+              answer += "Important legal considerations:\n\n";
+              laws.forEach(law => {
+                answer += `• ${law.violation}: ${law.penalty} (${law.severity} severity)\n`;
+              });
+            }
+            
+            answer += "\nIt's always best to consult official sources or a legal professional for specific legal advice.";
+          }
+          
+          setLegalResponse(answer);
+        } else {
+          throw new Error("No relevant information found in knowledge base");
+        }
+      } catch (kbError) {
+        // Fallback to general AI response
+        const response = await askLegalQuestion.mutateAsync({
+          message: `Legal Question about ${selectedCity.name}: ${legalQuestion}`,
+          location: selectedCity.name,
+          latitude: selectedCity.latitude,
+          longitude: selectedCity.longitude
+        });
+        
+        setLegalResponse(response.response);
+      }
     } catch (error) {
-      setLegalResponse('I apologize, but I encountered an error processing your legal question. Please try again or contact local authorities for official legal advice.');
+      console.error('Error processing legal question:', error);
+      setLegalResponse('I apologize, but I encountered an error processing your legal question. Please try again with a more specific question, or contact local authorities for official legal advice.');
     } finally {
       setIsAsking(false);
     }
@@ -77,6 +129,15 @@ export default function TravelLawsAssistant({
     }
   };
 
+  const legalCategories = [
+    { value: 'all', label: 'All Categories', icon: <Book className="w-4 h-4 mr-2" /> },
+    { value: 'immigration', label: 'Immigration & Visas', icon: <FileText className="w-4 h-4 mr-2" /> },
+    { value: 'transportation', label: 'Transportation', icon: <MapPin className="w-4 h-4 mr-2" /> },
+    { value: 'behavior', label: 'Public Behavior', icon: <Info className="w-4 h-4 mr-2" /> },
+    { value: 'photography', label: 'Photography & Privacy', icon: <AlertTriangle className="w-4 h-4 mr-2" /> },
+    { value: 'penalties', label: 'Penalties & Enforcement', icon: <Scale className="w-4 h-4 mr-2" /> }
+  ];
+
   const commonQuestions = [
     "Can I drink alcohol in this city?",
     "What are the photography restrictions?",
@@ -90,22 +151,6 @@ export default function TravelLawsAssistant({
 
   return (
     <div className={`space-y-6 ${className}`}>
-      {/* Header */}
-      <div className="text-center">
-        <div className="flex items-center justify-center mb-4">
-          <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
-            <Scale className="w-8 h-8 text-white" />
-          </div>
-        </div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Travel Laws & Regulations Assistant
-        </h1>
-        <p className="text-gray-600 max-w-2xl mx-auto">
-          Understand local laws and regulations in plain English. Get clear, AI-powered guidance 
-          to ensure compliant and safe travel experiences.
-        </p>
-      </div>
-
       {/* City Selection */}
       <Card>
         <CardHeader>
@@ -119,17 +164,17 @@ export default function TravelLawsAssistant({
         </CardHeader>
         <CardContent>
           <div className="flex space-x-2">
-            <Input
-              placeholder="Search for any city..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleCitySearch(searchQuery)}
-              className="flex-1"
-            />
-            <Button onClick={() => handleCitySearch(searchQuery)}>
-              <Search className="w-4 h-4 mr-2" />
-              Search
-            </Button>
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search for any city..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleCitySearch(searchQuery)}
+                className="pl-10"
+              />
+            </div>
+            <Button onClick={() => handleCitySearch(searchQuery)}>Search</Button>
           </div>
           
           {selectedCity && (
@@ -158,7 +203,7 @@ export default function TravelLawsAssistant({
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center">
-            <FileText className="w-5 h-5 mr-2" />
+            <Scale className="w-5 h-5 mr-2" />
             Ask Your Legal Question
           </CardTitle>
           <CardDescription>
@@ -166,19 +211,23 @@ export default function TravelLawsAssistant({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="flex space-x-4">
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select category" />
+              <SelectTrigger className="w-full">
+                <div className="flex items-center">
+                  <Filter className="w-4 h-4 mr-2" />
+                  <SelectValue placeholder="Select category" />
+                </div>
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                <SelectItem value="immigration">Immigration & Customs</SelectItem>
-                <SelectItem value="transportation">Transportation</SelectItem>
-                <SelectItem value="accommodation">Accommodation</SelectItem>
-                <SelectItem value="public">Public Behavior</SelectItem>
-                <SelectItem value="photography">Photography & Privacy</SelectItem>
-                <SelectItem value="shopping">Shopping & Taxes</SelectItem>
+                {legalCategories.map((category) => (
+                  <SelectItem key={category.value} value={category.value}>
+                    <div className="flex items-center">
+                      {category.icon}
+                      {category.label}
+                    </div>
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -188,6 +237,7 @@ export default function TravelLawsAssistant({
             value={legalQuestion}
             onChange={(e) => setLegalQuestion(e.target.value)}
             rows={3}
+            className="w-full"
           />
           
           <Button 
@@ -207,7 +257,7 @@ export default function TravelLawsAssistant({
                   key={index}
                   variant="outline"
                   size="sm"
-                  className="text-xs justify-start h-auto py-2 px-3 whitespace-normal text-left"
+                  className="justify-start h-auto py-2 px-3 text-left text-xs"
                   onClick={() => setLegalQuestion(question)}
                 >
                   {question}
@@ -218,18 +268,50 @@ export default function TravelLawsAssistant({
 
           {/* Response */}
           {legalResponse && (
-            <Alert className="border-blue-200 bg-blue-50">
-              <Info className="h-4 w-4" />
-              <AlertDescription>
-                <div className="space-y-2">
-                  <div className="font-semibold">Legal Guidance:</div>
-                  <div className="whitespace-pre-wrap">{legalResponse}</div>
-                  <div className="text-xs text-gray-600 mt-2">
-                    ⚠️ This is AI-generated guidance. For official legal advice, consult local authorities or legal professionals.
+            <div className="mt-4">
+              <Card className="border-blue-200 bg-blue-50">
+                <CardHeader>
+                  <CardTitle className="flex items-center text-blue-800 text-lg">
+                    <Scale className="w-5 h-5 mr-2" />
+                    Legal Guidance
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="whitespace-pre-wrap text-gray-700">{legalResponse}</div>
+                    <Alert className="bg-gray-50 border-gray-200">
+                      <AlertTriangle className="h-4 w-4 text-gray-500" />
+                      <AlertDescription className="text-gray-600 text-xs">
+                        This is AI-generated guidance. For official legal advice, please consult local authorities or legal professionals.
+                      </AlertDescription>
+                    </Alert>
                   </div>
-                </div>
-              </AlertDescription>
-            </Alert>
+                </CardContent>
+                <CardFooter className="flex justify-between border-t pt-4">
+                  <div className="text-sm text-gray-500">Was this information helpful?</div>
+                  <div className="space-x-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="text-green-600 border-green-200 hover:bg-green-50"
+                      onClick={() => setFeedbackGiven(true)}
+                      disabled={feedbackGiven}
+                    >
+                      <CheckCircle className="w-3 h-3 mr-1" /> Yes
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      className="text-red-600 border-red-200 hover:bg-red-50"
+                      onClick={() => setFeedbackGiven(true)}
+                      disabled={feedbackGiven}
+                    >
+                      <AlertCircle className="w-3 h-3 mr-1" /> No
+                    </Button>
+                  </div>
+                </CardFooter>
+              </Card>
+            </div>
           )}
         </CardContent>
       </Card>
@@ -467,7 +549,7 @@ export default function TravelLawsAssistant({
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center text-red-700">
-                  <Phone className="w-5 h-5 mr-2" />
+                  <AlertTriangle className="w-5 h-5 mr-2" />
                   Emergency Contacts & Legal Help
                 </CardTitle>
                 <CardDescription>
