@@ -255,11 +255,15 @@ export default function RealTimeAssistant({
     "What are the cultural customs in Tokyo?",
     "Help me with essential Hindi phrases",
     "What's the best way to greet locals in India?",
+    "What are the local laws I should know in Pushkar?",
     "Tell me about cultural etiquette in Paris",
+    "Are there any photography restrictions in temples?",
     "Recommend authentic experiences in Bali",
     "What festivals happen in Pushkar?",
     "Help me navigate like a local in any city",
-    "What traditional food should I try?"
+    "What traditional food should I try?",
+    "What are the penalties for alcohol in dry states?",
+    "Do I need permits for driving in this city?"
   ];
 
   const personalities = {

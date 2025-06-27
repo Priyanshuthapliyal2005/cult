@@ -79,8 +79,7 @@ export default function Home() {
     e.preventDefault();
     if (searchQuery.trim()) {
       const path = locale === 'en' ? '/explore' : `/${locale}/explore`;
-      experience: 'Experience',
-      legalGuidance: 'Legal Guidance'
+      router.push(`${path}?q=${encodeURIComponent(searchQuery)}`);
     }
   };
 
@@ -109,9 +108,6 @@ export default function Home() {
           </Link>
           <Link href={getLocalizedPath('/chat')} className="text-gray-600 hover:text-gray-900 transition-colors">
             {tNavigation('chat')}
-          </Link>
-          <Link href={getLocalizedPath('/laws')} className="text-gray-600 hover:text-gray-900 transition-colors">
-            Laws
           </Link>
           <Link href={getLocalizedPath('/admin')} className="text-gray-600 hover:text-gray-900 transition-colors">
             {tNavigation('admin')}
@@ -275,6 +271,7 @@ export default function Home() {
               <li>Cultural Insights</li>
               <li>AI Chat Assistant</li>
               <li>Advanced Mapping</li>
+              <li>Travel Law Guidance</li>
               <li>Local Recommendations</li>
             </ul>
           </div>
@@ -295,6 +292,7 @@ export default function Home() {
             <ul className="space-y-2 text-gray-400">
               <li>Cultural Customs</li>
               <li>Local Phrases</li>
+              <li>Legal Regulations</li>
               <li>Festival Information</li>
               <li>Authentic Recommendations</li>
             </ul>
