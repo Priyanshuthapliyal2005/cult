@@ -51,7 +51,7 @@ export default function RealTimeAssistant({
     {
       id: '1',
       role: 'assistant',
-      content: "👋 Hello! I'm your real-time Cultural Intelligence Assistant. I'm here to help you navigate any destination with confidence. I can provide instant answers about local customs, translate phrases, suggest authentic experiences, and help you connect respectfully with local culture. What would you like to explore today?",
+      content: "👋 Hello! I'm your real-time Cultural Intelligence Assistant. I'm here to help you navigate any destination with confidence. I have knowledge about 1000+ cities worldwide and can provide instant answers about local customs, translate phrases, suggest authentic experiences, and help you connect respectfully with local culture. What would you like to explore today?",
       timestamp: new Date(),
     },
   ]);
@@ -252,14 +252,14 @@ export default function RealTimeAssistant({
   };
 
   const quickActions = [
-    "What should I know about local customs here?",
-    "Help me with essential phrases",
-    "What's the best way to greet locals?",
-    "Tell me about cultural etiquette",
-    "Recommend authentic local experiences",
-    "What festivals are happening now?",
-    "Help me navigate like a local",
-    "What food should I try?"
+    "What are the cultural customs in Tokyo?",
+    "Help me with essential Hindi phrases",
+    "What's the best way to greet locals in India?",
+    "Tell me about cultural etiquette in Paris",
+    "Recommend authentic experiences in Bali",
+    "What festivals happen in Pushkar?",
+    "Help me navigate like a local in any city",
+    "What traditional food should I try?"
   ];
 
   const personalities = {

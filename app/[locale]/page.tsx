@@ -11,6 +11,7 @@ import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
 import UserMenu from '@/components/UserMenu';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
+import { cityDatabase, type CityData } from '@/lib/cityDatabase';
 import Link from 'next/link';
 
 export default function Home() {
@@ -63,32 +64,13 @@ export default function Home() {
     },
   ];
 
-  const sampleDestinations = [
-    { 
-      name: t('destinations.pushkar.name'), 
-      image: 'https://images.pexels.com/photos/3581368/pexels-photo-3581368.jpeg?auto=compress&cs=tinysrgb&w=400', 
-      culture: t('destinations.pushkar.culture'),
-      description: t('destinations.pushkar.description')
-    },
-    { 
-      name: t('destinations.rishikesh.name'), 
-      image: 'https://images.pexels.com/photos/3581368/pexels-photo-3581368.jpeg?auto=compress&cs=tinysrgb&w=400', 
-      culture: t('destinations.rishikesh.culture'),
-      description: t('destinations.rishikesh.description')
-    },
-    { 
-      name: t('destinations.mussoorie.name'), 
-      image: 'https://images.pexels.com/photos/3581368/pexels-photo-3581368.jpeg?auto=compress&cs=tinysrgb&w=400', 
-      culture: t('destinations.mussoorie.culture'),
-      description: t('destinations.mussoorie.description')
-    },
-    { 
-      name: 'Tokyo, Japan', 
-      image: 'https://images.pexels.com/photos/2506923/pexels-photo-2506923.jpeg?auto=compress&cs=tinysrgb&w=400', 
-      culture: 'Traditional & Modern',
-      description: 'Blend of ancient traditions and technology'
-    },
-  ];
+  // Get featured destinations from city database
+  const featuredDestinations = [
+    'pushkar-india',
+    'rishikesh-india', 
+    'mussoorie-india',
+    'tokyo-japan'
+  ].map(id => cityDatabase.find(city => city.id === id)).filter(Boolean) as CityData[];
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -175,7 +157,7 @@ export default function Home() {
             transition={{ duration: 0.8, delay: 0.4 }}
             className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto"
           >
-            {sampleDestinations.map((destination, index) => (
+            {featuredDestinations.map((destination, index) => (
               <Card key={index} className="group cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-105">
                 <CardContent className="p-4">
                   <div className="aspect-square mb-3 rounded-lg overflow-hidden">
@@ -292,10 +274,13 @@ export default function Home() {
           <div>
             <h3 className="font-semibold mb-4">Destinations</h3>
             <ul className="space-y-2 text-gray-400">
-              <li>{t('destinations.pushkar.name')}</li>
-              <li>{t('destinations.rishikesh.name')}</li>
-              <li>{t('destinations.mussoorie.name')}</li>
-              <li>More Coming Soon</li>
+              <li>Pushkar, India</li>
+              <li>Rishikesh, India</li>
+              <li>Mussoorie, India</li>
+              <li>Tokyo, Japan</li>
+              <li>Paris, France</li>
+              <li>Ubud, Indonesia</li>
+              <li>1000+ More Cities</li>
             </ul>
           </div>
           <div>

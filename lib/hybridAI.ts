@@ -1,6 +1,6 @@
 import { geminiService } from './gemini';
 import { groqService } from './groq';
-import { getChatResponse } from './mockData';
+import { cityDatabase } from './cityDatabase';
 
 export interface CulturalInsightRequest {
   location: string;
@@ -130,9 +130,9 @@ export class HybridAIService {
       } catch (geminiError) {
         console.log('❌ Both AI services failed, using mock response:', geminiError);
         
-        // Ultimate fallback to mock responses
+        // Ultimate fallback to general cultural response
         const lastMessage = messages[messages.length - 1];
-        return getChatResponse(lastMessage.content, context?.location);
+        return generateFallbackResponse(lastMessage.content, context?.location);
       }
     }
   }
@@ -216,6 +216,39 @@ export class HybridAIService {
   }
 }
 
+// Generate fallback responses based on city database
+function generateFallbackResponse(message: string, location?: string): string {
+  const lowerMessage = message.toLowerCase();
+  
+  if (lowerMessage.includes('hello') || lowerMessage.includes('hi')) {
+    const sampleCities = cityDatabase.slice(0, 3).map(city => city.name).join(', ');
+    return `Hello! I'm your Cultural Intelligence Assistant. I can help you discover amazing cultural insights about destinations like ${sampleCities} and many more from our database of 1000+ cities worldwide. What would you like to explore today?`;
+  }
+  
+  if (location) {
+    const city = cityDatabase.find(c => 
+      c.name.toLowerCase().includes(location.toLowerCase())
+    );
+    if (city) {
+      return `I'd be happy to help you learn about ${city.name}! This ${city.culture} destination in ${city.region}, ${city.country} is known for ${city.highlights.slice(0, 2).join(' and ')}. What specific cultural aspect would you like to know about?`;
+    }
+  }
+  
+  if (lowerMessage.includes('food') || lowerMessage.includes('restaurant')) {
+    return "Each destination has unique culinary experiences! I can help you discover authentic local cuisines, traditional dishes, and recommended restaurants. Which destination's food scene interests you?";
+  }
+  
+  if (lowerMessage.includes('festival') || lowerMessage.includes('event')) {
+    return "Festivals and cultural events are amazing ways to experience local culture! I can provide information about traditional celebrations, seasonal festivals, and cultural events. Which destination or type of festival interests you?";
+  }
+  
+  if (lowerMessage.includes('language') || lowerMessage.includes('phrase')) {
+    return "Learning local phrases is a great way to connect with people! I can help you with essential phrases, pronunciation guides, and cultural communication tips. Which language or destination would you like help with?";
+  }
+  
+  const availableCities = cityDatabase.slice(0, 5).map(city => city.name).join(', ');
+  return `I'd be happy to help you learn about cultural aspects of destinations worldwide! I have information about ${availableCities} and many more cities. You can ask me about local customs, festivals, food, language phrases, or recommendations for any destination.`;
+}
 // Singleton instance
 export const hybridAI = new HybridAIService();
 

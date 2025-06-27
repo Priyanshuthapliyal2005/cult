@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { router, publicProcedure } from '../trpc';
 import { prisma } from '@/lib/prisma';
 import { hybridAI } from '@/lib/hybridAI';
-import { getCulturalDataByLocation, getChatResponse, getAllDestinations } from '@/lib/mockData';
+import { cityDatabase, getCityById } from '@/lib/cityDatabase';
 import { audioRouter } from './audio';
 import { userRouter } from './user';
 import { vectorRouter } from './vector';
@@ -63,7 +63,7 @@ export const appRouter = router({
   // Get all sample destinations
   getDestinations: publicProcedure
     .query(async () => {
-      return getAllDestinations();
+      return cityDatabase;
     }),
 
   getCulturalInsights: publicProcedure
@@ -75,50 +75,12 @@ export const appRouter = router({
     }))
     .mutation(async ({ input }): Promise<CulturalInsightData> => {
       try {
-        // First try to get data from new city database
-        const { getCityById, cityDatabase } = await import('@/lib/cityDatabase');
+        // Get data from city database
         const city = cityDatabase.find(c => 
           c.name.toLowerCase().includes(input.location.toLowerCase())
         );
-        
-        // Fallback to original mock data
-        const mockData = city ? null : getCulturalDataByLocation(input.location);
-        
-        if (mockData) {
-          // Store in database if available
-          try {
-            await prisma.culturalInsight.create({
-              data: {
-                location: input.location,
-                latitude: input.latitude || mockData.latitude,
-                longitude: input.longitude || mockData.longitude,
-                category: input.category || 'general',
-                title: `Cultural Insights for ${input.location}`,
-                description: mockData.description,
-                content: {
-                  customs: mockData.customs,
-                  laws: mockData.laws,
-                  events: mockData.events,
-                  phrases: mockData.phrases,
-                  recommendations: mockData.recommendations
-                },
-                embedding: [],
-              },
-            });
-          } catch (dbError) {
-            console.log('Database not available, using mock data only');
-          }
 
-          return {
-            customs: mockData.customs,
-            laws: mockData.laws,
-            events: mockData.events,
-            phrases: mockData.phrases,
-            recommendations: mockData.recommendations
-          };
-        }
-        
-        // If we found a city in the new database, use it
+        // If we found a city in the database, use it
         if (city) {
           try {
             await prisma.culturalInsight.create({
@@ -255,7 +217,7 @@ export const appRouter = router({
         }
 
         // Fallback response
-        throw new Error('No cultural data available for this location. Try searching from our database of 1000+ cities worldwide.');
+        throw new Error(`No cultural data available for "${input.location}". Try searching from our database of 1000+ cities worldwide, including major destinations like Delhi, Mumbai, Tokyo, Paris, New York, London, and many more.`);
       } catch (error) {
         console.error('Error in getCulturalInsights:', error);
         throw new Error(error instanceof Error ? error.message : 'Failed to get cultural insights');
@@ -371,7 +333,15 @@ export const appRouter = router({
         };
       } catch (error) {
         console.error('Error in sendMessage:', error);
-        throw new Error('Failed to send message. Please try again.');
+        
+        // Provide a helpful fallback response based on the city database
+        const availableCities = cityDatabase.slice(0, 5).map(city => city.name).join(', ');
+        const fallbackResponse = `I apologize for the technical difficulty. I can help you with cultural insights about many destinations including ${availableCities} and many more. What specific cultural question can I assist you with?`;
+        
+        return {
+          conversationId: conversationId || 'temp-' + Date.now().toString(),
+          response: fallbackResponse,
+        };
       }
     }),
 
