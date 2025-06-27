@@ -79,7 +79,8 @@ export default function Home() {
     e.preventDefault();
     if (searchQuery.trim()) {
       const path = locale === 'en' ? '/explore' : `/${locale}/explore`;
-      router.push(`${path}?q=${encodeURIComponent(searchQuery)}`);
+      experience: 'Experience',
+      legalGuidance: 'Legal Guidance'
     }
   };
 
@@ -108,6 +109,9 @@ export default function Home() {
           </Link>
           <Link href={getLocalizedPath('/chat')} className="text-gray-600 hover:text-gray-900 transition-colors">
             {tNavigation('chat')}
+          </Link>
+          <Link href={getLocalizedPath('/laws')} className="text-gray-600 hover:text-gray-900 transition-colors">
+            Laws
           </Link>
           <Link href={getLocalizedPath('/admin')} className="text-gray-600 hover:text-gray-900 transition-colors">
             {tNavigation('admin')}

@@ -165,7 +165,185 @@ export const cityDatabase: CityData[] = [
     localCuisine: ['Dal Baati Churma', 'Malpua', 'Lassi', 'Kachori'],
     transportOptions: ['Bus', 'Taxi', 'Auto-rickshaw', 'Camel'],
     safetyRating: 8.5,
-    touristFriendly: 9.0
+    touristFriendly: 9.0,
+    localLaws: {
+      legal: [
+        'Alcohol is completely banned in Pushkar city limits',
+        'Non-vegetarian food is prohibited within the city',
+        'Photography inside temples requires permission',
+        'Drug possession carries severe penalties (up to 10 years imprisonment)'
+      ],
+      cultural: [
+        'Leather items (shoes, belts, bags) are not allowed in the main temple area',
+        'Smoking is culturally inappropriate and legally banned in public places',
+        'Loud music and partying are restricted, especially during religious festivals',
+        'Couples should avoid public displays of affection'
+      ],
+      guidelines: [
+        'Remove shoes before entering temples and many shops',
+        'Dress modestly - cover shoulders and knees',
+        'Do not point feet towards deities or elders',
+        'Use right hand for eating and greeting'
+      ],
+      penalties: [
+        'Alcohol possession: ₹10,000 fine or 6 months imprisonment',
+        'Public smoking: ₹200 fine',
+        'Littering: ₹500-2000 fine',
+        'Photography violations: ₹1000-5000 fine'
+      ]
+    },
+    travelLaws: {
+      immigration: {
+        visaRequirements: [
+          'Foreign nationals require valid Indian visa',
+          'Passport must be valid for 6+ months',
+          'Tourist visa allows max 180 days stay'
+        ],
+        entryRestrictions: [
+          'Certain areas require special permits',
+          'Registration with local police if staying >180 days'
+        ],
+        customsRegulations: [
+          'Declare currency over $5,000 USD',
+          'No firearms or drugs allowed',
+          'Cultural artifacts require export permits'
+        ]
+      },
+      transportation: {
+        drivingLaws: [
+          'International driving permit required',
+          'Drive on left side of road',
+          'Helmet mandatory for motorcycles',
+          'Seat belts compulsory in front seats'
+        ],
+        publicTransportRules: [
+          'Keep tickets until end of journey',
+          'Priority seating for elderly/disabled',
+          'No smoking in buses/trains'
+        ],
+        rideSharingRegulations: [
+          'Use only licensed taxi services',
+          'Negotiate fare before starting journey',
+          'Ride-sharing apps available in major cities'
+        ]
+      },
+      accommodation: {
+        hotelRegistration: [
+          'Provide passport copy at check-in',
+          'Foreign registration form (C-Form) required',
+          'Hotels must report foreign guests to police'
+        ],
+        shortTermRentals: [
+          'Verify property registration',
+          'Keep rental agreement copy',
+          'Report stay to local authorities if required'
+        ],
+        guestObligations: [
+          'Maintain room condition',
+          'Report any issues immediately',
+          'Respect check-in/check-out times'
+        ]
+      },
+      publicBehavior: {
+        noiseOrdinances: [
+          'No loud music after 10 PM',
+          'Religious quiet hours during prayer times',
+          'Festivals may have extended noise permissions'
+        ],
+        alcoholRestrictions: [
+          'Complete alcohol ban in Pushkar',
+          'No public consumption anywhere',
+          'Heavy penalties for violations'
+        ],
+        smokingBans: [
+          'No smoking in public places',
+          'Designated smoking areas only',
+          'No smoking near religious sites'
+        ],
+        publicDisplayRestrictions: [
+          'Avoid public displays of affection',
+          'Dress modestly in religious areas',
+          'Respect local cultural sensitivities'
+        ]
+      },
+      photography: {
+        restrictedAreas: [
+          'Military installations strictly forbidden',
+          'Some temple interiors restricted',
+          'Government buildings require permission'
+        ],
+        permitsRequired: [
+          'Commercial photography needs permits',
+          'Drone usage requires government approval',
+          'Film/video production needs clearance'
+        ],
+        privacyLaws: [
+          'No photographing people without consent',
+          'Respect privacy in religious ceremonies',
+          'Children photography requires guardian permission'
+        ]
+      },
+      shopping: {
+        taxRefunds: [
+          'GST refund available for tourists',
+          'Minimum purchase amount required',
+          'Keep all original receipts'
+        ],
+        customsDeclaration: [
+          'Declare expensive purchases',
+          'Antiques need export clearance',
+          'Jewelry above certain value taxable'
+        ],
+        restrictedItems: [
+          'No ivory or endangered species products',
+          'Certain stones require certificates',
+          'Archaeological items prohibited'
+        ]
+      },
+      penalties: {
+        commonViolations: [
+          {
+            violation: 'Alcohol possession in Pushkar',
+            penalty: '₹10,000 fine + 6 months imprisonment',
+            severity: 'severe'
+          },
+          {
+            violation: 'Photography in restricted areas',
+            penalty: '₹1,000-5,000 fine + equipment confiscation',
+            severity: 'moderate'
+          },
+          {
+            violation: 'Public smoking',
+            penalty: '₹200 spot fine',
+            severity: 'minor'
+          },
+          {
+            violation: 'Littering in public places',
+            penalty: '₹500-2,000 fine',
+            severity: 'minor'
+          },
+          {
+            violation: 'Noise pollution during quiet hours',
+            penalty: '₹1,000-10,000 fine',
+            severity: 'moderate'
+          }
+        ],
+        contactAuthorities: [
+          'Tourist Police: 1363',
+          'Local Police Station: 100',
+          'Tourist Helpline: +91-11-23320005',
+          'Embassy contact in case of arrest'
+        ]
+      }
+    },
+    culturalTaboos: [
+      'Eating beef or buffalo meat',
+      'Drinking alcohol publicly',
+      'Wearing revealing clothes',
+      'Shouting or arguing loudly',
+      'Touching someone\'s head',
+      'Using left hand for eating'
+    ]
   },
   {
     id: 'rishikesh-india',
