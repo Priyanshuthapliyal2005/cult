@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Scale, Shield, Users, CheckCircle, Globe, BarChart3, AlertTriangle, Book, Search, AlertCircle, FileText, Filter } from 'lucide-react';
+import { ArrowLeft, Scale, Shield, Users, CheckCircle, Globe, BarChart3, AlertTriangle, Book, Search, AlertCircle, FileText, Filter, Info } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';

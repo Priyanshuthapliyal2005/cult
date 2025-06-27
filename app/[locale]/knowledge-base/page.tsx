@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Database, Search, MapPin, BarChart3, RefreshCw, AlertCircle, CheckCircle, XCircle, ArrowLeft, Globe, Book, FileText, Zap } from 'lucide-react';
+import { Database, Search, MapPin, BarChart3, RefreshCw, AlertCircle, CheckCircle, XCircle, ArrowLeft, Globe, Book, Zap, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -20,7 +20,7 @@ export default function KnowledgeBasePage() {
   const [selectedCountry, setSelectedCountry] = useState('all');
   const [selectedBudget, setSelectedBudget] = useState('all');
   const [selectedInterests, setSelectedInterests] = useState<string[]>([]);
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<any[]>([]); 
   const [isSearching, setIsSearching] = useState(false);
   
   const t = useTranslations();
