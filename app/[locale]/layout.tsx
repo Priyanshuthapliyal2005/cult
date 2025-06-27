@@ -19,7 +19,8 @@ function LocaleLayout({
   children: React.ReactNode;
   params: { locale: string };
 }) {
-  const [messages, setMessages] = useState({});
+  const [messages, setMessages] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Validate locale
   if (!locales.includes(locale as any)) {
@@ -28,13 +29,37 @@ function LocaleLayout({
 
   useEffect(() => {
     // Load messages for the current locale
+    setIsLoading(true);
     import(`../../messages/${locale}.json`)
-      .then((module) => setMessages(module.default))
+      .then((module) => {
+        setMessages(module.default);
+        setIsLoading(false);
+      })
       .catch(() => {
         // Fallback to English if locale not found
-        import('../../messages/en.json').then((module) => setMessages(module.default));
+        import('../../messages/en.json').then((module) => {
+          setMessages(module.default);
+          setIsLoading(false);
+        });
       });
   }, [locale]);
+
+  // Don't render until messages are loaded
+  if (isLoading || !messages) {
+    return (
+      <html lang={locale}>
+        <head>
+          <title>CulturalCompass - AI-Powered Travel Assistant</title>
+          <meta name="description" content="Your intelligent travel companion with deep cultural insights and personalized recommendations" />
+        </head>
+        <body className={inter.className}>
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="text-lg">Loading...</div>
+          </div>
+        </body>
+      </html>
+    );
+  }
 
   return (
     <html lang={locale}>

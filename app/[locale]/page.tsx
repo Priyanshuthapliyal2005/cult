@@ -17,7 +17,10 @@ import Link from 'next/link';
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isLoaded, setIsLoaded] = useState(false);
-  const t = useTranslations();
+  const tFeatures = useTranslations('features');
+  const tNavigation = useTranslations('navigation');
+  const tHomepage = useTranslations('homepage');
+  const tCommon = useTranslations('common');
   const locale = useLocale();
   const router = useRouter();
 
@@ -28,38 +31,38 @@ export default function Home() {
   const features = [
     {
       icon: Globe,
-      title: t('features.culturalIntelligence.title'),
-      description: t('features.culturalIntelligence.description'),
+      title: tFeatures('culturalIntelligence.title'),
+      description: tFeatures('culturalIntelligence.description'),
       color: 'from-blue-500 to-cyan-500',
     },
     {
       icon: MessageCircle,
-      title: t('features.aiAssistant.title'),
-      description: t('features.aiAssistant.description'),
+      title: tFeatures('aiAssistant.title'),
+      description: tFeatures('aiAssistant.description'),
       color: 'from-purple-500 to-pink-500',
     },
     {
       icon: MapPin,
-      title: t('features.interactiveMapping.title'),
-      description: t('features.interactiveMapping.description'),
+      title: tFeatures('interactiveMapping.title'),
+      description: tFeatures('interactiveMapping.description'),
       color: 'from-green-500 to-emerald-500',
     },
     {
       icon: Compass,
-      title: t('features.localNavigation.title'),
-      description: t('features.localNavigation.description'),
+      title: tFeatures('localNavigation.title'),
+      description: tFeatures('localNavigation.description'),
       color: 'from-orange-500 to-red-500',
     },
     {
       icon: Users,
-      title: t('features.communityInsights.title'),
-      description: t('features.communityInsights.description'),
+      title: tFeatures('communityInsights.title'),
+      description: tFeatures('communityInsights.description'),
       color: 'from-indigo-500 to-purple-500',
     },
     {
       icon: Zap,
-      title: t('features.realTimeUpdates.title'),
-      description: t('features.realTimeUpdates.description'),
+      title: tFeatures('realTimeUpdates.title'),
+      description: tFeatures('realTimeUpdates.description'),
       color: 'from-yellow-500 to-orange-500',
     },
   ];
@@ -98,16 +101,16 @@ export default function Home() {
         </div>
         <nav className="flex items-center space-x-6">
           <Link href={getLocalizedPath('/explore')} className="text-gray-600 hover:text-gray-900 transition-colors">
-            {t('navigation.explore')}
+            {tNavigation('explore')}
           </Link>
           <Link href={getLocalizedPath('/map')} className="text-gray-600 hover:text-gray-900 transition-colors">
-            {t('navigation.maps')}
+            {tNavigation('maps')}
           </Link>
           <Link href={getLocalizedPath('/chat')} className="text-gray-600 hover:text-gray-900 transition-colors">
-            {t('navigation.chat')}
+            {tNavigation('chat')}
           </Link>
           <Link href={getLocalizedPath('/admin')} className="text-gray-600 hover:text-gray-900 transition-colors">
-            {t('navigation.admin')}
+            {tNavigation('admin')}
           </Link>
           <LanguageSwitcher variant="compact" />
           <UserMenu />
@@ -123,10 +126,10 @@ export default function Home() {
             transition={{ duration: 0.8 }}
           >
             <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-              {t('homepage.title')}
+              {tHomepage('title')}
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
-              {t('homepage.subtitle')}
+              {tHomepage('subtitle')}
             </p>
           </motion.div>
 
@@ -139,14 +142,14 @@ export default function Home() {
             <form onSubmit={handleSearch} className="flex gap-2">
               <Input
                 type="text"
-                placeholder={t('homepage.searchPlaceholder')}
+                placeholder={tHomepage('searchPlaceholder')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="flex-1 h-12 text-lg border-2 border-gray-200 focus:border-blue-500"
               />
               <Button type="submit" size="lg" className="h-12 px-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
                 <Compass className="w-5 h-5 mr-2" />
-                {t('common.explore')}
+                {tCommon('explore')}
               </Button>
             </form>
           </motion.div>
@@ -183,9 +186,9 @@ export default function Home() {
       <section className="py-20 px-4 bg-white">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">{t('homepage.featuresTitle')}</h2>
+            <h2 className="text-4xl font-bold mb-4">{tHomepage('featuresTitle')}</h2>
             <p className="text-gray-600 text-lg">
-              {t('homepage.featuresSubtitle')}
+              {tHomepage('featuresSubtitle')}
             </p>
           </div>
 
@@ -225,22 +228,22 @@ export default function Home() {
             transition={{ duration: 0.8, delay: 0.6 }}
           >
             <h2 className="text-4xl font-bold text-white mb-6">
-              {t('homepage.ctaTitle')}
+              {tHomepage('ctaTitle')}
             </h2>
             <p className="text-xl text-blue-100 mb-8">
-              {t('homepage.ctaSubtitle')}
+              {tHomepage('ctaSubtitle')}
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button size="lg" variant="secondary" className="h-12 px-8 text-lg" asChild>
                 <Link href={getLocalizedPath('/chat')}>
                   <MessageCircle className="w-5 h-5 mr-2" />
-                  {t('homepage.startChat')}
+                  {tHomepage('startChat')}
                 </Link>
               </Button>
               <Button size="lg" variant="outline" className="h-12 px-8 text-lg border-white text-white hover:bg-white hover:text-blue-600" asChild>
                 <Link href={getLocalizedPath('/explore')}>
                   <MapPin className="w-5 h-5 mr-2" />
-                  {t('homepage.exploreDestinations')}
+                  {tHomepage('exploreDestinations')}
                 </Link>
               </Button>
             </div>

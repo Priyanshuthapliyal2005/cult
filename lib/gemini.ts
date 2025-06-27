@@ -18,8 +18,10 @@ export interface CulturalInsightResponse {
   };
   laws: {
     title: string;
-    important_regulations: string[];
-    legal_considerations: string[];
+    legal: string[]; // Legal requirements and restrictions
+    cultural: string[]; // Cultural rules and expectations 
+    guidelines: string[]; // Local guidelines and etiquette
+    penalties: string[]; // Potential penalties for violations
   };
   events: {
     title: string;
@@ -87,8 +89,10 @@ export class GeminiService {
       },
       "laws": {
         "title": "Important Laws & Regulations",
-        "important_regulations": ["Key laws tourists should be aware of"],
-        "legal_considerations": ["Legal considerations and requirements for visitors"]
+        "legal": ["Legal requirements and restrictions tourists must follow"],
+        "cultural": ["Cultural rules and expectations in the community"],
+        "guidelines": ["Local guidelines and etiquette for respectful behavior"],
+        "penalties": ["Potential consequences for violating local laws or customs"]
       },
       "events": {
         "title": "Cultural Events & Festivals",
@@ -175,6 +179,33 @@ export class GeminiService {
     } catch (error) {
       console.error('Error generating location description:', error);
       throw new Error('Failed to generate location description');
+    }
+  }
+
+  async generateChatResponse(
+    messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>,
+    context?: any
+  ): Promise<string> {
+    if (!this.model) {
+      throw new Error('Gemini API not configured');
+    }
+
+    try {
+      // Convert messages to a single prompt (Gemini doesn't support conversation history in the same way)
+      const conversationPrompt = messages.map(msg => `${msg.role}: ${msg.content}`).join('\n');
+      
+      const result = await this.model.generateContent(conversationPrompt);
+      const response = await result.response;
+      const text = response.text();
+      
+      if (!text) {
+        throw new Error('Empty response from Gemini');
+      }
+      
+      return text;
+    } catch (error) {
+      console.error('Error generating chat response with Gemini:', error);
+      throw new Error('Failed to generate chat response');
     }
   }
 }

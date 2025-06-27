@@ -22,6 +22,32 @@ export interface CityData {
   transportOptions: string[];
   safetyRating: number;
   touristFriendly: number;
+  // Enhanced focus on local laws and rules
+  localLaws?: {
+    legal: string[];
+    cultural: string[];
+    guidelines: string[];
+    penalties: string[];
+  };
+  culturalTaboos?: string[];
+  dressCode?: {
+    general: string;
+    religious: string;
+    business: string;
+  };
+  tippingEtiquette?: string;
+  businessHours?: {
+    general: string;
+    restaurants: string;
+    shops: string;
+    government: string;
+  };
+  emergencyNumbers?: {
+    police: string;
+    medical: string;
+    fire: string;
+    tourist: string;
+  };
 }
 
 export interface TripPlan {

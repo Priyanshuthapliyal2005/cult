@@ -20,8 +20,10 @@ export interface CulturalInsightResponse {
   };
   laws: {
     title: string;
-    important_regulations: string[];
-    legal_considerations: string[];
+    legal: string[]; // Legal requirements and restrictions
+    cultural: string[]; // Cultural rules and expectations 
+    guidelines: string[]; // Local guidelines and etiquette
+    penalties: string[]; // Potential penalties for violations
   };
   events: {
     title: string;

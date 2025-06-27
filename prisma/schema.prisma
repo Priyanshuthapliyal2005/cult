@@ -117,29 +117,29 @@ model CulturalInsight {
   description String
   content     Json     // Structured content based on category
   language    String   @default("en")
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   // Vector embedding for semantic search (1536 dimensions for Google embeddings)
   embedding Unsupported("vector(1536)")?
 
   @@map("cultural_insights")
-  @@index([embedding], map: "cultural_insights_embedding_idx", type: Ivfflat)
+  @@index([embedding], map: "cultural_insights_embedding_idx")
 }
 
 model VectorContent {
-  id        String   @id @default(cuid())
-  contentId String   // Reference to original content
-  contentType String // "destination", "phrase", "custom", "recommendation", etc.
-  title     String
-  content   String   @db.Text
-  metadata  Json     // Store additional context like location, category, etc.
-  embedding Unsupported("vector(1536)")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String   @id @default(cuid())
+  contentId   String   @map("content_id") // Reference to original content
+  contentType String   @map("content_type") // "destination", "phrase", "custom", "recommendation", etc.
+  title       String
+  content     String   @db.Text
+  metadata    Json     // Store additional context like location, category, etc.
+  embedding   Unsupported("vector(1536)")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("vector_content")
-  @@index([embedding], map: "vector_content_embedding_idx", type: Ivfflat)
+  @@index([embedding], map: "vector_content_embedding_idx")
   @@index([contentType])
   @@index([contentId])
 }
@@ -154,7 +154,7 @@ model ConversationContext {
 
   @@map("conversation_context")
   @@index([conversationId])
-  @@index([embedding], map: "conversation_context_embedding_idx", type: Ivfflat)
+  @@index([embedding], map: "conversation_context_embedding_idx")
 }
 model Favorite {
   id        String   @id @default(cuid())

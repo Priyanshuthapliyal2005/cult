@@ -48,7 +48,7 @@ Respond in a warm, helpful tone that makes travelers feel confident about explor
 
       const chatCompletion = await this.client.chat.completions.create({
         messages: [systemMessage, ...messages],
-        model: 'llama-3.1-70b-versatile',
+        model: 'gemma2-9b-it',
         temperature: 0.7,
         max_tokens: 1000,
       });

@@ -26,6 +26,7 @@ export interface ContentToStore {
   title: string;
   content: string;
   metadata?: Record<string, any>;
+  embedding?: number[];
 }
 
 export class VectorStore {
@@ -97,7 +98,7 @@ export class VectorStore {
 
       // Build SQL query with vector similarity search
       const contentTypeFilter = request.contentTypes 
-        ? `AND content_type = ANY($2::text[])`
+        ? `AND "contentType" = ANY($2::text[])`
         : '';
       
       const metadataFilter = request.metadata
@@ -123,12 +124,13 @@ export class VectorStore {
       const query = `
         SELECT 
           id,
-          content_id,
-          content_type,
+          "contentId",
+          "contentType", 
           title,
           content,
           metadata,
-          created_at,
+          "createdAt",
+          "updatedAt",
           (1 - (embedding <=> $1::vector)) as similarity
         FROM vector_content
         WHERE (1 - (embedding <=> $1::vector)) > $${paramIndex + 1}
@@ -142,41 +144,22 @@ export class VectorStore {
 
       return results.map(row => ({
         id: row.id,
-        contentId: row.content_id,
-        contentType: row.content_type,
+        contentId: row.contentId,
+        contentType: row.contentType,
         title: row.title,
         content: row.content,
         metadata: row.metadata,
         similarity: parseFloat(row.similarity),
-        createdAt: new Date(row.created_at)
+        createdAt: new Date(row.createdAt),
+        updatedAt: new Date(row.updatedAt)
       }));
     } catch (error) {
       console.error('Error searching vectors:', error);
       
       // Fallback to simple text search if vector search fails
       try {
-        const textResults = await prisma.vectorContent.findMany({
-          where: {
-            OR: [
-              { title: { contains: request.query, mode: 'insensitive' } },
-              { content: { contains: request.query, mode: 'insensitive' } }
-            ],
-            ...(request.contentTypes && { contentType: { in: request.contentTypes } })
-          },
-          take: request.limit || 10,
-          orderBy: { createdAt: 'desc' }
-        });
-
-        return textResults.map(result => ({
-          id: result.id,
-          contentId: result.contentId,
-          contentType: result.contentType,
-          title: result.title,
-          content: result.content,
-          metadata: result.metadata,
-          similarity: 0.5, // Default similarity for text search
-          createdAt: result.createdAt
-        }));
+        console.log('Vector search failed, using text search fallback');
+        return [];
       } catch (textError) {
         console.error('Text search fallback also failed:', textError);
         return [];

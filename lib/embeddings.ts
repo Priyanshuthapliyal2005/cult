@@ -29,7 +29,9 @@ export class EmbeddingService {
 
     try {
       const result = await this.model.embedContent({
-        content: request.text,
+        content: {
+          parts: [{ text: request.text }]
+        },
         taskType: request.taskType || 'RETRIEVAL_DOCUMENT',
         title: request.title
       });

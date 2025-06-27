@@ -29,8 +29,8 @@ export default function ExplorePage() {
   const [error, setError] = useState<string | null>(null);
   const [cities, setCities] = useState<CityData[]>([]);
   const [filters, setFilters] = useState({
-    country: '',
-    costLevel: '' as '' | 'budget' | 'moderate' | 'expensive',
+    country: 'all',
+    costLevel: 'all' as 'all' | 'budget' | 'moderate' | 'expensive',
     minRating: 0
   });
 
@@ -46,7 +46,7 @@ export default function ExplorePage() {
   // Load initial data and handle search params
   useEffect(() => {
     loadCities();
-    const query = searchParams.get('q');
+    const query = searchParams?.get('q');
     if (query) {
       setSearchQuery(query);
       handleSearch(query);
@@ -55,7 +55,9 @@ export default function ExplorePage() {
 
   const loadCities = () => {
     const filteredCities = getCitiesByFilter({
-      ...filters,
+      country: filters.country === 'all' ? undefined : filters.country,
+      costLevel: filters.costLevel === 'all' ? undefined : filters.costLevel,
+      minRating: filters.minRating || undefined,
       searchTerm: searchQuery || undefined
     });
     setCities(filteredCities);
@@ -70,7 +72,9 @@ export default function ExplorePage() {
     if (!query.trim()) return;
     
     const filteredCities = getCitiesByFilter({
-      ...filters,
+      country: filters.country === 'all' ? undefined : filters.country,
+      costLevel: filters.costLevel === 'all' ? undefined : filters.costLevel,
+      minRating: filters.minRating || undefined,
       searchTerm: query
     });
     setCities(filteredCities);
@@ -180,7 +184,7 @@ export default function ExplorePage() {
                     <SelectValue placeholder="Country" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Countries</SelectItem>
+                    <SelectItem value="all">All Countries</SelectItem>
                     <SelectItem value="India">India</SelectItem>
                     <SelectItem value="Japan">Japan</SelectItem>
                     <SelectItem value="France">France</SelectItem>
@@ -193,7 +197,7 @@ export default function ExplorePage() {
                     <SelectValue placeholder="Budget" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">All Budgets</SelectItem>
+                    <SelectItem value="all">All Budgets</SelectItem>
                     <SelectItem value="budget">Budget-friendly</SelectItem>
                     <SelectItem value="moderate">Moderate</SelectItem>
                     <SelectItem value="expensive">Luxury</SelectItem>
@@ -435,6 +439,168 @@ export default function ExplorePage() {
                     </Card>
                   </TabsContent>
 
+                  {/* Essential Phrases Tab */}
+                  <TabsContent value="phrases" className="space-y-4">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Essential Phrases</CardTitle>
+                        <CardDescription>Learn key phrases for respectful communication</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        {isLoading ? (
+                          <div className="space-y-3">
+                            <div className="h-4 bg-gray-200 rounded animate-pulse" />
+                            <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4" />
+                          </div>
+                        ) : culturalInsights?.phrases?.essential_phrases ? (
+                          <div className="space-y-4">
+                            {culturalInsights.phrases.essential_phrases.map((phrase: any, index: number) => (
+                              <div key={index} className="border rounded-lg p-4">
+                                <div className="flex items-start justify-between mb-2">
+                                  <div>
+                                    <h4 className="font-semibold">{phrase.english}</h4>
+                                    <p className="text-lg text-blue-600">{phrase.local}</p>
+                                  </div>
+                                  <AudioPlayer text={phrase.local} language={selectedCity.language[0]} />
+                                </div>
+                                <p className="text-sm text-gray-600">{phrase.pronunciation}</p>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            <p className="text-gray-500">Loading essential phrases...</p>
+                            {/* Fallback phrases for immediate display */}
+                            <div className="space-y-3">
+                              <div className="border rounded-lg p-4">
+                                <div className="flex items-start justify-between mb-2">
+                                  <div>
+                                    <h4 className="font-semibold">Hello</h4>
+                                    <p className="text-lg text-blue-600">Basic greeting</p>
+                                  </div>
+                                </div>
+                                <p className="text-sm text-gray-600">Used for formal and informal greetings</p>
+                              </div>
+                              <div className="border rounded-lg p-4">
+                                <div className="flex items-start justify-between mb-2">
+                                  <div>
+                                    <h4 className="font-semibold">Thank you</h4>
+                                    <p className="text-lg text-blue-600">Expression of gratitude</p>
+                                  </div>
+                                </div>
+                                <p className="text-sm text-gray-600">Essential for polite interactions</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+
+                  {/* Local Laws & Rules Tab */}
+                  <TabsContent value="recommendations" className="space-y-4">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Local Laws & Cultural Rules</CardTitle>
+                        <CardDescription>Important legal and cultural guidelines you must know</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        {isLoading ? (
+                          <div className="space-y-3">
+                            <div className="h-4 bg-gray-200 rounded animate-pulse" />
+                            <div className="h-4 bg-gray-200 rounded animate-pulse w-3/4" />
+                          </div>
+                        ) : culturalInsights?.laws ? (
+                          <div className="space-y-6">
+                            {/* Legal Requirements */}
+                            <div>
+                              <h4 className="font-semibold text-red-700 mb-3 flex items-center">
+                                <AlertCircle className="w-4 h-4 mr-2" />
+                                Legal Requirements & Restrictions
+                              </h4>
+                              <div className="space-y-2">
+                                {culturalInsights.laws.legal.map((law: string, index: number) => (
+                                  <div key={index} className="bg-red-50 border border-red-200 rounded p-3">
+                                    <p className="text-sm text-red-800">{law}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Cultural Rules */}
+                            <div>
+                              <h4 className="font-semibold text-orange-700 mb-3">Cultural Rules & Expectations</h4>
+                              <div className="space-y-2">
+                                {culturalInsights.laws.cultural.map((rule: string, index: number) => (
+                                  <div key={index} className="bg-orange-50 border border-orange-200 rounded p-3">
+                                    <p className="text-sm text-orange-800">{rule}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Local Guidelines */}
+                            <div>
+                              <h4 className="font-semibold text-blue-700 mb-3">Local Guidelines & Etiquette</h4>
+                              <div className="space-y-2">
+                                {culturalInsights.laws.guidelines.map((guideline: string, index: number) => (
+                                  <div key={index} className="bg-blue-50 border border-blue-200 rounded p-3">
+                                    <p className="text-sm text-blue-800">{guideline}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+
+                            {/* Penalties for Violations */}
+                            {culturalInsights.laws.penalties && culturalInsights.laws.penalties.length > 0 && (
+                              <div>
+                                <h4 className="font-semibold text-purple-700 mb-3 flex items-center">
+                                  <AlertCircle className="w-4 h-4 mr-2" />
+                                  Potential Penalties & Consequences
+                                </h4>
+                                <div className="space-y-2">
+                                  {culturalInsights.laws.penalties.map((penalty: string, index: number) => (
+                                    <div key={index} className="bg-purple-50 border border-purple-200 rounded p-3">
+                                      <p className="text-sm text-purple-800">{penalty}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            <p className="text-gray-500">Loading local laws and cultural rules...</p>
+                            {/* Fallback content with focus on local rules */}
+                            <div className="space-y-4">
+                              <div>
+                                <h4 className="font-semibold text-red-700 mb-3 flex items-center">
+                                  <AlertCircle className="w-4 h-4 mr-2" />
+                                  Important Legal Considerations
+                                </h4>
+                                <div className="bg-red-50 border border-red-200 rounded p-3">
+                                  <p className="text-sm text-red-800">Check local visa requirements and entry restrictions</p>
+                                </div>
+                                <div className="bg-red-50 border border-red-200 rounded p-3 mt-2">
+                                  <p className="text-sm text-red-800">Respect photography restrictions at religious and government sites</p>
+                                </div>
+                              </div>
+                              <div>
+                                <h4 className="font-semibold text-orange-700 mb-3">Cultural Sensitivities</h4>
+                                <div className="bg-orange-50 border border-orange-200 rounded p-3">
+                                  <p className="text-sm text-orange-800">Dress modestly when visiting religious sites</p>
+                                </div>
+                                <div className="bg-orange-50 border border-orange-200 rounded p-3 mt-2">
+                                  <p className="text-sm text-orange-800">Remove shoes before entering homes and certain establishments</p>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </TabsContent>
+
                   {/* Enhanced Map Tab */}
                   <TabsContent value="map" className="space-y-4">
                     <DynamicCityMap
@@ -447,8 +613,6 @@ export default function ExplorePage() {
                       filters={{ country: selectedCity.country }}
                     />
                   </TabsContent>
-
-                  {/* Other tabs... */}
                 </Tabs>
               </>
             )}
