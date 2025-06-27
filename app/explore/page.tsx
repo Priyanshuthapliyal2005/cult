@@ -440,8 +440,18 @@ export default function ExplorePage() {
                   <TabsContent value="map" className="space-y-4">
                     <Card>
                       <CardHeader>
-                        <CardTitle>Interactive Map</CardTitle>
-                        <CardDescription>Explore cultural points of interest</CardDescription>
+                        <CardTitle className="flex items-center justify-between">
+                          Interactive Map
+                          <Button variant="outline" size="sm" asChild>
+                            <Link href="/map">
+                              <MapPin className="w-4 h-4 mr-1" />
+                              Full Map View
+                            </Link>
+                          </Button>
+                        </CardTitle>
+                        <CardDescription>
+                          Basic map view - visit our full maps page for advanced features
+                        </CardDescription>
                       </CardHeader>
                       <CardContent>
                         <MapComponent

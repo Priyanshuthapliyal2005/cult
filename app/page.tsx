@@ -107,6 +107,9 @@ export default function Home() {
           <Link href="/explore" className="text-gray-600 hover:text-gray-900 transition-colors">
             Explore
           </Link>
+          <Link href="/map" className="text-gray-600 hover:text-gray-900 transition-colors">
+            Maps
+          </Link>
           <Link href="/chat" className="text-gray-600 hover:text-gray-900 transition-colors">
             Chat
           </Link>
@@ -253,7 +256,13 @@ export default function Home() {
       <footer className="py-12 px-4 bg-gray-900 text-white">
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
           <div>
-            <div className="flex items-center space-x-2 mb-4">
+                    Explore
+                  </Link>
+                </Button>
+                <Button size="lg" variant="outline" className="h-12 px-8 text-lg border-white text-white hover:bg-white hover:text-blue-600" asChild>
+                  <Link href="/map">
+                    <MapPin className="w-5 h-5 mr-2" />
+                    Interactive Maps
               <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
                 <Globe className="w-5 h-5 text-white" />
               </div>
@@ -268,7 +277,7 @@ export default function Home() {
             <ul className="space-y-2 text-gray-400">
               <li>Cultural Insights</li>
               <li>AI Chat Assistant</li>
-              <li>Interactive Maps</li>
+              <li>Advanced Mapping</li>
               <li>Local Recommendations</li>
             </ul>
           </div>
