@@ -56,19 +56,19 @@ export default function LanguageSwitcher({ variant = 'default', className = '' }
 
   if (variant === 'compact') {
     return (
-      <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-        <DropdownMenuTrigger asChild>
+      <DropdownMenu open={isOpen} onOpenChange={setIsOpen} modal={false}>
+        <DropdownMenuTrigger asChild className="transition-all duration-300">
           <Button
             variant="ghost"
             size="sm"
-            className={`h-8 w-8 p-0 ${className}`}
+            className={`h-8 w-8 p-0 rounded-lg hover:bg-gray-100 ${className}`}
             disabled={isPending}
           >
             <span className="sr-only">{t('language')}</span>
             <span className="text-lg">{currentLang.flag}</span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-48">
+        <DropdownMenuContent align="end" className="w-48 border-0 shadow-lg rounded-lg overflow-hidden mt-1">
           {locales.map((lang) => {
             const langInfo = languageNames[lang];
             return (
@@ -91,12 +91,12 @@ export default function LanguageSwitcher({ variant = 'default', className = '' }
   }
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
-      <DropdownMenuTrigger asChild>
+    <DropdownMenu open={isOpen} onOpenChange={setIsOpen} modal={false}>
+      <DropdownMenuTrigger asChild className="transition-all duration-300">
         <Button
           variant="outline"
           size="sm"
-          className={`h-9 px-3 ${className}`}
+          className={`h-9 px-3 rounded-lg hover:border-blueberry ${className}`}
           disabled={isPending}
         >
           <Globe className="w-4 h-4 mr-2" />
@@ -105,7 +105,7 @@ export default function LanguageSwitcher({ variant = 'default', className = '' }
           <ChevronDown className="w-3 h-3 ml-2 opacity-50" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
+      <DropdownMenuContent align="end" className="w-56 border-0 shadow-lg rounded-lg overflow-hidden">
         {locales.map((lang) => {
           const langInfo = languageNames[lang];
           return (
@@ -121,7 +121,7 @@ export default function LanguageSwitcher({ variant = 'default', className = '' }
                   <div className="text-xs text-gray-500">{langInfo.name}</div>
                 </div>
               </div>
-              {locale === lang && <Check className="w-4 h-4 text-blue-600" />}
+              {locale === lang && <Check className="w-4 h-4 text-blueberry" />}
             </DropdownMenuItem>
           );
         })}

@@ -18,30 +18,44 @@
 
 @layer base {
   :root {
+    /* Clay-inspired color palette */
     --background: 0 0% 100%;
-    --foreground: 0 0% 3.9%;
+    --foreground: 240 10% 3.9%;
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 3.9%;
+    --card-foreground: 240 10% 3.9%;
     --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 3.9%;
-    --primary: 0 0% 9%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 240 5.9% 10%;
     --primary-foreground: 0 0% 98%;
-    --secondary: 0 0% 96.1%;
-    --secondary-foreground: 0 0% 9%;
-    --muted: 0 0% 96.1%;
-    --muted-foreground: 0 0% 45.1%;
-    --accent: 0 0% 96.1%;
-    --accent-foreground: 0 0% 9%;
+    
+    /* Clay's blue gradient accent */
+    --secondary: 221 83% 53%;
+    --secondary-foreground: 210 40% 98%;
+    
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 0 0% 89.8%;
-    --input: 0 0% 89.8%;
-    --ring: 0 0% 3.9%;
-    --chart-1: 12 76% 61%;
-    --chart-2: 173 58% 39%;
-    --chart-3: 197 37% 24%;
-    --chart-4: 43 74% 66%;
-    --chart-5: 27 87% 67%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 5.9% 10%;
+    
+    /* Clay themed chart colors */
+    --chart-1: 221 83% 53%;
+    --chart-2: 142 71% 45%;
+    --chart-3: 276 91% 38%;
+    --chart-4: 25 95% 53%;
+    --chart-5: 187 92% 41%;
+    
+    /* Clay theme additional colors */
+    --dragonfruit: 353 74% 35%;
+    --blueberry: 221 83% 53%;
+    --matcha: 142 71% 45%;
+    --tangarine: 25 95% 53%;
+    --ube: 276 91% 38%;
+    --oat: 39 100% 97%;
     --radius: 0.5rem;
   }
   .dark {
@@ -64,11 +78,11 @@
     --border: 0 0% 14.9%;
     --input: 0 0% 14.9%;
     --ring: 0 0% 83.1%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
+    --chart-1: 217 91% 60%;
+    --chart-2: 142 77% 73%;
+    --chart-3: 262 83% 58%;
+    --chart-4: 27 96% 61%;
+    --chart-5: 187 92% 69%;
   }
 }
 
@@ -77,6 +91,68 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground tracking-tight;
   }
+}
+
+/* Custom Clay-inspired styling */
+.clay-gradient-text {
+  @apply bg-gradient-to-r from-blueberry via-ube to-secondary bg-clip-text text-transparent;
+}
+
+.clay-card {
+  @apply rounded-xl border border-border shadow-sm hover:shadow-md transition-all duration-300;
+}
+
+.clay-button {
+  @apply rounded-full px-6 py-2.5 font-medium transition-all duration-300;
+}
+
+.clay-primary-button {
+  @apply clay-button bg-gradient-to-r from-blueberry to-ube text-white hover:shadow-md;
+}
+
+.clay-secondary-button {
+  @apply clay-button border border-border hover:border-blueberry;
+}
+
+.clay-hero {
+  @apply bg-gradient-to-br from-slate-50 to-blue-50;
+}
+
+.clay-section {
+  @apply py-16 md:py-24;
+}
+
+.clay-container {
+  @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+}
+
+.clay-testimonial {
+  @apply bg-gradient-to-r from-blueberry/10 to-ube/10 rounded-xl p-6;
+}
+
+.clay-feature-card {
+  @apply p-6 rounded-xl hover:shadow-lg transition-all duration-300;
+}
+
+/* Animations inspired by Clay */
+@keyframes clay-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.clay-animate-fade-in-up {
+  animation: clay-fade-in-up 0.6s ease-out forwards;
+}
+
+/* Responsive utilities */
+.clay-responsive-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
 }

@@ -127,11 +127,11 @@ export default function Home() {
       <section className="py-20 px-4">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 20 }}
             transition={{ duration: 0.8 }}
           >
-            <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+            <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blueberry via-ube to-secondary bg-clip-text text-transparent">
               {tHomepage('title')}
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
@@ -142,7 +142,7 @@ export default function Home() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: isLoaded ? 1 : 0, y: isLoaded ? 0 : 20 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
+            transition={{ duration: 0.8, delay: 0.3 }}
             className="max-w-md mx-auto mb-12"
           >
             <form onSubmit={handleSearch} className="flex gap-2">
@@ -153,7 +153,7 @@ export default function Home() {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="flex-1 h-12 text-lg border-2 border-gray-200 focus:border-blue-500"
               />
-              <Button type="submit" size="lg" className="h-12 px-6 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
+              <Button type="submit" size="lg" className="h-12 px-6 bg-gradient-to-r from-blueberry to-ube hover:shadow-md transition-all duration-300">
                 <Compass className="w-5 h-5 mr-2" />
                 {tCommon('explore')}
               </Button>
@@ -185,6 +185,186 @@ export default function Home() {
               </Card>
             ))}
           </motion.div>
+        </div>
+      </section>
+      {/* Featured Destinations Section */}
+      <section className="clay-section bg-white">
+        <div className="clay-container">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Explore Popular Destinations</h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              Discover rich cultural experiences at these trending destinations with comprehensive cultural insights
+            </p>
+          </div>
+          
+          <div className="clay-responsive-grid">
+            {featuredDestinations.map((destination, index) => (
+              <motion.div
+                key={destination.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
+                <div className="clay-card overflow-hidden group">
+                  <div className="aspect-video overflow-hidden">
+                    <img
+                      src={destination.image}
+                      alt={destination.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                    />
+                  </div>
+                  <div className="p-6">
+                    <h3 className="text-xl font-bold mb-2">{destination.name}, {destination.country}</h3>
+                    <p className="text-gray-600 mb-4">{destination.description}</p>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge variant="secondary" className="bg-blueberry/10 text-blueberry border-none">
+                        {destination.culture}
+                      </Badge>
+                      <Badge variant="outline" className={
+                        destination.costLevel === 'budget' ? 'text-green-700 border-green-200' :
+                        destination.costLevel === 'moderate' ? 'text-yellow-700 border-yellow-200' :
+                        'text-red-700 border-red-200'
+                      }>
+                        {destination.costLevel}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+          
+          <div className="text-center mt-10">
+            <Button asChild className="clay-primary-button">
+              <Link href={getLocalizedPath('/explore')}>
+                Explore All Destinations
+              </Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className="clay-section bg-gradient-to-br from-slate-50 to-blue-50">
+        <div className="clay-container">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">How CulturalCompass Works</h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              Our AI-powered platform helps you navigate cultural nuances with ease and confidence
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-r from-blueberry to-ube rounded-2xl flex items-center justify-center text-white mx-auto mb-5">
+                <Globe className="w-8 h-8" />
+              </div>
+              <h3 className="text-xl font-bold mb-3">Choose Your Destination</h3>
+              <p className="text-gray-600">
+                Select any city from our database of 1000+ global destinations or ask our AI about any location.
+              </p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-r from-tangarine to-dragonfruit rounded-2xl flex items-center justify-center text-white mx-auto mb-5">
+                <MessageCircle className="w-8 h-8" />
+              </div>
+              <h3 className="text-xl font-bold mb-3">Get Cultural Insights</h3>
+              <p className="text-gray-600">
+                Receive personalized recommendations, essential phrases, local customs, and legal guidance.
+              </p>
+            </div>
+            
+            <div className="text-center">
+              <div className="w-16 h-16 bg-gradient-to-r from-matcha to-blueberry rounded-2xl flex items-center justify-center text-white mx-auto mb-5">
+                <Compass className="w-8 h-8" />
+              </div>
+              <h3 className="text-xl font-bold mb-3">Travel Confidently</h3>
+              <p className="text-gray-600">
+                Navigate local culture with ease, avoid cultural pitfalls, and connect authentically with your destination.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+      
+      {/* Testimonials Section */}
+      <section className="clay-section bg-white">
+        <div className="clay-container">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">What Travelers Say</h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              Real experiences from travelers who used CulturalCompass on their journeys
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="clay-testimonial">
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden mr-4">
+                  <img src="https://images.pexels.com/photos/733872/pexels-photo-733872.jpeg" alt="User" className="w-full h-full object-cover" />
+                </div>
+                <div>
+                  <h4 className="font-bold">Sarah Thompson</h4>
+                  <p className="text-sm text-gray-600">Tokyo, Japan</p>
+                </div>
+              </div>
+              <p className="text-gray-700 mb-4">
+                "CulturalCompass was a lifesaver in Japan. The local phrases helped me connect with shop owners, and the customs guide kept me from making embarrassing mistakes!"
+              </p>
+              <div className="flex text-yellow-400">
+                <Star className="w-5 h-5 fill-current" />
+                <Star className="w-5 h-5 fill-current" />
+                <Star className="w-5 h-5 fill-current" />
+                <Star className="w-5 h-5 fill-current" />
+                <Star className="w-5 h-5 fill-current" />
+              </div>
+            </div>
+            
+            <div className="clay-testimonial">
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden mr-4">
+                  <img src="https://images.pexels.com/photos/614810/pexels-photo-614810.jpeg" alt="User" className="w-full h-full object-cover" />
+                </div>
+                <div>
+                  <h4 className="font-bold">Michael Rodriguez</h4>
+                  <p className="text-sm text-gray-600">Pushkar, India</p>
+                </div>
+              </div>
+              <p className="text-gray-700 mb-4">
+                "The cultural insights about Pushkar's spiritual significance transformed my visit. I participated in rituals with confidence and had meaningful conversations with locals."
+              </p>
+              <div className="flex text-yellow-400">
+                <Star className="w-5 h-5 fill-current" />
+                <Star className="w-5 h-5 fill-current" />
+                <Star className="w-5 h-5 fill-current" />
+                <Star className="w-5 h-5 fill-current" />
+                <Star className="w-5 h-5 fill-current" />
+              </div>
+            </div>
+            
+            <div className="clay-testimonial">
+              <div className="flex items-center mb-4">
+                <div className="w-12 h-12 rounded-full bg-gray-200 overflow-hidden mr-4">
+                  <img src="https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg" alt="User" className="w-full h-full object-cover" />
+                </div>
+                <div>
+                  <h4 className="font-bold">Emma Wilson</h4>
+                  <p className="text-sm text-gray-600">Paris, France</p>
+                </div>
+              </div>
+              <p className="text-gray-700 mb-4">
+                "The legal advice about photography restrictions in Paris museums saved me from a potentially awkward situation. I appreciated having all this knowledge at my fingertips."
+              </p>
+              <div className="flex text-yellow-400">
+                <Star className="w-5 h-5 fill-current" />
+                <Star className="w-5 h-5 fill-current" />
+                <Star className="w-5 h-5 fill-current" />
+                <Star className="w-5 h-5 fill-current" />
+                <Star className="w-5 h-5 fill-current" />
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -226,7 +406,7 @@ export default function Home() {
       </section>
 
       {/* Demo CTA Section */}
-      <section className="py-20 px-4 bg-gradient-to-r from-blue-600 to-purple-600">
+      <section className="py-20 px-4 bg-gradient-to-r from-blueberry to-ube">
         <div className="max-w-4xl mx-auto text-center">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -277,7 +457,7 @@ export default function Home() {
               <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
                 <Globe className="w-5 h-5 text-white" />
               </div>
-              <span className="text-xl font-bold">CulturalCompass</span>
+              <span className="text-xl font-bold">CulturalCompass AI</span>
             </div>
             <p className="text-gray-400">
               Your AI-powered cultural intelligence platform for authentic travel experiences.
@@ -316,7 +496,18 @@ export default function Home() {
             </ul>
           </div>
         </div>
-        <div className="max-w-6xl mx-auto mt-8 pt-8 border-t border-gray-800 text-center text-gray-400">
+            <p>&copy; 2024 CulturalCompass AI. Experience authentic cultural intelligence.</p>
+            <div className="mt-4 flex justify-center space-x-4">
+              <Link href={getLocalizedPath('/privacy')}>
+                <span className="text-gray-400 hover:text-white transition-colors">Privacy Policy</span>
+              </Link>
+              <Link href={getLocalizedPath('/terms')}>
+                <span className="text-gray-400 hover:text-white transition-colors">Terms of Service</span>
+              </Link>
+              <Link href={getLocalizedPath('/contact')}>
+                <span className="text-gray-400 hover:text-white transition-colors">Contact Us</span>
+              </Link>
+            </div>
           <p>&copy; 2024 CulturalCompass Demo. Experience authentic cultural intelligence.</p>
         </div>
       </footer>
