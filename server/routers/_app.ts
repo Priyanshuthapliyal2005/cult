@@ -5,6 +5,8 @@ import { hybridAI } from '@/lib/hybridAI';
 import { getCulturalDataByLocation, getChatResponse, getAllDestinations } from '@/lib/mockData';
 import { audioRouter } from './audio';
 import { userRouter } from './user';
+import { vectorRouter } from './vector';
+import { ragService } from '@/lib/ragService';
 
 // Define explicit types to prevent deep type instantiation
 type CulturalInsightData = {
@@ -26,6 +28,9 @@ export const appRouter = router({
   
   // Include user router
   ...userRouter,
+
+  // Include vector router
+  vector: vectorRouter,
 
   // Test endpoint to verify database connection
   testConnection: publicProcedure
@@ -223,12 +228,30 @@ export const appRouter = router({
           console.log('Database not available for conversation history');
         }
 
-        // Use hybrid AI service with automatic fallbacks
-        response = await hybridAI.generateChatResponse(chatMessages, {
-          location: input.location,
-          latitude: input.latitude,
-          longitude: input.longitude,
-        });
+        // Use RAG-enhanced response if available, otherwise fallback to hybrid AI
+        try {
+          const ragResponse = await ragService.generateRAGResponse({
+            query: input.message,
+            conversationId,
+            location: input.location,
+            includeHistory: true,
+            maxContext: 3
+          });
+          
+          response = ragResponse.response;
+          
+          // Add source information if confidence is high
+          if (ragResponse.confidence > 0.7 && ragResponse.sources.length > 0) {
+            response += `\n\n*Based on ${ragResponse.sources.length} relevant sources from our cultural database.*`;
+          }
+        } catch (ragError) {
+          console.log('RAG service failed, using hybrid AI fallback:', ragError);
+          response = await hybridAI.generateChatResponse(chatMessages, {
+            location: input.location,
+            latitude: input.latitude,
+            longitude: input.longitude,
+          });
+        }
 
         // Try to save AI response
         try {

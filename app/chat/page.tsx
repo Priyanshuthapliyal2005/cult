@@ -39,6 +39,7 @@ export default function ChatPage() {
   const sendMessage = trpc.sendMessage.useMutation();
   const testConnection = trpc.testConnection.useQuery();
   const testAI = trpc.testAI.useQuery();
+  const testVector = trpc.vector.testVectorServices.useQuery();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -152,11 +153,21 @@ export default function ChatPage() {
           >
             AI: {testAI.isLoading ? 'Testing...' : testAI.data?.overall?.status || 'Demo'}
           </Badge>
+          <Badge 
+            variant={testVector.data?.overall?.status === 'success' ? "default" : "secondary"} 
+            className={
+              testVector.data?.overall?.status === 'success' ? "bg-green-50 text-green-700 border-green-200" : 
+              testVector.data?.overall?.status === 'partial' ? "bg-yellow-50 text-yellow-700 border-yellow-200" :
+              "bg-gray-50 text-gray-700 border-gray-200"
+            }
+          >
+            RAG: {testVector.isLoading ? 'Testing...' : testVector.data?.overall?.status || 'Demo'}
+          </Badge>
         </div>
       </header>
 
       {/* Connection Status */}
-      {(testConnection.data?.status === 'error' || testAI.data?.overall?.status !== 'success') && (
+      {(testConnection.data?.status === 'error' || testAI.data?.overall?.status !== 'success' || testVector.data?.overall?.status === 'demo') && (
         <Alert className="m-4 border-blue-200 bg-blue-50">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
@@ -172,6 +183,12 @@ export default function ChatPage() {
               )}
               {testAI.data?.overall?.status === 'error' && (
                 <div>AI: All services unavailable - using demo responses</div>
+              )}
+              {testVector.data?.overall?.status === 'demo' && (
+                <div>RAG: Vector search disabled - responses won't include knowledge base context</div>
+              )}
+              {testVector.data?.overall?.status === 'partial' && (
+                <div>RAG: Partial functionality - some features may be limited</div>
               )}
             </div>
           </AlertDescription>
