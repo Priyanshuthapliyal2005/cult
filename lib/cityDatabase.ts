@@ -48,6 +48,48 @@ export interface CityData {
     fire: string;
     tourist: string;
   };
+  // Enhanced Legal and Regulation System
+  travelLaws?: {
+    immigration: {
+      visaRequirements: string[];
+      entryRestrictions: string[];
+      customsRegulations: string[];
+    };
+    transportation: {
+      drivingLaws: string[];
+      publicTransportRules: string[];
+      rideSharingRegulations: string[];
+    };
+    accommodation: {
+      hotelRegistration: string[];
+      shortTermRentals: string[];
+      guestObligations: string[];
+    };
+    publicBehavior: {
+      noiseOrdinances: string[];
+      alcoholRestrictions: string[];
+      smokingBans: string[];
+      publicDisplayRestrictions: string[];
+    };
+    photography: {
+      restrictedAreas: string[];
+      permitsRequired: string[];
+      privacyLaws: string[];
+    };
+    shopping: {
+      taxRefunds: string[];
+      customsDeclaration: string[];
+      restrictedItems: string[];
+    };
+    penalties: {
+      commonViolations: Array<{
+        violation: string;
+        penalty: string;
+        severity: 'minor' | 'moderate' | 'severe';
+      }>;
+      contactAuthorities: string[];
+    };
+  };
 }
 
 export interface TripPlan {
