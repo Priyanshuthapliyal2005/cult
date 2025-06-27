@@ -38,7 +38,7 @@ export default function ChatPage() {
 
   const sendMessage = trpc.sendMessage.useMutation();
   const testConnection = trpc.testConnection.useQuery();
-  const testOpenAI = trpc.testOpenAI.useQuery();
+  const testAI = trpc.testAI.useQuery();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -143,16 +143,20 @@ export default function ChatPage() {
             DB: {testConnection.isLoading ? 'Testing...' : testConnection.data?.status || 'Demo'}
           </Badge>
           <Badge 
-            variant={testOpenAI.data?.status === 'success' ? "default" : "secondary"} 
-            className={testOpenAI.data?.status === 'success' ? "bg-green-50 text-green-700 border-green-200" : "bg-blue-50 text-blue-700 border-blue-200"}
+            variant={testAI.data?.overall?.status === 'success' ? "default" : "secondary"} 
+            className={
+              testAI.data?.overall?.status === 'success' ? "bg-green-50 text-green-700 border-green-200" : 
+              testAI.data?.overall?.status === 'partial' ? "bg-yellow-50 text-yellow-700 border-yellow-200" :
+              "bg-blue-50 text-blue-700 border-blue-200"
+            }
           >
-            AI: {testOpenAI.isLoading ? 'Testing...' : testOpenAI.data?.status || 'Demo'}
+            AI: {testAI.isLoading ? 'Testing...' : testAI.data?.overall?.status || 'Demo'}
           </Badge>
         </div>
       </header>
 
       {/* Connection Status */}
-      {(testConnection.data?.status === 'error' || testOpenAI.data?.status === 'demo') && (
+      {(testConnection.data?.status === 'error' || testAI.data?.overall?.status !== 'success') && (
         <Alert className="m-4 border-blue-200 bg-blue-50">
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
@@ -160,8 +164,14 @@ export default function ChatPage() {
               {testConnection.data?.status === 'error' && (
                 <div>Database: Using demo mode - conversations won't be saved</div>
               )}
-              {testOpenAI.data?.status === 'demo' && (
-                <div>AI: Using demo responses - add OpenAI API key for full functionality</div>
+              {testAI.data?.overall?.status === 'demo' && (
+                <div>AI: Using demo responses - add Gemini/Groq API keys for full functionality</div>
+              )}
+              {testAI.data?.overall?.status === 'partial' && (
+                <div>AI: Running with limited services - some features may use fallbacks</div>
+              )}
+              {testAI.data?.overall?.status === 'error' && (
+                <div>AI: All services unavailable - using demo responses</div>
               )}
             </div>
           </AlertDescription>

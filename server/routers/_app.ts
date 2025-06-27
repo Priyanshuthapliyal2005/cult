@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { router, publicProcedure } from '../trpc';
 import { prisma } from '@/lib/prisma';
-import { getCulturalInsights, generateChatResponse } from '@/lib/openai';
+import { hybridAI } from '@/lib/hybridAI';
 import { getCulturalDataByLocation, getChatResponse, getAllDestinations } from '@/lib/mockData';
 import { audioRouter } from './audio';
 import { userRouter } from './user';
@@ -40,30 +40,17 @@ export const appRouter = router({
     }),
 
   // Test OpenAI API connection
-  testOpenAI: publicProcedure
+  testAI: publicProcedure
     .query(async () => {
       try {
-        if (!process.env.OPENAI_API_KEY) {
-          return { 
-            status: 'demo', 
-            message: 'OpenAI API not configured - using demo responses',
-            response: 'Demo mode active'
-          };
-        }
-        const response = await generateChatResponse([
-          { role: 'user', content: 'Hello, this is a test message.' }
-        ]);
-        return { 
-          status: 'success', 
-          message: 'OpenAI API connected successfully',
-          response: response.substring(0, 100) + '...'
-        };
+        const testResults = await hybridAI.testServices();
+        return testResults;
       } catch (error) {
-        console.error('OpenAI API error:', error);
+        console.error('AI services test error:', error);
         return { 
-          status: 'demo', 
-          message: 'OpenAI API connection failed - using demo responses',
-          error: error instanceof Error ? error.message : 'Unknown error'
+          gemini: { status: 'error', message: 'Test failed' },
+          groq: { status: 'error', message: 'Test failed' },
+          overall: { status: 'error', message: 'AI services test failed' }
         };
       }
     }),
@@ -137,8 +124,8 @@ export const appRouter = router({
         }
 
         // Try OpenAI if available
-        if (process.env.OPENAI_API_KEY) {
-          const insights = await getCulturalInsights(input);
+        try {
+          const insights = await hybridAI.getCulturalInsights(input);
           
           // Try to store in database
           try {
@@ -159,6 +146,8 @@ export const appRouter = router({
           }
 
           return insights;
+        } catch (aiError) {
+          console.log('AI services failed, using mock fallback:', aiError);
         }
 
         // Fallback response
@@ -216,39 +205,30 @@ export const appRouter = router({
 
         let response: string;
 
-        // Try OpenAI first, then fallback to mock responses
-        if (process.env.OPENAI_API_KEY) {
-          try {
-            // Get conversation history if database is available
-            let chatMessages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }> = [
-              { role: 'user', content: input.message }
-            ];
-            try {
-              const messages = await prisma.message.findMany({
-                where: { conversationId },
-                orderBy: { createdAt: 'asc' },
-                take: 10,
-              });
-              chatMessages = messages.map(msg => ({
-                role: msg.role as 'user' | 'assistant' | 'system',
-                content: msg.content,
-              }));
-            } catch (dbError) {
-              console.log('Database not available for conversation history');
-            }
-
-            response = await generateChatResponse(chatMessages, {
-              location: input.location,
-              latitude: input.latitude,
-              longitude: input.longitude,
-            });
-          } catch (aiError) {
-            console.log('OpenAI not available, using mock response');
-            response = getChatResponse(input.message, input.location);
-          }
-        } else {
-          response = getChatResponse(input.message, input.location);
+        // Get conversation history if database is available
+        let chatMessages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }> = [
+          { role: 'user', content: input.message }
+        ];
+        try {
+          const messages = await prisma.message.findMany({
+            where: { conversationId },
+            orderBy: { createdAt: 'asc' },
+            take: 10,
+          });
+          chatMessages = messages.map(msg => ({
+            role: msg.role as 'user' | 'assistant' | 'system',
+            content: msg.content,
+          }));
+        } catch (dbError) {
+          console.log('Database not available for conversation history');
         }
+
+        // Use hybrid AI service with automatic fallbacks
+        response = await hybridAI.generateChatResponse(chatMessages, {
+          location: input.location,
+          latitude: input.latitude,
+          longitude: input.longitude,
+        });
 
         // Try to save AI response
         try {
