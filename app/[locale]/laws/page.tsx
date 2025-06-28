@@ -29,6 +29,8 @@ export default function TravelLawsPage() {
   const t = useTranslations();
   const locale = useLocale();
   const router = useRouter();
+  // Disable landing-page-only intro sections on /laws
+  const showIntro = false;
   
   const askLegalQuestion = trpc.sendMessage.useMutation();
   const knowledgeBaseSearch = trpc.knowledgeBase.search.useMutation();
@@ -42,19 +44,60 @@ export default function TravelLawsPage() {
   const totalCountries = new Set(cityDatabase.map(city => city.country)).size;
   const citiesWithLaws = cityDatabase.filter(city => city.travelLaws).length;
 
-  const handleCitySearch = (e: React.FormEvent) => {
+  const handleCitySearch = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!searchQuery.trim()) return;
-    
+
+    const query = searchQuery.trim();
+    if (!query) return;
+
     const foundCity = cityDatabase.find(city =>
-      city.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      city.country.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      city.region.toLowerCase().includes(searchQuery.toLowerCase())
+      city.name.toLowerCase().includes(query.toLowerCase()) ||
+      city.country.toLowerCase().includes(query.toLowerCase()) ||
+      city.region.toLowerCase().includes(query.toLowerCase())
     );
-    
+
     if (foundCity) {
       setSelectedCity(foundCity);
+      return;
+    }
+
+    // Fallback: fetch summary from Wikipedia REST API
+    try {
+      const resp = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`);
+      if (!resp.ok) return;
+      const data = await resp.json();
+      if (data && !data.type?.includes('disambiguation')) {
+        const wikiCity: CityData = {
+          id: data.title.toLowerCase().replace(/\s+/g, '-'),
+          name: data.title,
+          country: data.description || '',
+          region: '',
+          latitude: 0,
+          longitude: 0,
+          population: 0,
+          timezone: '',
+          language: [],
+          currency: '',
+          culture: '',
+          image: '',
+          description: data.extract || '',
+          wikipediaUrl: data.content_urls?.desktop?.page ?? '',
+          highlights: [],
+          rating: 0,
+          costLevel: 'budget',
+          bestTimeToVisit: [],
+          averageStay: 0,
+          mainAttractions: [],
+          localCuisine: [],
+          transportOptions: [],
+          safetyRating: 0,
+          touristFriendly: 0,
+          travelLaws: undefined,
+        };
+        setSelectedCity(wikiCity);
+      }
+    } catch (err) {
+      console.error('Wikipedia fetch error', err);
     }
   };
 
@@ -215,117 +258,123 @@ export default function TravelLawsPage() {
           transition={{ duration: 0.5 }}
           className="space-y-8"
         >
-          {/* Hero Section */}
-          <div className="text-center mb-12">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-            >
-              <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
-                Understand Travel Laws
-                <br />
-                in Plain English
-              </h1>
-              <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
-                Get clear, AI-powered explanations of local government laws and policies. 
-                No legal jargon, just straightforward answers for confident travel.
-              </p>
-            </motion.div>
-
-            {/* Statistics */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto mb-12"
-            >
-              <Card className="text-center">
-                <CardContent className="p-6">
-                  <div className="text-3xl font-bold text-blue-600 mb-2">10,000+</div>
-                  <div className="text-sm text-gray-500">Questions Answered</div>
-                </CardContent>
-              </Card>
-              <Card className="text-center">
-                <CardContent className="p-6">
-                  <div className="text-3xl font-bold text-green-600 mb-2">{totalCities}+</div>
-                  <div className="text-sm text-gray-500">Cities Covered</div>
-                </CardContent>
-              </Card>
-              <Card className="text-center">
-                <CardContent className="p-6">
-                  <div className="text-3xl font-bold text-purple-600 mb-2">98%</div>
-                  <div className="text-sm text-gray-500">User Satisfaction</div>
-                </CardContent>
-              </Card>
-              <Card className="text-center">
-                <CardContent className="p-6">
-                  <div className="text-3xl font-bold text-orange-600 mb-2">24/7</div>
-                  <div className="text-sm text-gray-500">Available</div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          </div>
-
-          {/* Features Section */}
-          <div className="mb-12">
-            <h2 className="text-3xl font-bold text-center mb-8">How TravelLaw.AI Helps</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {features.map((feature, index) => (
+          {showIntro && (
+            <>
+              {/* Hero Section */}
+              <div className="text-center mb-12">
                 <motion.div
-                  key={index}
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
+                  transition={{ duration: 0.8 }}
                 >
-                  <Card className="h-full group hover:shadow-xl transition-all duration-300 hover:scale-105">
-                    <CardHeader>
-                      <div className={`w-12 h-12 rounded-lg bg-gradient-to-r ${feature.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
-                        <feature.icon className="w-6 h-6 text-white" />
-                      </div>
-                      <CardTitle className="text-xl">{feature.title}</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <CardDescription className="text-gray-600">
-                        {feature.description}
-                      </CardDescription>
+                  <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-blue-600 via-purple-600 to-pink-600 bg-clip-text text-transparent">
+                    Understand Travel Laws
+                    <br />
+                    in Plain English
+                  </h1>
+                  <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
+                    Get clear, AI-powered explanations of local government laws and policies. 
+                    No legal jargon, just straightforward answers for confident travel.
+                  </p>
+                </motion.div>
+
+                {/* Statistics */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.8, delay: 0.2 }}
+                  className="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto mb-12"
+                >
+                  <Card className="text-center">
+                    <CardContent className="p-6">
+                      <div className="text-3xl font-bold text-blue-600 mb-2">10,000+</div>
+                      <div className="text-sm text-gray-500">Questions Answered</div>
+                    </CardContent>
+                  </Card>
+                  <Card className="text-center">
+                    <CardContent className="p-6">
+                      <div className="text-3xl font-bold text-green-600 mb-2">{totalCities}+</div>
+                      <div className="text-sm text-gray-500">Cities Covered</div>
+                    </CardContent>
+                  </Card>
+                  <Card className="text-center">
+                    <CardContent className="p-6">
+                      <div className="text-3xl font-bold text-purple-600 mb-2">98%</div>
+                      <div className="text-sm text-gray-500">User Satisfaction</div>
+                    </CardContent>
+                  </Card>
+                  <Card className="text-center">
+                    <CardContent className="p-6">
+                      <div className="text-3xl font-bold text-orange-600 mb-2">24/7</div>
+                      <div className="text-sm text-gray-500">Available</div>
                     </CardContent>
                   </Card>
                 </motion.div>
-              ))}
-            </div>
-          </div>
+              </div>
 
-          {/* Mission Statement */}
-          <Card className="mb-12">
-            <CardHeader>
-              <CardTitle className="text-2xl text-center">Our Mission</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-center text-gray-600 max-w-3xl mx-auto">
-                We aim to bridge the gap between complex legal language and everyday understanding, 
-                making local government policies accessible to all travelers through the power of AI technology.
-              </p>
-              
-              <div className="grid md:grid-cols-3 gap-6 mt-8">
-                <div className="text-center">
-                  <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-4" />
-                  <h3 className="font-semibold mb-2">Accurate & Reliable</h3>
-                  <p className="text-sm text-gray-600">Information sourced from official government databases</p>
-                </div>
-                <div className="text-center">
-                  <Users className="w-12 h-12 text-blue-600 mx-auto mb-4" />
-                  <h3 className="font-semibold mb-2">Accessible to All</h3>
-                  <p className="text-sm text-gray-600">Complex legal language made simple for everyone</p>
-                </div>
-                <div className="text-center">
-                  <BarChart3 className="w-12 h-12 text-purple-600 mx-auto mb-4" />
-                  <h3 className="font-semibold mb-2">Instant Answers</h3>
-                  <p className="text-sm text-gray-600">Get immediate responses to your legal questions</p>
+              {/* Features Section */}
+              <div className="mb-12">
+                <h2 className="text-3xl font-bold text-center mb-8">How TravelLaw.AI Helps</h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                  {features.map((feature, index) => (
+                    <motion.div
+                      key={index}
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.6, delay: index * 0.1 }}
+                    >
+                      <Card className="h-full group hover:shadow-xl transition-all duration-300 hover:scale-105">
+                        <CardHeader>
+                          <div className={`w-12 h-12 rounded-lg bg-gradient-to-r ${feature.color} flex items-center justify-center mb-4 group-hover:scale-110 transition-transform duration-300`}>
+                            <feature.icon className="w-6 h-6 text-white" />
+                          </div>
+                          <CardTitle className="text-xl">{feature.title}</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <CardDescription className="text-gray-600">
+                            {feature.description}
+                          </CardDescription>
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                  ))}
                 </div>
               </div>
-            </CardContent>
-          </Card>
+
+              {/* Mission Statement */}
+              <Card className="mb-12">
+                <CardHeader>
+                  <CardTitle className="text-2xl text-center">Our Mission</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-center text-gray-600 max-w-3xl mx-auto">
+                    We aim to bridge the gap between complex legal language and everyday understanding, 
+                    making local government policies accessible to all travelers through the power of AI technology.
+                  </p>
+                  
+                  <div className="grid md:grid-cols-3 gap-6 mt-8">
+                    <div className="text-center">
+                      <CheckCircle className="w-12 h-12 text-green-600 mx-auto mb-4" />
+                      <h3 className="font-semibold mb-2">Accurate & Reliable</h3>
+                      <p className="text-sm text-gray-600">Information sourced from official government databases</p>
+                    </div>
+                    <div className="text-center">
+                      <Users className="w-12 h-12 text-blue-600 mx-auto mb-4" />
+                      <h3 className="font-semibold mb-2">Accessible to All</h3>
+                      <p className="text-sm text-gray-600">Complex legal language made simple for everyone</p>
+                    </div>
+                    <div className="text-center">
+                      <BarChart3 className="w-12 h-12 text-purple-600 mx-auto mb-4" />
+                      <h3 className="font-semibold mb-2">Instant Answers</h3>
+                      <p className="text-sm text-gray-600">Get immediate responses to your legal questions</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* End landing intro sections */}
+            </>
+          )}
 
           {/* Main Assistant Component */}
           <div className="space-y-6">
@@ -722,18 +771,18 @@ export default function TravelLawsPage() {
                           <div className="space-y-2">
                             <div className="flex justify-between items-center p-2 bg-red-50 rounded">
                               <span className="font-medium">Police Emergency</span>
-                              <Badge variant="destructive">{selectedCity.emergencyNumbers.police}</Badge>
+                              <Badge variant="destructive">{selectedCity?.emergencyNumbers?.police ?? 'N/A'}</Badge>
                             </div>
                             <div className="flex justify-between items-center p-2 bg-blue-50 rounded">
                               <span className="font-medium">Medical Emergency</span>
                               <Badge variant="secondary" className="bg-blue-100 text-blue-800 hover:bg-blue-100">
-                                {selectedCity.emergencyNumbers.medical}
+                                {selectedCity?.emergencyNumbers?.medical ?? 'N/A'}
                               </Badge>
                             </div>
                             <div className="flex justify-between items-center p-2 bg-orange-50 rounded">
                               <span className="font-medium">Tourist Helpline</span>
                               <Badge variant="outline" className="border-orange-300 text-orange-700">
-                                {selectedCity.emergencyNumbers.tourist}
+                                {selectedCity?.emergencyNumbers?.tourist ?? 'N/A'}
                               </Badge>
                             </div>
                           </div>
@@ -742,7 +791,7 @@ export default function TravelLawsPage() {
                         <div>
                           <h3 className="font-semibold text-blue-700 mb-3">Legal Assistance</h3>
                           <div className="space-y-2">
-                            {selectedCity.travelLaws.penalties.contactAuthorities.map((authority, index) => (
+                            {selectedCity?.travelLaws?.penalties?.contactAuthorities?.map((authority, index) => (
                               <div key={index} className="p-2 bg-blue-50 rounded">
                                 <p className="text-sm text-blue-800">{authority}</p>
                               </div>

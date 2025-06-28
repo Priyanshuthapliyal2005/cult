@@ -12,6 +12,7 @@ export interface CityData {
   culture: string;
   image: string;
   description: string;
+  wikipediaUrl?: string;
   highlights: string[];
   rating: number;
   costLevel: 'budget' | 'moderate' | 'expensive';
