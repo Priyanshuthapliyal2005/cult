@@ -6,6 +6,13 @@
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
   --background-end-rgb: 255, 255, 255;
+  
+  /* Clay-inspired color palette */
+  --sage-green: 227, 229, 221;
+  --terracotta: 200, 85, 61;
+  --deep-indigo: 40, 40, 62;
+  --soft-cream: 250, 248, 240;
+  --dusty-blue: 100, 130, 160;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -71,7 +78,7 @@
     --secondary-foreground: 0 0% 98%;
     --muted: 0 0% 14.9%;
     --muted-foreground: 0 0% 63.9%;
-    --accent: 0 0% 14.9%;
+    --accent: 217 91% 60%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
@@ -155,4 +162,164 @@
 /* Responsive utilities */
 .clay-responsive-grid {
   @apply grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6;
+}
+
+/* Clay-inspired animations */
+@keyframes float {
+  0% { transform: translateY(0px) translateX(0px); }
+  50% { transform: translateY(-10px) translateX(5px); }
+  100% { transform: translateY(0px) translateX(0px); }
+}
+
+@keyframes pulse-soft {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.02); }
+}
+
+@keyframes shift-gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Clay-inspired utility classes */
+.clay-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.clay-float-slow {
+  animation: float 8s ease-in-out infinite;
+}
+
+.clay-float-fast {
+  animation: float 4s ease-in-out infinite;
+}
+
+.clay-pulse {
+  animation: pulse-soft 4s ease-in-out infinite;
+}
+
+.clay-gradient-text {
+  background: linear-gradient(135deg, 
+    rgb(var(--deep-indigo)) 0%,
+    rgb(var(--dusty-blue)) 50%,
+    rgb(var(--terracotta)) 100%
+  );
+  background-size: 200% 200%;
+  animation: shift-gradient 8s ease infinite;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-fill-color: transparent;
+}
+
+.clay-gradient-bg {
+  background: linear-gradient(135deg,
+    rgba(var(--sage-green), 0.3) 0%,
+    rgba(var(--soft-cream), 0.5) 50%,
+    rgba(var(--dusty-blue), 0.3) 100%
+  );
+  background-size: 200% 200%;
+  animation: shift-gradient 15s ease infinite;
+}
+
+.clay-card {
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.clay-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.clay-frosted-nav {
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.clay-section {
+  position: relative;
+  padding: 6rem 0;
+  overflow: hidden;
+}
+
+.clay-shape {
+  position: absolute;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(var(--sage-green), 0.3), rgba(var(--dusty-blue), 0.2));
+  filter: blur(60px);
+  z-index: -1;
+}
+
+.clay-shape-1 {
+  top: -100px;
+  left: -100px;
+  width: 300px;
+  height: 300px;
+}
+
+.clay-shape-2 {
+  bottom: -50px;
+  right: -50px;
+  width: 250px;
+  height: 250px;
+  background: linear-gradient(135deg, rgba(var(--terracotta), 0.2), rgba(var(--deep-indigo), 0.3));
+}
+
+.clay-btn {
+  border-radius: 12px;
+  transition: all 0.3s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.clay-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(rgba(255, 255, 255, 0.2), transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.clay-btn:hover::after {
+  opacity: 1;
+}
+
+.clay-hero-pattern {
+  background-color: #f5f8fc;
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='rgba(40, 40, 62, 0.05)' fill-rule='evenodd'/%3E%3C/svg%3E");
+}
+
+/* Parallax scrolling effect */
+.clay-parallax {
+  transform-style: preserve-3d;
+  transition: transform 0.1s linear;
+}
+
+.clay-parallax-item {
+  transform: translateZ(var(--depth)) scale(calc(1 + var(--depth) * -1));
+  --depth: 0px;
+}
+
+.clay-parallax-depth-1 {
+  --depth: 20px;
+}
+
+.clay-parallax-depth-2 {
+  --depth: 40px;
+}
+
+.clay-parallax-depth-3 {
+  --depth: 60px;
 }
