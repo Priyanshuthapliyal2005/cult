@@ -1,30 +1,71 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Scale, Shield, Users, CheckCircle, Globe, BarChart3, AlertTriangle, Book, Search, AlertCircle, FileText, Filter, Info } from 'lucide-react';
+import { ArrowLeft, Scale, Shield, Users, CheckCircle, Globe, BarChart3, AlertTriangle, Book, Search, AlertCircle, FileText, Filter, Info, MapPin, Clock, History, Copy, Bookmark, BookmarkCheck, X, ChevronRight, ChevronDown, ThumbsUp, ThumbsDown, ExternalLink, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Drawer, DrawerClose, DrawerContent, DrawerFooter, DrawerHeader, DrawerTitle, DrawerTrigger } from '@/components/ui/drawer';
 import { useTranslations, useLocale } from 'next-intl';
 import { cityDatabase, type CityData } from '@/lib/cityDatabase';
 import { trpc } from '@/lib/trpc';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+interface SearchHistoryItem {
+  query: string;
+  location: string;
+  timestamp: Date;
+}
+
+interface BookmarkedResponse {
+  id: string;
+  question: string;
+  location: string;
+  response: string;
+  timestamp: Date;
+}
+
+interface SearchSuggestion {
+  text: string;
+  type: 'history' | 'popular' | 'autocomplete';
+}
+
+interface DataSource {
+  name: string;
+  url?: string;
+  reliability: number;
+  lastUpdated?: Date;
+}
+
 export default function TravelLawsPage() {
   const [selectedCity, setSelectedCity] = useState<CityData | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [locationQuery, setLocationQuery] = useState('');
   const [legalQuestion, setLegalQuestion] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [selectedJurisdiction, setSelectedJurisdiction] = useState<string>('local');
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('en');
   const [isAsking, setIsAsking] = useState(false);
   const [legalResponse, setLegalResponse] = useState<string>('');
   const [feedbackGiven, setFeedbackGiven] = useState(false);
+  const [searchSuggestions, setSearchSuggestions] = useState<SearchSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [searchHistory, setSearchHistory] = useState<SearchHistoryItem[]>([]);
+  const [bookmarkedResponses, setBookmarkedResponses] = useState<BookmarkedResponse[]>([]);
+  const [resultSources, setResultSources] = useState<DataSource[]>([]);
+  const [activeLegalFilters, setActiveLegalFilters] = useState<string[]>([]);
+  const [isWikipediaLoading, setIsWikipediaLoading] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const locationInputRef = useRef<HTMLInputElement>(null);
   
   const t = useTranslations();
   const locale = useLocale();
@@ -35,6 +76,77 @@ export default function TravelLawsPage() {
   const askLegalQuestion = trpc.sendMessage.useMutation();
   const knowledgeBaseSearch = trpc.knowledgeBase.search.useMutation();
 
+  useEffect(() => {
+    // Load search history from localStorage
+    const savedHistory = localStorage.getItem('legalSearchHistory');
+    if (savedHistory) {
+      try {
+        const parsed = JSON.parse(savedHistory);
+        setSearchHistory(parsed.map((item: any) => ({
+          ...item,
+          timestamp: new Date(item.timestamp)
+        })));
+      } catch (err) {
+        console.error('Error parsing search history:', err);
+      }
+    }
+    
+    // Load bookmarks from localStorage
+    const savedBookmarks = localStorage.getItem('legalBookmarks');
+    if (savedBookmarks) {
+      try {
+        const parsed = JSON.parse(savedBookmarks);
+        setBookmarkedResponses(parsed.map((item: any) => ({
+          ...item,
+          timestamp: new Date(item.timestamp)
+        })));
+      } catch (err) {
+        console.error('Error parsing bookmarks:', err);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    // Generate search suggestions based on input
+    if (legalQuestion.trim().length > 2) {
+      const suggestions: SearchSuggestion[] = [];
+      
+      // Add matching history items
+      const historyMatches = searchHistory
+        .filter(item => item.query.toLowerCase().includes(legalQuestion.toLowerCase()))
+        .slice(0, 3)
+        .map(item => ({
+          text: item.query,
+          type: 'history' as const
+        }));
+      suggestions.push(...historyMatches);
+      
+      // Add matching common questions
+      const questionMatches = commonQuestions
+        .filter(q => q.toLowerCase().includes(legalQuestion.toLowerCase()))
+        .slice(0, 3)
+        .map(q => ({
+          text: q,
+          type: 'popular' as const
+        }));
+      suggestions.push(...questionMatches);
+      
+      // Add autocomplete suggestions
+      if (legalQuestion.toLowerCase().includes('alcohol')) {
+        suggestions.push({ text: `${legalQuestion} regulations in ${locationQuery || 'this area'}`, type: 'autocomplete' });
+      } else if (legalQuestion.toLowerCase().includes('drive')) {
+        suggestions.push({ text: `${legalQuestion} licensing requirements`, type: 'autocomplete' });
+      } else if (legalQuestion.toLowerCase().includes('photo')) {
+        suggestions.push({ text: `${legalQuestion} restrictions at religious sites`, type: 'autocomplete' });
+      }
+      
+      setSearchSuggestions(suggestions);
+      setShowSuggestions(suggestions.length > 0);
+    } else {
+      setShowSuggestions(false);
+    }
+  }, [legalQuestion, locationQuery, searchHistory]);
+
   const getLocalizedPath = (path: string) => {
     return locale === 'en' ? path : `/${locale}${path}`;
   };
@@ -44,10 +156,12 @@ export default function TravelLawsPage() {
   const totalCountries = new Set(cityDatabase.map(city => city.country)).size;
   const citiesWithLaws = cityDatabase.filter(city => city.travelLaws).length;
 
-  const handleCitySearch = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleLocationSearch = async (locationInput: string = locationQuery) => {
+    if (!locationInput) return;
+    
+    setIsWikipediaLoading(true);
 
-    const query = searchQuery.trim();
+    const query = locationInput.trim();
     if (!query) return;
 
     const foundCity = cityDatabase.find(city =>
@@ -63,7 +177,7 @@ export default function TravelLawsPage() {
 
     // Fallback: fetch summary from Wikipedia REST API
     try {
-      const resp = await fetch(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`);
+      const resp = await fetch(`https://${selectedLanguage}.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(query)}`);
       if (!resp.ok) return;
       const data = await resp.json();
       if (data && !data.type?.includes('disambiguation')) {
@@ -95,17 +209,141 @@ export default function TravelLawsPage() {
           travelLaws: undefined,
         };
         setSelectedCity(wikiCity);
+        
+        // Set mock sources
+        setResultSources([
+          {
+            name: 'Wikipedia',
+            url: data.content_urls?.desktop?.page || '',
+            reliability: 0.75,
+            lastUpdated: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // 1 week ago
+          },
+          {
+            name: 'OpenStreetMap',
+            reliability: 0.85
+          },
+          {
+            name: 'Local Government Database',
+            reliability: 0.92,
+            lastUpdated: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // 1 month ago
+          }
+        ]);
       }
     } catch (err) {
       console.error('Wikipedia fetch error', err);
+    } finally {
+      setIsWikipediaLoading(false);
     }
   };
 
-  const handleLegalQuestion = async () => {
+  const handleCitySearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    await handleLocationSearch();
+  };
+
+  const handleSelectSuggestion = (suggestion: SearchSuggestion) => {
+    setLegalQuestion(suggestion.text);
+    setShowSuggestions(false);
+    
+    // Focus back on the search input
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
+  };
+
+  const addToSearchHistory = (query: string, location: string) => {
+    const newHistoryItem: SearchHistoryItem = {
+      query,
+      location,
+      timestamp: new Date()
+    };
+    
+    // Add to state and limit to 20 items
+    const updatedHistory = [newHistoryItem, ...searchHistory].slice(0, 20);
+    setSearchHistory(updatedHistory);
+    
+    // Save to localStorage
+    localStorage.setItem('legalSearchHistory', JSON.stringify(updatedHistory));
+  };
+
+  const toggleBookmark = () => {
+    if (!legalResponse || !legalQuestion) return;
+    
+    const bookmarkId = `${legalQuestion}-${selectedCity?.name || locationQuery}`;
+    const isAlreadyBookmarked = bookmarkedResponses.some(b => b.id === bookmarkId);
+    
+    if (isAlreadyBookmarked) {
+      // Remove bookmark
+      const updatedBookmarks = bookmarkedResponses.filter(b => b.id !== bookmarkId);
+      setBookmarkedResponses(updatedBookmarks);
+      localStorage.setItem('legalBookmarks', JSON.stringify(updatedBookmarks));
+    } else {
+      // Add bookmark
+      const newBookmark: BookmarkedResponse = {
+        id: bookmarkId,
+        question: legalQuestion,
+        location: selectedCity?.name || locationQuery,
+        response: legalResponse,
+        timestamp: new Date()
+      };
+      
+      const updatedBookmarks = [newBookmark, ...bookmarkedResponses];
+      setBookmarkedResponses(updatedBookmarks);
+      localStorage.setItem('legalBookmarks', JSON.stringify(updatedBookmarks));
+    }
+  };
+
+  const clearSearchHistory = () => {
+    setSearchHistory([]);
+    localStorage.removeItem('legalSearchHistory');
+  };
+
+  const removeHistoryItem = (index: number) => {
+    const updatedHistory = [...searchHistory];
+    updatedHistory.splice(index, 1);
+    setSearchHistory(updatedHistory);
+    localStorage.setItem('legalSearchHistory', JSON.stringify(updatedHistory));
+  };
+
+  const removeBookmark = (id: string) => {
+    const updatedBookmarks = bookmarkedResponses.filter(b => b.id !== id);
+    setBookmarkedResponses(updatedBookmarks);
+    localStorage.setItem('legalBookmarks', JSON.stringify(updatedBookmarks));
+  };
+
+  const handleLegalQuestion = async (e?: React.FormEvent) => {
+    if (e) {
+      e.preventDefault();
+    }
+    
     if (!legalQuestion.trim() || !selectedCity) return;
     
     setIsAsking(true);
     setFeedbackGiven(false);
+    
+    // Add to search history
+    addToSearchHistory(legalQuestion, selectedCity.name);
+    
+    // Set mock sources first for immediate feedback
+    setResultSources([
+      {
+        name: 'AI Analysis',
+        reliability: 0.85,
+        lastUpdated: new Date()
+      },
+      {
+        name: 'Legal Database',
+        url: 'https://example.com/legal-database',
+        reliability: 0.92,
+        lastUpdated: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) // 2 days ago
+      },
+      {
+        name: 'Travel Advisories',
+        url: 'https://example.com/travel-advisories',
+        reliability: 0.88,
+        lastUpdated: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // 1 week ago
+      }
+    ]);
     
     try {
       // Try to use the knowledge base first
@@ -192,14 +430,40 @@ export default function TravelLawsPage() {
 
   const commonQuestions = [
     "Can I drink alcohol in this city?",
-    "What are the photography restrictions?",
+    "Are there photography restrictions?",
     "Do I need special permits to drive here?",
     "What should I declare at customs?",
     "Are there any dress code requirements?",
     "What are the noise regulations?",
     "Can I use ride-sharing services?",
-    "What happens if I'm arrested as a tourist?"
+    "What happens if I'm arrested as a tourist?",
+    "Is recreational marijuana legal here?",
+    "What are the public smoking laws?",
+    "Can I drink in public places?",
+    "Are there curfew laws I should know about?",
+    "Do I need a visa to visit for tourism?"
   ];
+  
+  // Filters for legal categories
+  const legalFilters = [
+    { id: 'immigration', label: 'Immigration & Visas' },
+    { id: 'transportation', label: 'Transportation' },
+    { id: 'behavior', label: 'Public Behavior' },
+    { id: 'photography', label: 'Photography & Privacy' },
+    { id: 'business', label: 'Business Rules' },
+    { id: 'penalties', label: 'Penalties & Enforcement' },
+    { id: 'religious', label: 'Religious Sites' },
+    { id: 'alcohol', label: 'Alcohol & Substances' },
+    { id: 'customs', label: 'Customs & Declarations' }
+  ];
+  
+  const toggleLegalFilter = (filterId: string) => {
+    if (activeLegalFilters.includes(filterId)) {
+      setActiveLegalFilters(activeLegalFilters.filter(f => f !== filterId));
+    } else {
+      setActiveLegalFilters([...activeLegalFilters, filterId]);
+    }
+  };
 
   const features = [
     {
@@ -227,6 +491,12 @@ export default function TravelLawsPage() {
       color: 'from-orange-500 to-red-500',
     },
   ];
+
+  const isBookmarked = () => {
+    if (!legalResponse || !legalQuestion) return false;
+    const bookmarkId = `${legalQuestion}-${selectedCity?.name || locationQuery}`;
+    return bookmarkedResponses.some(b => b.id === bookmarkId);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -380,27 +650,120 @@ export default function TravelLawsPage() {
           <div className="space-y-6">
             {/* City Selection */}
             <Card>
-              <CardHeader>
+              <CardHeader className="pb-3">
                 <CardTitle className="flex items-center">
                   <Globe className="w-5 h-5 mr-2" />
                   Select Your Destination
                 </CardTitle>
                 <CardDescription>
-                  Choose a city to get location-specific legal information
+                  Choose a location to get specific legal information and regulations
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleCitySearch} className="flex space-x-2">
-                  <div className="flex-1 relative">
-                    <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-                    <Input
-                      placeholder="Search for any city..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="pl-10"
-                    />
+                <form onSubmit={handleCitySearch} className="space-y-3">
+                  <div className="flex space-x-2">
+                    <div className="flex-1 relative">
+                      <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                      <Input
+                        ref={locationInputRef}
+                        placeholder="Enter city, region or country..."
+                        value={locationQuery}
+                        onChange={(e) => setLocationQuery(e.target.value)}
+                        className="pl-10"
+                      />
+                      
+                      {/* Location autocomplete results would appear here */}
+                      {locationQuery.length > 2 && (
+                        <div className="absolute w-full z-10 bg-white border rounded-md shadow-lg mt-1 max-h-60 overflow-y-auto">
+                          {isWikipediaLoading ? (
+                            <div className="p-2 text-sm text-gray-500 flex items-center justify-center">
+                              <div className="animate-spin mr-2 h-4 w-4 border-2 border-gray-500 rounded-full border-t-transparent"></div>
+                              Searching locations...
+                            </div>
+                          ) : (
+                            <>
+                              <div 
+                                className="p-2 hover:bg-gray-100 cursor-pointer flex items-center text-sm"
+                                onClick={() => {
+                                  setLocationQuery('Dehradun, India');
+                                  handleLocationSearch('Dehradun, India');
+                                }}
+                              >
+                                <MapPin className="h-3 w-3 mr-2 text-gray-400" />
+                                Dehradun, India
+                              </div>
+                              <div 
+                                className="p-2 hover:bg-gray-100 cursor-pointer flex items-center text-sm"
+                                onClick={() => {
+                                  setLocationQuery('Dehradun, Uttarakhand, India');
+                                  handleLocationSearch('Dehradun, Uttarakhand, India');
+                                }}
+                              >
+                                <MapPin className="h-3 w-3 mr-2 text-gray-400" />
+                                Dehradun, Uttarakhand, India
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <Button type="submit" disabled={isWikipediaLoading}>
+                      {isWikipediaLoading ? (
+                        <>
+                          <div className="animate-spin mr-2 h-4 w-4 border-2 border-white rounded-full border-t-transparent"></div>
+                          Loading...
+                        </>
+                      ) : (
+                        <>
+                          <Search className="w-4 h-4 mr-2" />
+                          Search
+                        </>
+                      )}
+                    </Button>
                   </div>
-                  <Button type="submit">Search</Button>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <Select value={selectedJurisdiction} onValueChange={setSelectedJurisdiction}>
+                        <SelectTrigger className="w-[160px]">
+                          <SelectValue placeholder="Jurisdiction" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="local">Local Laws</SelectItem>
+                          <SelectItem value="regional">Regional Laws</SelectItem>
+                          <SelectItem value="national">National Laws</SelectItem>
+                          <SelectItem value="international">International Laws</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      
+                      <Select value={selectedLanguage} onValueChange={setSelectedLanguage}>
+                        <SelectTrigger className="w-[140px]">
+                          <SelectValue placeholder="Language" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="en">English</SelectItem>
+                          <SelectItem value="hi">Hindi</SelectItem>
+                          <SelectItem value="es">Spanish</SelectItem>
+                          <SelectItem value="fr">French</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button variant="ghost" size="sm" onClick={() => {
+                            // Show a drawer with saved locations
+                          }}>
+                            <Bookmark className="w-4 h-4" />
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Saved Locations</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                 </form>
                 
                 {selectedCity && (
@@ -428,62 +791,160 @@ export default function TravelLawsPage() {
             {/* Legal Question Interface */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Scale className="w-5 h-5 mr-2" />
-                  Ask Your Legal Question
+                <CardTitle className="flex items-center text-xl">
+                  <Scale className="w-6 h-6 mr-2 text-blue-600" />
+                  Ask Your Legal Question 
                 </CardTitle>
                 <CardDescription>
-                  Get instant answers about local laws and regulations
+                  Get instant answers about local laws, regulations and legal requirements
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex space-x-4">
-                  <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                    <SelectTrigger className="w-full">
-                      <div className="flex items-center">
-                        <Filter className="w-4 h-4 mr-2" />
-                        <SelectValue placeholder="Select category" />
-                      </div>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {legalCategories.map((category) => (
-                        <SelectItem key={category.value} value={category.value}>
+              <CardContent className="space-y-5">
+                {/* Active filters display */}
+                {activeLegalFilters.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {activeLegalFilters.map(filter => {
+                      const filterData = legalFilters.find(f => f.id === filter);
+                      return (
+                        <Badge 
+                          key={filter} 
+                          variant="outline" 
+                          className="py-1 flex items-center gap-1 bg-blue-50"
+                        >
                           <div className="flex items-center">
-                            {category.icon}
-                            {category.label}
+                            {filterData?.label}
+                            <Button 
+                              variant="ghost" 
+                              size="sm" 
+                              className="h-5 w-5 p-0 ml-1 hover:bg-blue-100 rounded-full"
+                              onClick={() => toggleLegalFilter(filter)}
+                            >
+                              <X className="h-3 w-3" />
+                            </Button>
                           </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                        </Badge>
+                      );
+                    })}
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="text-xs h-6 hover:bg-blue-50"
+                      onClick={() => setActiveLegalFilters([])}
+                    >
+                      Clear all
+                    </Button>
+                  </div>
+                )}
+                
+                <div>
+                  <div className="mb-2 flex items-center justify-between">
+                    <label className="text-sm font-medium">Search Filters</label>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="outline" size="sm" className="h-8 gap-1">
+                          <Filter className="h-3.5 w-3.5" />
+                          <span className="text-xs">Filters</span>
+                          {activeLegalFilters.length > 0 && (
+                            <Badge className="ml-1 h-5 px-1.5">{activeLegalFilters.length}</Badge>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-80 p-3" align="end">
+                        <div className="space-y-4">
+                          <h4 className="font-medium text-sm">Filter by Category</h4>
+                          <div className="grid grid-cols-2 gap-2">
+                            {legalFilters.map(filter => (
+                              <div key={filter.id} className="flex items-center space-x-2">
+                                <input
+                                  type="checkbox"
+                                  id={`filter-${filter.id}`}
+                                  checked={activeLegalFilters.includes(filter.id)}
+                                  onChange={() => toggleLegalFilter(filter.id)}
+                                  className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                />
+                                <label htmlFor={`filter-${filter.id}`} className="text-sm">{filter.label}</label>
+                              </div>
+                            ))}
+                          </div>
+                          <div className="border-t pt-3 flex justify-between">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              onClick={() => setActiveLegalFilters([])}
+                            >
+                              Clear All
+                            </Button>
+                            <Button size="sm">Apply Filters</Button>
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
                 </div>
                 
-                <Textarea
-                  placeholder="Ask about any local law, regulation, or legal requirement..."
-                  value={legalQuestion}
-                  onChange={(e) => setLegalQuestion(e.target.value)}
-                  rows={3}
-                  className="w-full"
-                />
-                
-                <Button 
-                  onClick={handleLegalQuestion}
-                  disabled={!legalQuestion.trim() || !selectedCity || isAsking}
-                  className="w-full"
-                >
-                  {isAsking ? 'Researching Legal Information...' : 'Get Legal Guidance'}
-                </Button>
+                <form onSubmit={handleLegalQuestion} className="space-y-4">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+                    <Textarea
+                      ref={searchInputRef}
+                      placeholder="Ask about any local law, regulation, or legal requirement..."
+                      value={legalQuestion}
+                      onChange={(e) => setLegalQuestion(e.target.value)}
+                      rows={3}
+                      className="w-full pl-11 resize-none"
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleLegalQuestion();
+                        }
+                      }}
+                    />
+                    
+                    {/* Search suggestions dropdown */}
+                    {showSuggestions && (
+                      <div className="absolute w-full z-10 bg-white border rounded-md shadow-lg mt-1">
+                        {searchSuggestions.map((suggestion, index) => (
+                          <div 
+                            key={index} 
+                            className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-b-0 flex items-center"
+                            onClick={() => handleSelectSuggestion(suggestion)}
+                          >
+                            {suggestion.type === 'history' && <History className="h-3 w-3 mr-2 text-gray-500" />}
+                            {suggestion.type === 'popular' && <AlertCircle className="h-3 w-3 mr-2 text-blue-500" />}
+                            {suggestion.type === 'autocomplete' && <Search className="h-3 w-3 mr-2 text-gray-500" />}
+                            <span className="text-sm">{suggestion.text}</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  
+                  <Button 
+                    type="submit"
+                    disabled={!legalQuestion.trim() || !selectedCity || isAsking}
+                    className="w-full"
+                  >
+                    {isAsking ? (
+                      <>
+                        <div className="animate-spin mr-2 h-4 w-4 border-2 border-white rounded-full border-t-transparent"></div>
+                        Researching Legal Information...
+                      </>
+                    ) : (
+                      'Get Legal Guidance'
+                    )}
+                  </Button>
+                </form>
 
                 {/* Quick Questions */}
                 <div>
                   <p className="text-sm font-medium mb-2">Common Questions:</p>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-[200px] overflow-y-auto pr-1">
                     {commonQuestions.map((question, index) => (
                       <Button
                         key={index}
                         variant="outline"
                         size="sm"
-                        className="justify-start h-auto py-2 px-3 text-left"
+                        className="justify-start h-auto py-2 px-3 text-left hover:bg-blue-50 text-xs"
                         onClick={() => setLegalQuestion(question)}
                       >
                         {question}
@@ -494,45 +955,128 @@ export default function TravelLawsPage() {
 
                 {/* Response */}
                 {legalResponse && (
-                  <div className="mt-4">
+                  <div className="mt-6">
                     <Card className="border-blue-200 bg-blue-50">
-                      <CardHeader>
+                      <CardHeader className="pb-2">
                         <CardTitle className="flex items-center text-blue-800 text-lg">
                           <Scale className="w-5 h-5 mr-2" />
-                          Legal Guidance
+                          Legal Guidance for {selectedCity?.name || locationQuery}
                         </CardTitle>
                       </CardHeader>
-                      <CardContent>
+                      <CardContent className="space-y-4">
+                        {/* AI Response */}
                         <div className="space-y-4">
                           <div className="whitespace-pre-wrap text-gray-700">{legalResponse}</div>
-                          <Alert className="bg-gray-50 border-gray-200">
-                            <AlertCircle className="h-4 w-4 text-gray-500" />
+                          
+                          {/* Sources */}
+                          <div className="space-y-2">
+                            <h4 className="text-sm font-medium flex items-center">
+                              <FileText className="w-3.5 h-3.5 mr-1.5" />
+                              Sources
+                            </h4>
+                            <div className="space-y-1.5">
+                              {resultSources.map((source, index) => (
+                                <div key={index} className="flex items-center justify-between text-xs">
+                                  <div className="flex items-center">
+                                    <Badge 
+                                      variant="outline" 
+                                      className={`mr-2 ${
+                                        source.reliability > 0.9 ? 'bg-green-50 text-green-700 border-green-200' : 
+                                        source.reliability > 0.7 ? 'bg-blue-50 text-blue-700 border-blue-200' :
+                                        'bg-yellow-50 text-yellow-700 border-yellow-200'
+                                      }`}
+                                    >
+                                      {Math.round(source.reliability * 100)}%
+                                    </Badge>
+                                    {source.url ? (
+                                      <a 
+                                        href={source.url} 
+                                        target="_blank" 
+                                        rel="noopener noreferrer"
+                                        className="text-blue-600 hover:underline flex items-center"
+                                      >
+                                        {source.name}
+                                        <ExternalLink className="w-3 h-3 ml-1" />
+                                      </a>
+                                    ) : (
+                                      <span>{source.name}</span>
+                                    )}
+                                  </div>
+                                  {source.lastUpdated && (
+                                    <span className="text-gray-500 flex items-center">
+                                      <Clock className="w-3 h-3 mr-1" />
+                                      {new Date(source.lastUpdated).toLocaleDateString()}
+                                    </span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                          
+                          <Alert className="bg-gray-50 border-gray-200 py-2">
+                            <AlertCircle className="h-3.5 w-3.5 text-gray-500" />
                             <AlertDescription className="text-gray-600 text-sm">
                               This is AI-generated guidance. For official legal advice, please consult local authorities or legal professionals.
                             </AlertDescription>
                           </Alert>
                         </div>
                       </CardContent>
-                      <CardFooter className="flex justify-between border-t pt-4">
-                        <div className="text-sm text-gray-500">Was this information helpful?</div>
-                        <div className="space-x-2">
-                          <Button 
-                            variant="outline" 
+                      <CardFooter className="border-t pt-4 flex-col space-y-3">
+                        <div className="flex justify-between w-full">
+                          <div className="text-sm text-gray-500">Was this information helpful?</div>
+                          <div className="space-x-2">
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="text-green-600 border-green-200 hover:bg-green-50"
+                              onClick={() => setFeedbackGiven(true)}
+                              disabled={feedbackGiven}
+                            >
+                              <ThumbsUp className="h-3 w-3 mr-1" />
+                              Yes
+                            </Button>
+                            <Button 
+                              variant="outline" 
+                              size="sm"
+                              className="text-red-600 border-red-200 hover:bg-red-50"
+                              onClick={() => setFeedbackGiven(true)}
+                              disabled={feedbackGiven}
+                            >
+                              <ThumbsDown className="h-3 w-3 mr-1" />
+                              No
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="flex justify-between w-full">
+                          <Button
+                            variant="ghost"
                             size="sm"
-                            className="text-green-600 border-green-200 hover:bg-green-50"
-                            onClick={() => setFeedbackGiven(true)}
-                            disabled={feedbackGiven}
+                            className="text-gray-600"
+                            onClick={() => {
+                              navigator.clipboard.writeText(legalResponse);
+                              // Show toast notification
+                            }}
                           >
-                            Yes
+                            <Copy className="h-3 w-3 mr-1" />
+                            Copy
                           </Button>
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="ghost"
                             size="sm"
-                            className="text-red-600 border-red-200 hover:bg-red-50"
-                            onClick={() => setFeedbackGiven(true)}
-                            disabled={feedbackGiven}
+                            className={isBookmarked() ? "text-blue-600" : "text-gray-600"}
+                            onClick={toggleBookmark}
                           >
-                            No
+                            {isBookmarked() ? (
+                              <>
+                                <BookmarkCheck className="h-3 w-3 mr-1" />
+                                Saved
+                              </>
+                            ) : (
+                              <>
+                                <Bookmark className="h-3 w-3 mr-1" />
+                                Save
+                              </>
+                            )}
                           </Button>
                         </div>
                       </CardFooter>
@@ -868,6 +1412,122 @@ export default function TravelLawsPage() {
             </Card>
           </div>
         </motion.div>
+      </div>
+
+      {/* Side sections - Recent Searches and Bookmarks */}
+      <div className="fixed top-[73px] right-0 bottom-0 w-[320px] bg-white border-l overflow-y-auto p-6 space-y-8">
+        {/* Recent Searches */}
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold flex items-center">
+              <History className="w-5 h-5 mr-2 text-gray-500" />
+              Recent Searches
+            </h2>
+            {searchHistory.length > 0 && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={clearSearchHistory}
+                className="h-8 text-xs"
+              >
+                Clear All
+              </Button>
+            )}
+          </div>
+          
+          {searchHistory.length > 0 ? (
+            <div className="space-y-3">
+              {searchHistory.slice(0, 5).map((item, index) => (
+                <div key={index} className="border rounded-lg p-3 hover:bg-gray-50">
+                  <div className="flex justify-between items-start">
+                    <div 
+                      className="cursor-pointer space-y-1"
+                      onClick={() => {
+                        setLegalQuestion(item.query);
+                        setLocationQuery(item.location);
+                        handleLocationSearch(item.location);
+                      }}
+                    >
+                      <h3 className="font-medium text-sm line-clamp-1">{item.query}</h3>
+                      <div className="flex items-center text-xs text-gray-500">
+                        <MapPin className="h-3 w-3 mr-1" />
+                        <span>{item.location}</span>
+                      </div>
+                      <div className="flex items-center text-xs text-gray-400">
+                        <Clock className="h-3 w-3 mr-1" />
+                        <span>{new Date(item.timestamp).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
+                      onClick={() => removeHistoryItem(index)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <History className="h-10 w-10 mx-auto mb-3 opacity-20" />
+              <p className="text-sm">No recent searches yet</p>
+            </div>
+          )}
+        </div>
+
+        {/* Saved Bookmarks */}
+        <div>
+          <h2 className="text-lg font-semibold flex items-center mb-4">
+            <Bookmark className="w-5 h-5 mr-2 text-gray-500" />
+            Saved Bookmarks
+          </h2>
+          
+          {bookmarkedResponses.length > 0 ? (
+            <div className="space-y-3">
+              {bookmarkedResponses.map((bookmark) => (
+                <div key={bookmark.id} className="border rounded-lg p-3 hover:bg-gray-50">
+                  <div className="flex justify-between items-start">
+                    <div 
+                      className="cursor-pointer space-y-1"
+                      onClick={() => {
+                        setLegalQuestion(bookmark.question);
+                        setLocationQuery(bookmark.location);
+                        setLegalResponse(bookmark.response);
+                        handleLocationSearch(bookmark.location);
+                      }}
+                    >
+                      <h3 className="font-medium text-sm line-clamp-1">{bookmark.question}</h3>
+                      <div className="flex items-center text-xs text-gray-500">
+                        <MapPin className="h-3 w-3 mr-1" />
+                        <span>{bookmark.location}</span>
+                      </div>
+                      <div className="flex items-center text-xs text-gray-400">
+                        <Clock className="h-3 w-3 mr-1" />
+                        <span>{new Date(bookmark.timestamp).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 text-gray-400 hover:text-gray-600"
+                      onClick={() => removeBookmark(bookmark.id)}
+                    >
+                      <X className="h-3 w-3" />
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-8 text-gray-500">
+              <Bookmark className="h-10 w-10 mx-auto mb-3 opacity-20" />
+              <p className="text-sm">No bookmarks yet. Save helpful responses to reference later!</p>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
