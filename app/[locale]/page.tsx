@@ -297,24 +297,24 @@ export default function Home() {
               <ChevronDown className="w-5 h-5 animate-bounce" />
             </a>
           </motion.div>
-        </div>
+        </motion.div>
         
         {/* Floating cultural symbols */}
-        <div className="absolute top-1/4 left-10 w-16 h-16 opacity-20 clay-float-slow">
+        <motion.div className="absolute top-1/4 left-10 w-16 h-16 opacity-20 clay-float-slow">
           <div className="w-full h-full rounded-full border-2 border-blue-600 flex items-center justify-center">
             <span className="text-2xl">🕉️</span>
           </div>
-        </div>
-        <div className="absolute top-1/3 right-20 w-12 h-12 opacity-20 clay-float">
+        </motion.div>
+        <motion.div className="absolute top-1/3 right-20 w-12 h-12 opacity-20 clay-float">
           <div className="w-full h-full rounded-full border-2 border-red-400 flex items-center justify-center">
             <span className="text-2xl">🏮</span>
           </div>
-        </div>
-        <div className="absolute bottom-1/4 right-1/4 w-14 h-14 opacity-20 clay-float-fast">
+        </motion.div>
+        <motion.div className="absolute bottom-1/4 right-1/4 w-14 h-14 opacity-20 clay-float-fast">
           <div className="w-full h-full rounded-full border-2 border-green-500 flex items-center justify-center">
             <span className="text-2xl">⛩️</span>
           </div>
-        </div>
+        </motion.div>
       </section>
       
       {/* Featured Destinations Section */}
@@ -444,7 +444,7 @@ export default function Home() {
               transition={{ duration: 0.8, delay: 0.2 }}
             >
               Our AI-powered platform helps you navigate cultural nuances with ease and confidence
-            </p>
+            </motion.p>
           </motion.div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-16">
@@ -638,7 +638,7 @@ export default function Home() {
               transition={{ duration: 0.8, delay: 0.2 }}
             >
               Real experiences from travelers who used CulturalCompass on their journeys
-            </p>
+            </motion.p>
           </motion.div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
@@ -825,7 +825,7 @@ export default function Home() {
               transition={{ duration: 0.8, delay: 0.2 }}
             >
               {tHomepage('ctaTitle')}
-            </h2>
+            </motion.h2>
             
             <motion.p 
               className="text-2xl text-blue-100 mb-10 max-w-3xl mx-auto leading-relaxed"
@@ -834,7 +834,7 @@ export default function Home() {
               transition={{ duration: 0.8, delay: 0.3 }}
             >
               {tHomepage('ctaSubtitle')}
-            </p>
+            </motion.p>
             
             <motion.div 
               className="flex flex-col sm:flex-row gap-4 justify-center items-center"
