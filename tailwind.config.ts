@@ -20,6 +20,9 @@ const config: Config = {
         sm: 'calc(var(--radius) - 4px)',
       },
       colors: {
+        // Custom colors for Clay design
+        blueberry: '#6B7AFF',
+        ube: '#8A85FF',
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
         card: {

@@ -37,10 +37,28 @@ export default function ContactPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setFormStatus('idle');
     
-    // Simulate API call
     try {
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formState.name,
+          email: formState.email,
+          subject: formState.subject,
+          message: formState.message,
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to send message');
+      }
+      
       setFormStatus('success');
       setFormState({
         name: '',
@@ -49,6 +67,7 @@ export default function ContactPage() {
         message: ''
       });
     } catch (error) {
+      console.error('Error:', error);
       setFormStatus('error');
     } finally {
       setIsSubmitting(false);
