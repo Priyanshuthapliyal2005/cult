@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { router, publicProcedure } from '../trpc';
 import { travelKnowledgeBase } from '@/lib/knowledgeBase';
+import { qualityAssuranceSystem } from '@/lib/knowledgeBase/qualityAssurance';
 import { SearchRequest } from '@/lib/knowledgeBase/types';
 
 export const knowledgeBaseRouter = router({

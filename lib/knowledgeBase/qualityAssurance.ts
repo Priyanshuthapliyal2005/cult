@@ -1,6 +1,5 @@
 import { prisma } from '@/lib/prisma';
 import { EnhancedCityData, QualityMetrics, UserRating } from './types';
-import { qualityAssuranceSystem } from './qualityAssurance';
 
 export interface QualityReport {
   overallScore: number;
