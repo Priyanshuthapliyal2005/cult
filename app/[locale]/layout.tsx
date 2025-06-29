@@ -63,6 +63,10 @@ function LocaleLayout({
         ) : (
           <NextIntlClientProvider locale={locale} messages={messages}>
             {children}
+          </NextIntlClientProvider>
+        )}
+      </body>
+    </html>
   );
 }
 
