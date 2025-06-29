@@ -1,11 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Globe, Mic, Volume2, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useTranslations, useLocale } from 'next-intl';
 import RealTimeAssistant from '@/components/RealTimeAssistant';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
@@ -16,6 +15,7 @@ import { trpc } from '@/lib/trpc';
 export default function ChatPage() {
   const [currentLocation, setCurrentLocation] = useState('');
   const [isMinimized, setIsMinimized] = useState(false);
+  const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
   const [globalListening, setGlobalListening] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(false);
   const recognitionRef = useRef<any>(null);
@@ -23,6 +23,15 @@ export default function ChatPage() {
   const t = useTranslations();
   const locale = useLocale();
   const testElevenLabs = trpc.audio.testElevenLabs.useQuery();
+  // Check for browser speech recognition support
+  useEffect(() => {
+    const hasSpeechRecognition = 'webkitSpeechRecognition' in window || 
+                                'SpeechRecognition' in window;
+    if (!hasSpeechRecognition) {
+      console.log('Speech recognition not supported in this browser');
+    }
+  }, []);
+
   
   // Initialize speech recognition
   useEffect(() => {
@@ -188,7 +197,7 @@ export default function ChatPage() {
             initialLocation={currentLocation}
             onLocationChange={setCurrentLocation}
             isMinimized={isMinimized}
-            onToggleSize={() => setIsMinimized(!isMinimized)}
+            onToggleSize={() => setIsMinimized(prev => !prev)}
             className="h-full"
             voiceEnabled={voiceEnabled}
           />

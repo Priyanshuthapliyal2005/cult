@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -37,9 +37,9 @@ function RouteCalculator({ points, onRouteCalculated }: {
 
   useEffect(() => {
     if (points.length >= 2) {
-      calculateRoute();
+      void calculateRoute();
     }
-  }, [points]);
+  }, [points]); 
 
   const calculateRoute = async () => {
     if (points.length < 2) return;
@@ -231,7 +231,7 @@ export default function RouteMapper({ center, zoom = 13, height = '500px' }: Rou
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-600">
                     {routeInfo.distance} km
-                  </div>
+                  </div> 
                   <div className="text-sm text-gray-500">Distance</div>
                 </div>
                 <div className="text-center">
@@ -245,7 +245,7 @@ export default function RouteMapper({ center, zoom = 13, height = '500px' }: Rou
               <div className="space-y-2">
                 <h4 className="font-semibold text-sm">Waypoints:</h4>
                 {routePoints.map((point, index) => (
-                  <div key={index} className="flex items-center justify-between text-sm">
+                  <div key={`point-${index}`} className="flex items-center justify-between text-sm">
                     <div className="flex items-center space-x-2">
                       <Badge variant={
                         point.type === 'start' ? 'default' : 
@@ -310,7 +310,7 @@ export default function RouteMapper({ center, zoom = 13, height = '500px' }: Rou
               {/* Route Points */}
               {routePoints.map((point, index) => (
                 <Marker
-                  key={index}
+                  key={`marker-${index}`}
                   position={[point.lat, point.lng]}
                   icon={getMarkerIcon(point.type)}
                 >
@@ -328,7 +328,7 @@ export default function RouteMapper({ center, zoom = 13, height = '500px' }: Rou
               {/* Click to add points when planning */}
               {isPlanning && (
                 <div className="absolute top-4 left-4 z-[1000]">
-                  <Card className="p-2">
+                  <Card className="p-2"> 
                     <div className="text-sm text-blue-600 flex items-center">
                       <MapPin className="w-4 h-4 mr-1" />
                       Click on map to add waypoints

@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { EnhancedCityData, QualityMetrics, UserRating } from './types';
+import { qualityAssuranceSystem } from './qualityAssurance';
 
 export interface QualityReport {
   overallScore: number;
@@ -215,7 +216,7 @@ export class QualityAssuranceSystem {
   private async analyzeDataFreshness() {
     try {
       const cities = await prisma.vectorContent.findMany({
-        where: { contentType: 'enhanced_city' },
+        where: { contentType: 'enhanced_city' as string },
         select: { metadata: true, createdAt: true, updatedAt: true }
       });
 
@@ -286,7 +287,7 @@ export class QualityAssuranceSystem {
   private async calculateOverallMetrics(): Promise<QualityMetrics> {
     try {
       const cities = await prisma.vectorContent.findMany({
-        where: { contentType: 'enhanced_city' },
+        where: { contentType: 'enhanced_city' as string },
         select: { metadata: true }
       });
 

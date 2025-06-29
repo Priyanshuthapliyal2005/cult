@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { embeddingService, EmbeddingRequest } from '@/lib/embeddings';
+import { embeddingService } from '@/lib/embeddings';
 
 export interface VectorSearchRequest {
   query: string;
@@ -15,9 +15,10 @@ export interface VectorSearchResult {
   contentType: string;
   title: string;
   content: string;
-  metadata: any;
+  metadata: Record<string, any>;
   similarity: number;
   createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface ContentToStore {
@@ -142,13 +143,13 @@ export class VectorStore {
         const query = `
           SELECT 
             id,
-            "contentId",
-            "contentType", 
+            "contentId" as "contentId",
+            "contentType" as "contentType", 
             title,
             content,
             metadata,
-            "createdAt",
-            "updatedAt",
+            "createdAt" as "createdAt",
+            "updatedAt" as "updatedAt",
             (1 - (embedding <=> $1::vector)) as similarity
           FROM vector_content
           WHERE (1 - (embedding <=> $1::vector)) > $${paramIndex + 1}
@@ -164,9 +165,9 @@ export class VectorStore {
           id: row.id,
           contentId: row.contentId,
           contentType: row.contentType,
-          title: row.title,
-          content: row.content,
-          metadata: row.metadata,
+          title: row.title as string,
+          content: row.content as string,
+          metadata: row.metadata as Record<string, any>,
           similarity: parseFloat(row.similarity),
           createdAt: new Date(row.createdAt),
           updatedAt: new Date(row.updatedAt)
@@ -204,8 +205,8 @@ export class VectorStore {
           id: row.id,
           contentId: row.contentId,
           contentType: row.contentType,
-          title: row.title,
-          content: row.content,
+          title: row.title as string,
+          content: row.content as string,
           metadata: row.metadata as any,
           similarity: 0.5, // Default similarity for text search
           createdAt: row.createdAt,
@@ -220,7 +221,7 @@ export class VectorStore {
 
   async updateContent(id: string, updates: Partial<ContentToStore>): Promise<void> {
     try {
-      const existing = await prisma.vectorContent.findUnique({
+      const existing = await prisma.vectorContent.findFirst({
         where: { id }
       });
 
@@ -253,7 +254,7 @@ export class VectorStore {
           ...(updates.content && { content: updates.content }),
           ...(updates.metadata && { metadata: updates.metadata }),
           ...(newEmbedding && { embedding: newEmbedding as any }),
-          updatedAt: new Date()
+          _all: true
         }
       });
 
@@ -298,7 +299,7 @@ export class VectorStore {
       ]);
 
       const contentTypes = typeStats.reduce((acc, stat) => {
-        acc[stat.contentType] = stat._count.id;
+        acc[stat.contentType] = stat._count._all;
         return acc;
       }, {} as Record<string, number>);
 

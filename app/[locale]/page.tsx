@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { motion, useScroll, useTransform, useSpring, useInView, stagger } from 'framer-motion';
-import { MapPin, MessageCircle, Globe, Compass, Users, Zap, Scale, Database, ArrowRight, ChevronDown, Sparkles } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
+import { MapPin, MessageCircle, Globe, Compass, Users, Zap, Scale, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge'; 
 import { useTranslations, useLocale } from 'next-intl';
@@ -16,25 +16,7 @@ import Link from 'next/link';
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [isLoaded, setIsLoaded] = useState(false);
-  const [scrollY, setScrollY] = useState(0);
-  const heroRef = useRef<HTMLDivElement>(null);
-  const featuredRef = useRef<HTMLDivElement>(null);
-  const featuresRef = useRef<HTMLDivElement>(null);
-  const testimonialRef = useRef<HTMLDivElement>(null);
-  const ctaRef = useRef<HTMLDivElement>(null);
-  
-  const { scrollYProgress } = useScroll();
-  const scale = useTransform(scrollYProgress, [0, 1], [1, 1.1]);
-  const y = useTransform(scrollYProgress, [0, 1], [0, -100]);
-  const heroOpacity = useTransform(scrollYProgress, [0, 0.2], [1, 0.5]);
-  const smoothY = useSpring(y, { stiffness: 100, damping: 30 });
-  
-  const isHeroInView = useInView(heroRef, { once: false, amount: 0.5 });
-  const isFeaturedInView = useInView(featuredRef, { once: false, amount: 0.2 });
-  const isFeaturesInView = useInView(featuresRef, { once: false, amount: 0.2 });
-  const isTestimonialInView = useInView(testimonialRef, { once: false, amount: 0.2 });
-  const isCtaInView = useInView(ctaRef, { once: false, amount: 0.2 });
+  const [isLoaded, setIsLoaded] = useState(false); 
   
   const tFeatures = useTranslations('features');
   const tNavigation = useTranslations('navigation');
@@ -45,13 +27,6 @@ export default function Home() {
 
   useEffect(() => {
     setIsLoaded(true);
-    
-    const handleScroll = () => {
-      setScrollY(window.scrollY);
-    };
-    
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
   const features = [
@@ -93,50 +68,12 @@ export default function Home() {
     },
   ];
 
-  // Get featured destinations from city database
-  const featuredDestinations = [
-    'pushkar-india',
-    'rishikesh-india', 
-    'mussoorie-india',
-    'tokyo-japan'
-  ].map(id => cityDatabase.find(city => city.id === id)).filter(Boolean) as CityData[];
-
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       const path = locale === 'en' ? '/explore' : `/${locale}/explore`;
       router.push(`${path}?q=${encodeURIComponent(searchQuery)}`);
     }
-  };
-
-  const staggerChildrenVariants = {
-    hidden: { opacity: 0, y: 50 },
-    visible: (i: number) => ({
-      opacity: 1,
-      y: 0,
-      transition: {
-        delay: i * 0.1,
-        duration: 0.8,
-        ease: [0.215, 0.61, 0.355, 1]
-      }
-    })
-  };
-  
-  const heroTextVariants = {
-    hidden: { opacity: 0, y: 20 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.8,
-        staggerChildren: 0.2,
-        delayChildren: 0.3
-      }
-    }
-  };
-  
-  const parallaxOffset = {
-    transform: `translateY(${-scrollY * 0.15}px)`
   };
 
   const getLocalizedPath = (path: string) => {
@@ -164,9 +101,6 @@ export default function Home() {
           </Link>
           <Link href={getLocalizedPath('/map')} className="text-gray-600 hover:text-gray-900 transition-colors">
             {tNavigation('maps')}
-          </Link>
-          <Link href={getLocalizedPath('/knowledge-base')} className="text-gray-600 hover:text-gray-900 transition-colors">
-            Knowledge Base
           </Link>
           <Link href={getLocalizedPath('/chat')} className="text-gray-600 hover:text-gray-900 transition-colors">
             {tNavigation('chat')}
@@ -978,6 +912,149 @@ export default function Home() {
           </div>
         </div>
       </footer>
+      
+      {/* Hero Section */}
+      <div className="min-h-screen flex items-center justify-center px-4 py-20">
+        <div className="max-w-5xl mx-auto text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <h1 className="text-5xl md:text-6xl font-bold mb-6 clay-gradient-text">
+              {tHomepage('title')}
+            </h1>
+            <p className="text-xl md:text-2xl text-gray-600 mb-10 max-w-3xl mx-auto">
+              {tHomepage('subtitle')}
+            </p>
+            
+            <form onSubmit={handleSearch} className="max-w-2xl mx-auto mb-10">
+              <div className="flex">
+                <Input
+                  type="text"
+                  placeholder={tHomepage('searchPlaceholder')}
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="flex-1 h-14 px-6 rounded-l-full text-lg border-2 border-r-0 border-gray-200 focus:border-blueberry focus:ring-0"
+                />
+                <Button 
+                  type="submit" 
+                  className="h-14 px-8 rounded-r-full bg-gradient-to-r from-blueberry to-ube text-white text-lg"
+                >
+                  <Search className="w-5 h-5 mr-2" />
+                  {tCommon('search')}
+                </Button>
+              </div>
+            </form>
+            
+            <div className="flex flex-wrap justify-center gap-4 mt-8">
+              <Button 
+                asChild
+                className="clay-primary-button"
+                size="lg"
+              >
+                <Link href={getLocalizedPath('/chat')}>
+                  <MessageCircle className="w-5 h-5 mr-2" />
+                  {tHomepage('startChat')}
+                </Link>
+              </Button>
+              <Button 
+                asChild
+                variant="outline" 
+                className="clay-secondary-button"
+                size="lg"
+              >
+                <Link href={getLocalizedPath('/explore')}>
+                  <Compass className="w-5 h-5 mr-2" />
+                  {tHomepage('exploreDestinations')}
+                </Link>
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      </div>
+      
+      {/* Features Section */}
+      <div className="py-20 bg-gradient-to-b from-white to-blue-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 clay-gradient-text">
+              {tHomepage('featuresTitle')}
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              {tHomepage('featuresSubtitle')}
+            </p>
+          </motion.div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {features.map((feature, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
+                <Card className="clay-card h-full">
+                  <CardContent className="p-6">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-r from-blueberry to-ube flex items-center justify-center mb-4">
+                      <feature.icon className="w-6 h-6 text-white" />
+                    </div>
+                    <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
+                    <p className="text-gray-600">{feature.description}</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </div>
+      
+      {/* CTA Section */}
+      <div className="py-20 bg-gradient-to-r from-blueberry/10 to-ube/10">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            <h2 className="text-3xl md:text-4xl font-bold mb-4 clay-gradient-text">
+              {tHomepage('ctaTitle')}
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+              {tHomepage('ctaSubtitle')}
+            </p>
+            
+            <div className="flex flex-wrap justify-center gap-4">
+              <Button 
+                asChild
+                className="clay-primary-button"
+                size="lg"
+              >
+                <Link href={getLocalizedPath('/chat')}>
+                  <MessageCircle className="w-5 h-5 mr-2" />
+                  {tHomepage('startChat')}
+                </Link>
+              </Button>
+              <Button 
+                asChild
+                variant="outline" 
+                className="clay-secondary-button"
+                size="lg"
+              >
+                <Link href={getLocalizedPath('/explore')}>
+                  <Compass className="w-5 h-5 mr-2" />
+                  {tHomepage('exploreDestinations')}
+                </Link>
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      </div>
     </div>
   );
 }
@@ -996,5 +1073,23 @@ const Star = ({ className }: { className?: string }) => (
     className={className}
   >
     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+  </svg>
+);
+
+const Search = ({ className }: { className?: string }) => (
+  <svg 
+    xmlns="http://www.w3.org/2000/svg" 
+    width="24" 
+    height="24" 
+    viewBox="0 0 24 24" 
+    fill="none" 
+    stroke="currentColor" 
+    strokeWidth="2" 
+    strokeLinecap="round" 
+    strokeLinejoin="round" 
+    className={className}
+  >
+    <circle cx="11" cy="11" r="8"></circle>
+    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
   </svg>
 );

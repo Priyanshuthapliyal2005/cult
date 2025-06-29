@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Button } from '@/components/ui/button';
@@ -108,11 +108,28 @@ interface DynamicCityMapProps {
 
 // Map event handler for clicks
 function MapClickHandler({ onMapClick }: { onMapClick: (lat: number, lng: number) => void }) {
-  useMapEvents({
+  const map = useMap();
+  
+  useEffect(() => {
+    const handleClick = (e: L.LeafletMouseEvent) => {
+      onMapClick(e.latlng.lat, e.latlng.lng);
+    };
+    
+    map.on('click', handleClick);
+    
+    return () => {
+      map.off('click', handleClick);
+    };
+  }, [map, onMapClick]);
+  
+  /* This causes a type error in React Leaflet
+  const events = useMapEvents({
     click: (e) => {
       onMapClick(e.latlng.lat, e.latlng.lng);
     },
   });
+  */
+  
   return null;
 }
 
@@ -280,7 +297,7 @@ export default function DynamicCityMap({
 
   const getCurrentLocation = () => {
     if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
+      navigator.geolocation?.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
           setMapCenter([latitude, longitude]);
@@ -420,7 +437,7 @@ export default function DynamicCityMap({
               <div className="flex items-center space-x-2">
                 <div className="w-4 h-4 bg-green-500 rounded-full"></div>
                 <span>Budget-friendly</span>
-              </div>
+              </div> 
               <div className="flex items-center space-x-2">
                 <div className="w-4 h-4 bg-yellow-500 rounded-full"></div>
                 <span>Moderate cost</span>
@@ -428,7 +445,7 @@ export default function DynamicCityMap({
               <div className="flex items-center space-x-2">
                 <div className="w-4 h-4 bg-red-500 rounded-full"></div>
                 <span>Luxury destination</span>
-              </div>
+              </div> 
             </div>
           </Card>
         </div>
@@ -448,7 +465,7 @@ export default function DynamicCityMap({
                   <div className="flex items-center space-x-1">
                     <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
                     <span className="text-xs">{selectedCity.rating}</span>
-                    <Badge className={`text-xs ${getCostLevelColor(selectedCity.costLevel)}`}>
+                    <Badge className={`text-xs ${getCostLevelColor(selectedCity.costLevel || 'moderate')}`}>
                       {selectedCity.costLevel}
                     </Badge>
                   </div>

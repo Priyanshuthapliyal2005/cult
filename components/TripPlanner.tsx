@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { Calendar, Clock, MapPin, DollarSign, Users, Star, ChevronRight, ChevronDown } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { getTripPlans, getCityById, type TripPlan, type DayPlan, type Activity } from '@/lib/cityDatabase';
 import { dynamicCityService } from '@/lib/dynamicCityService';
-import { useTranslations } from 'next-intl';
 
 interface TripPlannerProps {
   cityId: string;
@@ -23,9 +22,7 @@ export default function TripPlanner({ cityId, onPlanSelect, className = '' }: Tr
   const [selectedPlan, setSelectedPlan] = useState<TripPlan | null>(null);
   const [expandedDay, setExpandedDay] = useState<number | null>(null);
   const [budgetType, setBudgetType] = useState<'budget' | 'moderate' | 'luxury'>('moderate');
-  
-  const t = useTranslations();
-  
+    
   const city = getCityById(cityId);
   const [tripPlans, setTripPlans] = useState<TripPlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -264,92 +261,84 @@ export default function TripPlanner({ cityId, onPlanSelect, className = '' }: Tr
                         </CollapsibleTrigger>
                         <CollapsibleContent>
                           <AnimatePresence>
-                            {expandedDay === dayIndex && (
-                              <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                exit={{ opacity: 0, height: 0 }}
-                                transition={{ duration: 0.3 }}
-                                className="mt-3 p-4 bg-gray-50 rounded-lg"
-                              >
-                                {/* Day Highlights */}
-                                <div className="mb-4">
-                                  <h5 className="font-medium mb-2">Day Highlights</h5>
-                                  <div className="flex flex-wrap gap-2">
-                                    {day.highlights.map((highlight, index) => (
-                                      <Badge key={index} variant="outline">
-                                        {highlight}
-                                      </Badge>
+                            <div className={`${expandedDay === dayIndex ? 'block' : 'hidden'} mt-3 p-4 bg-gray-50 rounded-lg`}>
+                              {/* Day Highlights */}
+                              <div className="mb-4">
+                                <h5 className="font-medium mb-2">Day Highlights</h5>
+                                <div className="flex flex-wrap gap-2">
+                                  {day.highlights.map((highlight, index) => (
+                                    <Badge key={index} variant="outline">
+                                      {highlight}
+                                    </Badge>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* Activities Timeline */}
+                              <div className="space-y-3">
+                                <h5 className="font-medium">Activities Timeline</h5>
+                                {day.activities.map((activity, actIndex) => (
+                                  <div key={actIndex} className="flex space-x-3 p-3 bg-white rounded border">
+                                    <div className="text-center shrink-0">
+                                      <div className="text-sm font-bold text-blue-600">{activity.time}</div>
+                                      <div className="text-xs text-gray-500">{activity.duration}min</div>
+                                    </div>
+                                    <div className="flex-1">
+                                      <div className="flex items-center space-x-2 mb-1">
+                                        <span className="text-lg">{getCategoryIcon(activity.category)}</span>
+                                        <h6 className="font-medium">{activity.name}</h6>
+                                        <Badge variant="secondary" className="text-xs">
+                                          ₹{activity.cost}
+                                        </Badge>
+                                      </div>
+                                      <p className="text-sm text-gray-600 mb-2">{activity.description}</p>
+                                      <div className="flex items-center space-x-2 text-xs text-gray-500">
+                                        <MapPin className="w-3 h-3" />
+                                        <span>{activity.location}</span>
+                                      </div>
+                                      {activity.tips.length > 0 && (
+                                        <div className="mt-2">
+                                          <div className="text-xs font-medium text-gray-700 mb-1">Tips:</div>
+                                          <ul className="text-xs text-gray-600 space-y-1">
+                                            {activity.tips.map((tip, tipIndex) => (
+                                              <li key={tipIndex}>• {tip}</li>
+                                            ))}
+                                          </ul>
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+
+                              {/* Meals */}
+                              {day.meals.length > 0 && (
+                                <div className="mt-4">
+                                  <h5 className="font-medium mb-2">Recommended Meals</h5>
+                                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                    {day.meals.map((meal, mealIndex) => (
+                                      <div key={mealIndex} className="p-3 bg-white rounded border">
+                                        <div className="font-medium text-sm capitalize">{meal.mealType}</div>
+                                        <div className="text-sm text-blue-600">{meal.restaurant}</div>
+                                        <div className="text-xs text-gray-500">{meal.cuisine} • ₹{meal.estimatedCost}</div>
+                                        <div className="text-xs mt-1">
+                                          <span className="font-medium">Must try: </span>
+                                          {meal.mustTry.join(', ')}
+                                        </div>
+                                      </div>
                                     ))}
                                   </div>
                                 </div>
+                              )}
 
-                                {/* Activities Timeline */}
-                                <div className="space-y-3">
-                                  <h5 className="font-medium">Activities Timeline</h5>
-                                  {day.activities.map((activity, actIndex) => (
-                                    <div key={actIndex} className="flex space-x-3 p-3 bg-white rounded border">
-                                      <div className="text-center shrink-0">
-                                        <div className="text-sm font-bold text-blue-600">{activity.time}</div>
-                                        <div className="text-xs text-gray-500">{activity.duration}min</div>
-                                      </div>
-                                      <div className="flex-1">
-                                        <div className="flex items-center space-x-2 mb-1">
-                                          <span className="text-lg">{getCategoryIcon(activity.category)}</span>
-                                          <h6 className="font-medium">{activity.name}</h6>
-                                          <Badge variant="secondary" className="text-xs">
-                                            ₹{activity.cost}
-                                          </Badge>
-                                        </div>
-                                        <p className="text-sm text-gray-600 mb-2">{activity.description}</p>
-                                        <div className="flex items-center space-x-2 text-xs text-gray-500">
-                                          <MapPin className="w-3 h-3" />
-                                          <span>{activity.location}</span>
-                                        </div>
-                                        {activity.tips.length > 0 && (
-                                          <div className="mt-2">
-                                            <div className="text-xs font-medium text-gray-700 mb-1">Tips:</div>
-                                            <ul className="text-xs text-gray-600 space-y-1">
-                                              {activity.tips.map((tip, tipIndex) => (
-                                                <li key={tipIndex}>• {tip}</li>
-                                              ))}
-                                            </ul>
-                                          </div>
-                                        )}
-                                      </div>
-                                    </div>
-                                  ))}
+                              {/* Transportation */}
+                              <div className="mt-4 p-3 bg-blue-50 rounded">
+                                <h5 className="font-medium text-sm mb-1">Transportation</h5>
+                                <div className="text-xs text-gray-600">
+                                  {day.transportation.join(' • ')}
                                 </div>
-
-                                {/* Meals */}
-                                {day.meals.length > 0 && (
-                                  <div className="mt-4">
-                                    <h5 className="font-medium mb-2">Recommended Meals</h5>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                                      {day.meals.map((meal, mealIndex) => (
-                                        <div key={mealIndex} className="p-3 bg-white rounded border">
-                                          <div className="font-medium text-sm capitalize">{meal.mealType}</div>
-                                          <div className="text-sm text-blue-600">{meal.restaurant}</div>
-                                          <div className="text-xs text-gray-500">{meal.cuisine} • ₹{meal.estimatedCost}</div>
-                                          <div className="text-xs mt-1">
-                                            <span className="font-medium">Must try: </span>
-                                            {meal.mustTry.join(', ')}
-                                          </div>
-                                        </div>
-                                      ))}
-                                    </div>
-                                  </div>
-                                )}
-
-                                {/* Transportation */}
-                                <div className="mt-4 p-3 bg-blue-50 rounded">
-                                  <h5 className="font-medium text-sm mb-1">Transportation</h5>
-                                  <div className="text-xs text-gray-600">
-                                    {day.transportation.join(' • ')}
-                                  </div>
-                                </div>
-                              </motion.div>
-                            )}
+                              </div>
+                            </div>
                           </AnimatePresence>
                         </CollapsibleContent>
                       </Collapsible>

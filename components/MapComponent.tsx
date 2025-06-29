@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap, useMapEvents } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Button } from '@/components/ui/button';
@@ -173,14 +173,23 @@ function MapControls({ onLayerChange, onLocationFound }: {
 }
 
 // Map events handler
-function MapEvents({ onLocationClick }: { onLocationClick?: (lat: number, lng: number) => void }) {
-  useMapEvents({
-    click: (e) => {
-      if (onLocationClick) {
-        onLocationClick(e.latlng.lat, e.latlng.lng);
-      }
-    },
-  });
+function MapEvents({ onLocationClick }: { onLocationClick?: ((lat: number, lng: number) => void) | undefined }) {
+  const map = useMap();
+  
+  useEffect(() => {
+    if (!onLocationClick) return;
+    
+    const handleClick = (e: L.LeafletMouseEvent) => {
+      onLocationClick(e.latlng.lat, e.latlng.lng);
+    };
+    
+    map.on('click', handleClick);
+    
+    return () => {
+      map.off('click', handleClick);
+    };
+  }, [map, onLocationClick]);
+  
   return null;
 }
 
@@ -239,7 +248,7 @@ export default function MapComponent({
   showControls = true,
   showSearch = false,
   onLocationClick,
-  clustered = false
+  clustered = false 
 }: MapComponentProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [currentLayer, setCurrentLayer] = useState('streets');
@@ -255,7 +264,7 @@ export default function MapComponent({
 
   const handleLocationFound = (lat: number, lng: number) => {
     console.log('Location found:', lat, lng);
-  };
+  }; 
 
   if (!isMounted) {
     return (

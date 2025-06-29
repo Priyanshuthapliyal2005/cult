@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence, useAnimation } from 'framer-motion';
-import { Send, Bot, User, MapPin, Volume2, Copy, ThumbsUp, ThumbsDown, Mic, MicOff, Phone, VideoIcon, Settings, Minimize2, Maximize2 } from 'lucide-react';
+import { motion, useAnimation } from 'framer-motion';
+import { Send, Bot, User, MapPin, Volume2, Copy, ThumbsUp, ThumbsDown, Mic, MicOff, Settings, Minimize2, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -62,8 +62,9 @@ export default function RealTimeAssistant({
   const [isTyping, setIsTyping] = useState(false);
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [currentLocation, setCurrentLocation] = useState(initialLocation || '');
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const [settings, setSettings] = useState<AssistantSettings>({
-    voice: false,
+    voice: true,
     autoSpeak: false,
     language: 'en',
     personality: 'friendly',
@@ -72,6 +73,7 @@ export default function RealTimeAssistant({
   
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const t = useTranslations();
   const animationControls = useAnimation();
   
@@ -122,7 +124,7 @@ export default function RealTimeAssistant({
     }
   };
 
-  // Initialize speech recognition
+  // Initialize speech recognition and synthesis
   useEffect(() => {
     if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
       const SpeechRecognition = (window as any).webkitSpeechRecognition;
@@ -143,6 +145,20 @@ export default function RealTimeAssistant({
       
       recognitionRef.current.onend = () => {
         setIsListening(false);
+      };
+    }
+    
+    // Create audio element for speech synthesis
+    audioRef.current = new Audio();
+    
+    // Add event listeners for audio
+    if (audioRef.current) {
+      audioRef.current.onended = () => {
+        setIsSpeaking(false);
+      };
+      
+      return () => {
+        audioRef.current?.removeEventListener('ended', () => setIsSpeaking(false));
       };
     }
   }, []);
@@ -205,7 +221,7 @@ export default function RealTimeAssistant({
 
       // Auto-speak if enabled
       if (settings.autoSpeak && settings.voice) {
-        playAudio(response.response.slice(0, 200)); // Limit to first 200 chars for quicker audio
+        await playAudio(response.response.slice(0, 300)); // Limit to first 300 chars for demo
       }
 
     } catch (error) {
@@ -279,13 +295,23 @@ export default function RealTimeAssistant({
 
   const playAudio = async (text: string) => {
     try {
+      if (isSpeaking) {
+        if (audioRef.current) {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+        }
+        setIsSpeaking(false);
+        return;
+      }
+      
+      setIsSpeaking(true);
       // Check if ElevenLabs is available
       if (testElevenLabs.data?.status !== 'success') {
         // For demo mode, use browser's built-in speech synthesis
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.rate = 0.9; // Slightly slower for better clarity
         window.speechSynthesis.speak(utterance);
-        setIsPlaying(false);
+        setIsSpeaking(false);
         return;
       }
 
@@ -295,11 +321,14 @@ export default function RealTimeAssistant({
       });
       
       if (result.audioUrl) {
-        const audio = new Audio(result.audioUrl);
-        audio.play();
+        if (audioRef.current) {
+          audioRef.current.src = result.audioUrl;
+          await audioRef.current.play();
+        }
       }
     } catch (error) {
       console.error('Audio playback error:', error);
+      setIsSpeaking(false);
     }
   };
 
@@ -444,86 +473,86 @@ export default function RealTimeAssistant({
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              <AnimatePresence>
-                {messages.map((message) => (
-                  <motion.div
-                    key={message.id}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -20 }}
-                    transition={{ duration: 0.3 }}
-                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div className={`flex max-w-xs md:max-w-2xl ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
-                      <Avatar className="w-8 h-8 mx-2 shrink-0">
-                        <AvatarFallback className={message.role === 'user' ? 'bg-blue-100' : 'bg-purple-100'}>
-                          {message.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
-                        </AvatarFallback>
-                      </Avatar>
-                      <Card className={`${message.role === 'user' ? 'bg-blue-600 text-white' : 'bg-white border-gray-200'}`}>
-                        <CardContent className="p-3">
-                          {message.isTyping ? (
-                            <motion.div
-                              className="flex items-center space-x-1"
-                              animate={animationControls}
-                            >
-                              <span className="text-sm">{message.content}</span>
-                              <div className="flex space-x-1">
-                                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
-                                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
-                                <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
-                              </div>
-                            </motion.div>
-                          ) : (
-                            <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+              {messages.map((message) => (
+                <motion.div
+                  key={message.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ duration: 0.3 }}
+                  className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div className={`flex max-w-xs md:max-w-2xl ${message.role === 'user' ? 'flex-row-reverse' : 'flex-row'}`}>
+                    <Avatar className="w-8 h-8 mx-2 shrink-0">
+                      <AvatarFallback className={message.role === 'user' ? 'bg-blue-100' : 'bg-purple-100'}>
+                        {message.role === 'user' ? <User className="w-4 h-4" /> : <Bot className="w-4 h-4" />}
+                      </AvatarFallback>
+                    </Avatar>
+                    <Card className={`${message.role === 'user' ? 'bg-blue-600 text-white' : 'bg-white border-gray-200'}`}>
+                      <CardContent className="p-3">
+                        {message.isTyping ? (
+                          <motion.div
+                            className="flex items-center space-x-1"
+                            animate={animationControls}
+                          >
+                            <span className="text-sm">{message.content}</span>
+                            <div className="flex space-x-1">
+                              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
+                              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
+                              <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
+                            </div>
+                          </motion.div>
+                        ) : (
+                          <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                        )}
+                        
+                        <div className="flex items-center justify-between mt-2">
+                          <span className={`text-xs ${message.role === 'user' ? 'text-blue-100' : 'text-gray-400'}`}>
+                            {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                          {message.role === 'assistant' && !message.isTyping && (
+                            <div className="flex items-center space-x-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-gray-400 hover:text-blueberry transition-colors"
+                                onClick={() => handleCopy(message.content)}
+                              >
+                                <Copy className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className={`h-6 w-6 text-gray-400 hover:text-tangarine transition-colors ${
+                                  isSpeaking ? 'text-tangarine' : ''
+                                }`}
+                                onClick={() => playAudio(message.content.slice(0, 300))}
+                                disabled={generateAudio.isLoading}
+                              >
+                                <Volume2 className={`w-3 h-3 ${isSpeaking ? 'animate-pulse' : ''}`} />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-gray-400 hover:text-green-600 transition-colors"
+                              >
+                                <ThumbsUp className="w-3 h-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-gray-400 hover:text-red-600 transition-colors"
+                              >
+                                <ThumbsDown className="w-3 h-3" />
+                              </Button>
+                            </div>
                           )}
-                          
-                          <div className="flex items-center justify-between mt-2">
-                            <span className={`text-xs ${message.role === 'user' ? 'text-blue-100' : 'text-gray-400'}`}>
-                              {message.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                            {message.role === 'assistant' && !message.isTyping && (
-                              <div className="flex items-center space-x-1">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6 text-gray-400 hover:text-blueberry transition-colors"
-                                  onClick={() => handleCopy(message.content)}
-                                >
-                                  <Copy className="w-3 h-3" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6 text-gray-400 hover:text-tangarine transition-colors"
-                                  onClick={() => playAudio(message.content)}
-                                  disabled={generateAudio.isLoading}
-                                >
-                                  <Volume2 className="w-3 h-3" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6 text-gray-400 hover:text-green-600 transition-colors"
-                                >
-                                  <ThumbsUp className="w-3 h-3" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-6 w-6 text-gray-400 hover:text-red-600 transition-colors"
-                                >
-                                  <ThumbsDown className="w-3 h-3" />
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </motion.div>
-                ))}
-              </AnimatePresence>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </motion.div>
+              ))}
               <div ref={messagesEndRef} />
             </div>
 
@@ -554,8 +583,15 @@ export default function RealTimeAssistant({
                 <div className="flex-1 relative">
                   <Textarea
                     value={input}
-                    onChange={(e) => setInput(e.target.value)}
-                    placeholder="Ask me anything or tap the mic icon for voice control..."
+                    onChange={(e) => {
+                      setInput(e.target.value);
+                      // Stop speaking when user starts typing
+                      if (isSpeaking && audioRef.current) {
+                        audioRef.current.pause();
+                        setIsSpeaking(false);
+                      }
+                    }}
+                    placeholder="Ask me anything about local culture, customs, or travel advice..."
                     className="min-h-[44px] max-h-32 resize-none pr-20 border-2 border-gray-200 focus:border-blue-500"
                     rows={1}
                     disabled={isLoading}
@@ -570,21 +606,12 @@ export default function RealTimeAssistant({
                     <Button
                       type="button"
                       variant="ghost"
-                      size="sm"
-                      className="h-6 w-6 p-0"
+                      size="icon"
+                      className={`h-6 w-6 p-0 ${isListening ? 'text-red-500 animate-pulse' : ''}`}
                       onClick={toggleVoiceInput}
                       disabled={isLoading}
                     >
-                      {isListening ? (
-                        <motion.div
-                          animate={{ scale: [1, 1.2, 1] }}
-                          transition={{ repeat: Infinity, duration: 1 }}
-                        >
-                          <MicOff className="w-4 h-4 text-red-500" />
-                        </motion.div>
-                      ) : (
-                        <Mic className="w-4 h-4" />
-                      )}
+                      {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
                     </Button>
                   </div>
                 </div>
@@ -638,15 +665,13 @@ export default function RealTimeAssistant({
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Enable voice responses</span>
                   <Switch
-                    aria-label="Enable voice responses"
-                    checked={settings.voice}
+                    checked={settings.voice} 
                     onCheckedChange={(checked) => {
                       setSettings(prev => ({ ...prev, voice: checked }));
-                      // Announce the change
-                      if (checked) {
-                        const utterance = new SpeechSynthesisUtterance("Voice responses enabled");
-                        utterance.rate = 0.9;
-                        window.speechSynthesis.speak(utterance);
+                      // Stop speaking if turning off voice
+                      if (!checked && isSpeaking && audioRef.current) {
+                        audioRef.current.pause();
+                        setIsSpeaking(false);
                       }
                     }}
                   />

@@ -1,7 +1,6 @@
 'use client';
 
 import '../globals.css';
-import { Inter } from 'next/font/google';
 import { SessionProvider } from 'next-auth/react';
 import { AuthProvider } from '@/contexts/AuthContext';
 import { trpc } from '@/lib/trpc';
@@ -10,8 +9,7 @@ import { useEffect, useState } from 'react';
 import { locales } from '@/i18n';
 import { VoiceCommandProvider } from '@/components/VoiceCommandProvider';
 import { notFound } from 'next/navigation';
-
-const inter = Inter({ subsets: ['latin'] });
+import { Inter } from 'next/font/google';
 
 function LocaleLayout({
   children,
@@ -20,6 +18,8 @@ function LocaleLayout({
   children: React.ReactNode;
   params: { locale: string };
 }) {
+  const inter = Inter({ subsets: ['latin'] });
+  
   const [messages, setMessages] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 

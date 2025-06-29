@@ -1,6 +1,6 @@
 import { geminiService } from './gemini';
 import { groqService } from './groq';
-import { cityDatabase } from './cityDatabase';
+import { cityDatabase, type CityData } from './cityDatabase';
 
 export interface CulturalInsightRequest {
   location: string;
@@ -200,7 +200,7 @@ export class HybridAIService {
   /**
    * Generate comprehensive city data for a location
    */
-  async generateCityData(cityName: string, countryName?: string): Promise<any> {
+  async generateCityData(cityName: string, countryName?: string): Promise<CityData> {
     try {
       const prompt = `Generate comprehensive travel and cultural data for ${cityName}${countryName ? `, ${countryName}` : ''} in JSON format.
 
@@ -305,7 +305,7 @@ Return ONLY valid JSON with no explanation or comments.`;
 }
 
 // Generate fallback responses based on city database
-function generateFallbackResponse(message: string, location?: string): string {
+function generateFallbackResponse(message: string, location?: string | null): string {
   const lowerMessage = message.toLowerCase();
   
   if (lowerMessage.includes('hello') || lowerMessage.includes('hi')) {

@@ -3,6 +3,11 @@ import { hybridAI } from '@/lib/hybridAI';
 import { embeddingService } from '@/lib/embeddings';
 import { prisma } from '@/lib/prisma';
 
+interface Message {
+  role: string;
+  content: string;
+}
+
 export interface RAGRequest {
   query: string;
   conversationId?: string;
@@ -21,7 +26,7 @@ export interface RAGResponse {
 
 export interface RAGContext {
   retrievedContent: VectorSearchResult[];
-  conversationHistory?: Array<{ role: string; content: string }>;
+  conversationHistory?: Message[];
   locationContext?: string;
   queryEmbedding?: number[];
 }
@@ -54,11 +59,11 @@ export class RAGService {
       // Include conversation history if requested  
       if (request.includeHistory && request.conversationId && context.conversationHistory) {
         const historyMessages = context.conversationHistory.slice(-4);
-        for (const msg of historyMessages) {
-          if (msg.role === 'user') {
-            messages.splice(-1, 0, { role: 'user', content: msg.content });
-          } else if (msg.role === 'assistant') {
-            messages.splice(-1, 0, { role: 'user', content: `Previous response: ${msg.content}` });
+        for (const msg of historyMessages as Message[]) {
+          if (msg.role === 'user' as string) {
+            messages.splice(-1, 0, { role: 'user' as const, content: msg.content });
+          } else if (msg.role === 'assistant' as string) {
+            messages.splice(-1, 0, { role: 'user' as const, content: `Previous response: ${msg.content}` });
           }
         }
       }
@@ -179,7 +184,7 @@ export class RAGService {
           
           context.conversationHistory = messages.reverse().map(msg => ({
             role: msg.role,
-            content: msg.content
+            content: msg.content as string
           }));
         } catch (dbError) {
           console.log('Could not retrieve conversation history:', dbError);
@@ -202,7 +207,7 @@ export class RAGService {
   private buildEnrichedPrompt(query: string, context: RAGContext, location?: string): string {
     let prompt = `User Query: ${query}\n\n`;
 
-    // Add retrieved context
+    // Add retrieved context if available
     if (context.retrievedContent.length > 0) {
       prompt += `Relevant Information from Knowledge Base:\n\n`;
       context.retrievedContent.forEach((item, index) => {
@@ -270,7 +275,7 @@ Please provide a comprehensive response to the user's query.`;
   private calculateConfidence(sources: VectorSearchResult[], query: string): number {
     if (sources.length === 0) return 0.2;
 
-    const avgSimilarity = sources.reduce((sum, source) => sum + source.similarity, 0) / sources.length;
+    const avgSimilarity = sources.reduce((sum, source) => sum + (source.similarity || 0), 0) / sources.length;
     const sourceCount = Math.min(sources.length / 5, 1); // Normalize to 0-1 based on up to 5 sources
     const queryLength = Math.min(query.length / 100, 1); // Longer queries might be more specific
 
@@ -283,9 +288,9 @@ Please provide a comprehensive response to the user's query.`;
       return 'No specific context found in knowledge base';
     }
 
-    const typeSet = new Set(sources.map(s => s.contentType));
+    const typeSet = new Set<string>(sources.map(s => s.contentType));
     const types = Array.from(typeSet);
-    const avgSimilarity = sources.reduce((sum, s) => sum + s.similarity, 0) / sources.length;
+    const avgSimilarity = sources.reduce((sum, s) => sum + (s.similarity || 0), 0) / sources.length;
 
     return `Retrieved ${sources.length} relevant documents (${types.join(', ')}) with average similarity: ${avgSimilarity.toFixed(2)}`;
   }
@@ -312,7 +317,7 @@ Please provide a comprehensive response to the user's query.`;
       const recentContexts = await prisma.conversationContext.findMany({
         where: {
           createdAt: {
-            gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) // Last 7 days
+            gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000) as Date // Last 7 days
           }
         },
         select: { relevanceScore: true }

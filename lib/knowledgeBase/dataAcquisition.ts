@@ -1,6 +1,7 @@
 import { EnhancedCityData, DataSource, QualityMetrics } from './types';
 import { vectorStore } from '@/lib/vectorStore';
 import { embeddingService } from '@/lib/embeddings';
+import { groqService } from '@/lib/groq';
 
 export interface CityDataSources {
   wikipedia?: WikipediaData;
@@ -254,8 +255,6 @@ export class DataAcquisitionEngine {
 
   async validateAndEnrichData(rawData: CityDataSources, cityName: string): Promise<EnhancedCityData> {
     // Generate comprehensive city data using AI
-    const { groqService } = await import('@/lib/groq');
-    
     const prompt = `Based on the following data sources for ${cityName}, generate comprehensive travel intelligence in JSON format:
 
 Wikipedia Data: ${JSON.stringify(rawData.wikipedia, null, 2)}

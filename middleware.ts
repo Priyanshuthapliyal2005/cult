@@ -1,6 +1,6 @@
 import { withAuth } from 'next-auth/middleware';
 import createIntlMiddleware from 'next-intl/middleware';
-import { locales, defaultLocale } from './i18n';
+import { locales, defaultLocale } from '@/i18n';
 
 const intlMiddleware = createIntlMiddleware({
   locales,
@@ -48,7 +48,6 @@ export default function middleware(req: any) {
     '/api',
     '/auth',
     '/explore',
-    '/map',
     '/chat',
     '/admin'
   ];

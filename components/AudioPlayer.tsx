@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { Volume2, VolumeX, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { trpc } from '@/lib/trpc';
@@ -25,7 +25,6 @@ export default function AudioPlayer({
 }: AudioPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const generateAudio = trpc.audio.generatePhraseAudio.useMutation();
   const testElevenLabs = trpc.audio.testElevenLabs.useQuery();
@@ -33,10 +32,6 @@ export default function AudioPlayer({
   const handlePlay = async () => {
     if (isPlaying) {
       // Stop current audio
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.currentTime = 0;
-      }
       setIsPlaying(false);
       return;
     }

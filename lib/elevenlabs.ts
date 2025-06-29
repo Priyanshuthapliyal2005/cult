@@ -167,7 +167,7 @@ export const elevenLabsService = new ElevenLabsService();
 
 // Helper function for client-side audio playback
 export const playAudioFromBase64 = (base64Audio: string): Promise<void> => {
-  return new Promise((resolve, reject) => {
+  return new Promise<void>((resolve, reject) => {
     try {
       const audio = new Audio(base64Audio);
       audio.onended = () => resolve();
@@ -184,16 +184,16 @@ export class AudioCache {
   private cache = new Map<string, string>();
   private maxSize = 100; // Maximum number of cached audio files
 
-  getCacheKey(text: string, language: string, voiceId?: string): string {
+  getCacheKey(text: string, language: string, voiceId?: string | null): string {
     return `${text}-${language}-${voiceId || 'default'}`;
   }
 
-  get(text: string, language: string, voiceId?: string): string | null {
+  get(text: string, language: string, voiceId?: string | null): string | null {
     const key = this.getCacheKey(text, language, voiceId);
     return this.cache.get(key) || null;
   }
 
-  set(text: string, language: string, audioData: string, voiceId?: string): void {
+  set(text: string, language: string, audioData: string, voiceId?: string | null): void {
     const key = this.getCacheKey(text, language, voiceId);
     
     // Remove oldest entries if cache is full
