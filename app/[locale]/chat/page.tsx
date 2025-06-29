@@ -16,7 +16,9 @@ export default function ChatPage() {
   const [currentLocation, setCurrentLocation] = useState('');
   const [isMinimized, setIsMinimized] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window === 'undefined') {
+      return false;
+    } else {
       return localStorage.getItem('voiceEnabled') === 'true';
     }
     return false;
@@ -25,22 +27,25 @@ export default function ChatPage() {
   const recognitionRef = useRef<any>(null);
   
   const t = useTranslations();
-  const locale = useLocale();
   const testElevenLabs = trpc.audio.testElevenLabs.useQuery();
   
   // Check for browser speech recognition support
   useEffect(() => {
-    const hasSpeechRecognition = 'webkitSpeechRecognition' in window || 
-                                'SpeechRecognition' in window;
-    if (!hasSpeechRecognition) {
-      console.log('Speech recognition not supported in this browser');
+    if (typeof window !== 'undefined') {
+      const hasSpeechRecognition = 'webkitSpeechRecognition' in window || 
+                                  'SpeechRecognition' in window;
+      if (!hasSpeechRecognition) {
+        console.log('Speech recognition not supported in this browser');
+      }
     }
   }, []);
 
   
   // Initialize speech recognition
   useEffect(() => {
-    if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
+    if (typeof window === 'undefined') return;
+    
+    if ('webkitSpeechRecognition' in window) {
       const SpeechRecognition = (window as any).webkitSpeechRecognition;
       recognitionRef.current = new SpeechRecognition();
       recognitionRef.current.continuous = false;

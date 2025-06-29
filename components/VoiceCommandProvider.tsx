@@ -4,6 +4,17 @@ import { createContext, useContext, useEffect, useRef, useState, ReactNode } fro
 import { useRouter } from 'next/navigation';
 import { useLocale } from 'next-intl';
 
+// Define context with default values to avoid null check issues
+const defaultContextValue: VoiceCommandContextType = {
+  isListening: false,
+  startListening: () => {},
+  stopListening: () => {},
+  lastCommand: null,
+  isVoiceEnabled: false,
+  toggleVoiceEnabled: () => {},
+  speak: () => {}
+};
+
 interface VoiceCommandContextType {
   isListening: boolean;
   startListening: () => void;
@@ -14,13 +25,10 @@ interface VoiceCommandContextType {
   speak: (text: string) => void;
 }
 
-const VoiceCommandContext = createContext<VoiceCommandContextType | undefined>(undefined);
+const VoiceCommandContext = createContext<VoiceCommandContextType>(defaultContextValue);
 
 export function useVoiceCommand() {
   const context = useContext(VoiceCommandContext);
-  if (!context) {
-    throw new Error('useVoiceCommand must be used within a VoiceCommandProvider');
-  }
   return context;
 }
 
@@ -31,22 +39,30 @@ interface VoiceCommandProviderProps {
 export function VoiceCommandProvider({ children }: VoiceCommandProviderProps) {
   const [isListening, setIsListening] = useState(false);
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window === 'undefined') {
+      return false;
+    } else {
       return localStorage.getItem('voiceEnabled') === 'true';
     }
-    return false;
   });
   const [lastCommand, setLastCommand] = useState<string | null>(null);
   const recognitionRef = useRef<any>(null);
   const router = useRouter();
   const locale = useLocale();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const getLocalizedPath = (path: string) => {
     return locale === 'en' ? path : `/${locale}${path}`;
   };
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && 'webkitSpeechRecognition' in window) {
+    if (!isMounted) return;
+    
+    if ('webkitSpeechRecognition' in window) {
       const SpeechRecognition = (window as any).webkitSpeechRecognition;
       recognitionRef.current = new SpeechRecognition();
       recognitionRef.current.continuous = false;
@@ -74,10 +90,10 @@ export function VoiceCommandProvider({ children }: VoiceCommandProviderProps) {
   }, [router]);
 
   const toggleVoiceEnabled = () => {
+    if (typeof window === 'undefined') return;
+    
     setIsVoiceEnabled(!isVoiceEnabled);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('voiceEnabled', (!isVoiceEnabled).toString());
-    }
+    localStorage.setItem('voiceEnabled', (!isVoiceEnabled).toString());
     
     // Announce the change
     if (!isVoiceEnabled) {
@@ -86,7 +102,7 @@ export function VoiceCommandProvider({ children }: VoiceCommandProviderProps) {
   };
 
   const speak = (text: string) => {
-    if (window.speechSynthesis) {
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = 0.9; // Slightly slower for clarity
       window.speechSynthesis.speak(utterance);

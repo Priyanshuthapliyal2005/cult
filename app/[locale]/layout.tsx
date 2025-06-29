@@ -1,17 +1,20 @@
 'use client';
 
 import '../globals.css';
-import { SessionProvider } from 'next-auth/react';
-import { AuthProvider } from '@/contexts/AuthContext';
 import { trpc } from '@/lib/trpc';
 import { NextIntlClientProvider } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { locales } from '@/i18n';
-import { VoiceCommandProvider } from '@/components/VoiceCommandProvider';
 import { notFound } from 'next/navigation';
 import { Inter } from 'next/font/google';
+import dynamic from 'next/dynamic';
 
 const inter = Inter({ subsets: ['latin'] });
+
+// Dynamically import providers to prevent SSR issues
+const AuthProviders = dynamic(() => import('@/components/AuthProviders'), {
+  ssr: false,
+});
 
 function LocaleLayout({
   children,
@@ -62,13 +65,9 @@ function LocaleLayout({
           </div>
         ) : (
           <NextIntlClientProvider locale={locale} messages={messages}>
-            <SessionProvider>
-              <AuthProvider>
-                <VoiceCommandProvider>
-                  {children}
-                </VoiceCommandProvider>
-              </AuthProvider>
-            </SessionProvider>
+            <AuthProviders>
+              {children}
+            </AuthProviders>
           </NextIntlClientProvider>
         )}
       </body>

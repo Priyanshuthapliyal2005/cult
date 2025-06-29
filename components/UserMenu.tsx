@@ -20,10 +20,11 @@ import Link from 'next/link';
 export default function UserMenu() {
   // Add voice control state
   const [voiceEnabled, setVoiceEnabled] = useState(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window === 'undefined') {
+      return false;
+    } else {
       return localStorage.getItem('voiceEnabled') === 'true';
     }
-    return false;
   });
   const { user, isAuthenticated } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
@@ -103,9 +104,7 @@ export default function UserMenu() {
           className="cursor-pointer"
           onClick={() => {
             setVoiceEnabled(!voiceEnabled);
-            if (typeof window !== 'undefined') {
-              localStorage.setItem('voiceEnabled', (!voiceEnabled).toString());
-            }
+            localStorage.setItem('voiceEnabled', (!voiceEnabled).toString());
             // Announce the change
             if (!voiceEnabled) {
               const utterance = new SpeechSynthesisUtterance("Voice control enabled");
