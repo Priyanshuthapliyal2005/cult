@@ -99,7 +99,7 @@ class MockPrismaClient {
     update: async (args: any) => ({ id: 'mock-audit-id', ...args.data }),
     upsert: async (args: any) => ({ id: 'mock-audit-id', ...args.data }),
     delete: async () => ({ id: 'mock-audit-id' })
-  };
+  },
 
   // Mock raw queries
   $queryRaw: async () => [],
