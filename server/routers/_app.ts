@@ -386,8 +386,8 @@ export const appRouter = router({
               orderBy: { createdAt: 'asc' },
             },
           },
-        });
-      } catch (error) {
+      } catch (qualityError) {
+        console.error('Error getting quality report:', qualityError);
         console.error('Error getting conversation:', error);
         return null;
       }
