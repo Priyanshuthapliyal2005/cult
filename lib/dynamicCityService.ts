@@ -34,22 +34,33 @@ export class DynamicCityService {
       const formattedCityName = cityName.trim();
       if (!formattedCityName) return null;
       
-      // 1. First check vector database
+      // 1. First check local city database
+      const localCity = cityDatabase.find(city => 
+        city.name.toLowerCase().includes(formattedCityName.toLowerCase()) ||
+        (countryName && city.country.toLowerCase().includes(countryName.toLowerCase()))
+      );
+      
+      if (localCity) {
+        console.log(`✅ Found ${formattedCityName} in local database`);
+        return localCity;
+      }
+      
+      // 2. Then check vector database
       const existingCity = await this.searchVectorDB(formattedCityName, countryName);
       if (existingCity) {
         console.log(`✅ Found ${formattedCityName} in vector database`);
         return existingCity;
       }
 
-      // 2. If not found, fetch from external sources
+      // 3. If not found, fetch from external sources
       console.log(`🌐 Fetching ${formattedCityName} from external sources...`);
       const externalData = await this.fetchExternalData(formattedCityName, countryName);
       
-      // 3. Generate comprehensive city data using AI
+      // 4. Generate comprehensive city data using AI
       console.log(`🤖 Generating AI data for ${formattedCityName}...`);
       const cityData = await this.generateCityDataWithAI(formattedCityName, externalData, countryName);
       
-      // 4. Store in vector database for future use
+      // 5. Store in vector database for future use
       await this.storeCityInVectorDB(cityData);
       
       console.log(`✅ Generated and stored data for ${formattedCityName}`);
@@ -329,25 +340,28 @@ export class DynamicCityService {
   private async storeCityInVectorDB(cityData: CityData): Promise<void> {
     try {
       // Store in vector database
+      await vectorStore.storeContent({
+        contentId: cityData.id,
+        contentType: 'city',
+        title: `${cityData.name}, ${cityData.country}`,
+        content: JSON.stringify(cityData),
+        metadata: {
+          country: cityData.country,
+          region: cityData.region,
+          costLevel: cityData.costLevel,
+          rating: cityData.rating,
+          culture: cityData.culture,
+          generated: true,
+          timestamp: new Date().toISOString()
+        }
+      });
+      console.log(`✅ Stored ${cityData.name} in vector database`);
+      
+      // Store in ChromaDB as well for dynamic knowledge base
       try {
-        await vectorStore.storeContent({
-          contentId: cityData.id,
-          contentType: 'city',
-          title: `${cityData.name}, ${cityData.country}`,
-          content: JSON.stringify(cityData),
-          metadata: {
-            country: cityData.country,
-            region: cityData.region,
-            costLevel: cityData.costLevel,
-            rating: cityData.rating,
-            culture: cityData.culture,
-            generated: true,
-            timestamp: new Date().toISOString()
-          }
-        });
-        console.log(`✅ Stored ${cityData.name} in vector database`);
-      } catch (vectorError) {
-        console.error('Error storing in vector database:', vectorError);
+        await this.storeInChromaDB(cityData);
+      } catch (chromaError) {
+        console.error('Error storing in ChromaDB:', chromaError);
       }
       
       // Also try to store trip plans for this city if possible
@@ -358,6 +372,71 @@ export class DynamicCityService {
       }
     } catch (error) {
       console.error('Error in storeCityInVectorDB:', error);
+    }
+  }
+  
+  /**
+   * Store generated city data in ChromaDB for dynamic knowledge base
+   */
+  private async storeInChromaDB(cityData: CityData): Promise<void> {
+    try {
+      const { dynamicKnowledgeBase } = await import('./dynamicKnowledgeBase');
+      
+      // Initialize the dynamic knowledge base
+      await dynamicKnowledgeBase.initialize();
+      
+      // Add the destination to the knowledge base
+      await dynamicKnowledgeBase.addDestination({
+        name: cityData.name,
+        country: cityData.country,
+        region: cityData.region,
+        description: cityData.description,
+        coordinates: {
+          latitude: cityData.latitude,
+          longitude: cityData.longitude
+        },
+        metadata: {
+          culture: cityData.culture,
+          costLevel: cityData.costLevel,
+          rating: cityData.rating,
+          population: cityData.population,
+          language: cityData.language,
+          currency: cityData.currency,
+          image: cityData.image
+        }
+      });
+      
+      // Add cultural insights
+      await dynamicKnowledgeBase.addCulturalInsight({
+        destinationName: cityData.name,
+        country: cityData.country,
+        insightType: 'custom',
+        title: 'Cultural Overview',
+        content: cityData.description,
+        metadata: {
+          highlights: cityData.highlights,
+          mainAttractions: cityData.mainAttractions
+        }
+      });
+      
+      // Add law-related information if available
+      if (cityData.localLaws || cityData.travelLaws) {
+        await dynamicKnowledgeBase.addCulturalInsight({
+          destinationName: cityData.name,
+          country: cityData.country,
+          insightType: 'law',
+          title: 'Legal Information',
+          content: `Important legal information for ${cityData.name}`,
+          metadata: {
+            laws: cityData.localLaws || cityData.travelLaws
+          }
+        });
+      }
+      
+      console.log(`✅ Added ${cityData.name} to dynamic knowledge base`);
+    } catch (error) {
+      console.error('Error storing in ChromaDB:', error);
+      throw error;
     }
   }
   

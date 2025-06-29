@@ -90,6 +90,9 @@ export default function ExplorePage() {
     setIsGeneratingCity(false);
     setNewCityError(null);
     
+    setIsGeneratingCity(false);
+    setNewCityError(null);
+    
     const filteredCities = getCitiesByFilter({
       country: filters.country === 'all' ? undefined : filters.country,
       costLevel: filters.costLevel === 'all' ? undefined : filters.costLevel,
@@ -102,6 +105,8 @@ export default function ExplorePage() {
       handleGenerateNewCity(query);
     } else {
       setCities(filteredCities);
+    } else {
+      setCities(filteredCities);
       handleCitySelect(filteredCities[0]);
     }
   };
@@ -110,12 +115,23 @@ export default function ExplorePage() {
     try {
       setIsGeneratingCity(true);
       setError(null);
+      setError(null);
       
       console.log(`City "${cityName}" not found in local database. Generating using AI...`);
       
       // Use the dynamic city service to generate city data
       const generatedCity = await dynamicCityService.searchCity(cityName);
-      
+    setIsLoading(true);
+    setNewCityError(null);
+    setCulturalInsights(null);
+    setNewCityError(null);
+    setCulturalInsights(null);
+    
+    try {
+      const insights = await getCulturalInsights.mutateAsync({
+        location: city.name,
+        latitude: city.latitude,
+        longitude: city.longitude,
       if (generatedCity) {
         // Add the generated city to the cities list
         setCities([generatedCity]);
@@ -129,33 +145,12 @@ export default function ExplorePage() {
         const defaultCities = getCitiesByFilter({ limit: 8 });
         setCities(defaultCities);
       }
-    } catch (err) {
-      console.error("Error generating city:", err);
+    } catch (error) {
+      console.error('Error fetching cultural insights:', error);
       setNewCityError(`Error generating data for "${cityName}". Please try a different city name.`);
       // Load some default cities as fallback
       const defaultCities = getCitiesByFilter({ limit: 8 });
       setCities(defaultCities);
-    } finally {
-      setIsGeneratingCity(false);
-    }
-  };
-
-  const handleCitySelect = async (city: CityData) => {
-    setSelectedCity(city);
-    setIsLoading(true);
-    setNewCityError(null);
-    setCulturalInsights(null);
-    
-    try {
-      const insights = await getCulturalInsights.mutateAsync({
-        location: city.name,
-        latitude: city.latitude,
-        longitude: city.longitude,
-      });
-      setCulturalInsights(insights);
-    } catch (error) {
-      console.error('Error fetching cultural insights:', error);
-      setError(error instanceof Error ? error.message : 'Failed to load cultural insights');
     } finally {
       setIsLoading(false);
     }
@@ -292,11 +287,37 @@ export default function ExplorePage() {
                 <AlertDescription>{newCityError}</AlertDescription>
               </Alert>
             )}
+            {isGeneratingCity && (
+              <Card className="p-4">
+                <div className="animate-pulse space-y-3">
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-10 bg-gray-200 rounded"></div>
+                  <div className="h-20 bg-gray-200 rounded"></div>
+                  <div className="h-20 bg-gray-200 rounded"></div>
+                </div>
+                <div className="mt-3 text-sm text-gray-600 text-center">
+                  Generating new city data using AI...
+                </div>
+              </Card>
+            )}
+            
+            {/* Error State */}
+            {newCityError && !isGeneratingCity && (
+              <Alert className="border-red-200 bg-red-50">
+                <AlertCircle className="h-4 w-4 text-red-500" />
+                <AlertDescription>{newCityError}</AlertDescription>
+              </Alert>
+            )}
             
             {/* Cities List */}
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <h3 className="font-semibold text-sm">Cities ({cities.length})</h3>
+                {cities.length > 0 && !isGeneratingCity && (
+                  <Badge variant="outline" className="text-xs">
+                    {cities.some(c => c.id.includes('-generated')) ? 'AI Enhanced' : 'Database'}
+                  </Badge>
+                )}
                 {cities.length > 0 && !isGeneratingCity && (
                   <Badge variant="outline" className="text-xs">
                     {cities.some(c => c.id.includes('-generated')) ? 'AI Enhanced' : 'Database'}
@@ -375,6 +396,7 @@ export default function ExplorePage() {
               <Alert className="border-red-200 bg-red-50">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>{error}</AlertDescription>
+              </Alert>
               </Alert>
             )}
 
@@ -485,6 +507,11 @@ export default function ExplorePage() {
                             </div>
                           </div>
                         </div>
+                        {city.id.includes('-generated') && (
+                          <div className="mt-1">
+                            <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">AI Generated</Badge>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   </TabsContent>
