@@ -170,35 +170,36 @@ export class DynamicKnowledgeBase {
       // Sequentially search each collection to avoid issues
       for (const collection of collectionsToSearch) {
         try {
-        const collectionResults = await mockChromeDb.queryCollection(
-          collection,
-          options.query,
-          {
-            limit: options.limit || 5,
-            filters: options.filters || {},
-            includeMetadata: true,
-            includeDocuments: true
-          }
-        );
-        
-        // Transform to standard format
-        collectionResults.forEach((result: any) => {
-          results.push({
-            id: result.id,
-            type: result.metadata.type || collection,
-            title: result.metadata.title || 'Untitled',
-            content: result.content,
-            location: result.metadata.destination || result.metadata.location || result.metadata.name,
-            country: result.metadata.country,
-            coordinates: result.metadata.coordinates ? this.parseCoordinates(result.metadata.coordinates) : undefined,
-            metadata: result.metadata,
-            createdAt: new Date(result.metadata.createdAt || Date.now()),
+          const collectionResults = await mockChromeDb.queryCollection(
+            collection,
+            options.query,
+            {
+              limit: options.limit || 5,
+              filters: options.filters || {},
+              includeMetadata: true,
+              includeDocuments: true
+            }
+          );
+          
+          // Transform to standard format
+          collectionResults.forEach((result: any) => {
+            results.push({
+              id: result.id,
+              type: result.metadata.type || collection,
+              title: result.metadata.title || 'Untitled',
+              content: result.content,
+              location: result.metadata.destination || result.metadata.location || result.metadata.name,
+              country: result.metadata.country,
+              coordinates: result.metadata.coordinates ? this.parseCoordinates(result.metadata.coordinates) : undefined,
+              metadata: result.metadata,
+              createdAt: new Date(result.metadata.createdAt || Date.now()),
+              updatedAt: new Date(result.metadata.updatedAt || Date.now())
             } as KnowledgeBaseEntry);
           });
-        });
-      });
-      
-      await Promise.all(searchPromises);
+        } catch (error) {
+          console.error(`Error searching collection ${collection}:`, error);
+        }
+      }
       
       // Sort by relevance (similarity score)
       return results.sort((a, b) => 
