@@ -1,11 +1,8 @@
 'use client';
-
-import '../globals.css';
 import { trpc } from '@/lib/trpc';
 import { NextIntlClientProvider } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { locales } from '@/i18n';
-import { notFound } from 'next/navigation';
 import { Inter } from 'next/font/google';
 import dynamic from 'next/dynamic';
 
@@ -65,13 +62,7 @@ function LocaleLayout({
           </div>
         ) : (
           <NextIntlClientProvider locale={locale} messages={messages}>
-            <AuthProviders>
-              {children}
-            </AuthProviders>
-          </NextIntlClientProvider>
-        )}
-      </body>
-    </html>
+            {children}
   );
 }
 

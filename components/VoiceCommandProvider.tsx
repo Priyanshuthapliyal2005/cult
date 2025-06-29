@@ -39,11 +39,7 @@ interface VoiceCommandProviderProps {
 export function VoiceCommandProvider({ children }: VoiceCommandProviderProps) {
   const [isListening, setIsListening] = useState(false);
   const [isVoiceEnabled, setIsVoiceEnabled] = useState(() => {
-    if (typeof window === 'undefined') {
-      return false;
-    } else {
-      return localStorage.getItem('voiceEnabled') === 'true';
-    }
+    return false;  // Default to false, will update in useEffect
   });
   const [lastCommand, setLastCommand] = useState<string | null>(null);
   const recognitionRef = useRef<any>(null);
@@ -53,6 +49,11 @@ export function VoiceCommandProvider({ children }: VoiceCommandProviderProps) {
 
   useEffect(() => {
     setIsMounted(true);
+    // Now safe to use localStorage
+    if (typeof localStorage !== 'undefined') {
+      const storedValue = localStorage.getItem('voiceEnabled') === 'true';
+      setIsVoiceEnabled(storedValue);
+    }
   }, []);
 
   const getLocalizedPath = (path: string) => {
@@ -63,8 +64,15 @@ export function VoiceCommandProvider({ children }: VoiceCommandProviderProps) {
     if (!isMounted) return;
     
     if ('webkitSpeechRecognition' in window) {
-      const SpeechRecognition = (window as any).webkitSpeechRecognition;
-      recognitionRef.current = new SpeechRecognition();
+      try {
+        const SpeechRecognition = (window as any).webkitSpeechRecognition;
+        recognitionRef.current = new SpeechRecognition();
+      } catch (error) {
+        console.error('Error initializing speech recognition:', error);
+      }
+      
+      if (!recognitionRef.current) return;
+      
       recognitionRef.current.continuous = false;
       recognitionRef.current.interimResults = false;
       recognitionRef.current.lang = 'en-US';
@@ -91,9 +99,14 @@ export function VoiceCommandProvider({ children }: VoiceCommandProviderProps) {
 
   const toggleVoiceEnabled = () => {
     if (typeof window === 'undefined') return;
-    
+    if (!isMounted) return;
+
     setIsVoiceEnabled(!isVoiceEnabled);
-    localStorage.setItem('voiceEnabled', (!isVoiceEnabled).toString());
+    try {
+      localStorage.setItem('voiceEnabled', (!isVoiceEnabled).toString());
+    } catch (error) {
+      console.error('Error updating localStorage:', error);
+    }
     
     // Announce the change
     if (!isVoiceEnabled) {
@@ -102,10 +115,16 @@ export function VoiceCommandProvider({ children }: VoiceCommandProviderProps) {
   };
 
   const speak = (text: string) => {
-    if (typeof window !== 'undefined' && window.speechSynthesis) {
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.9; // Slightly slower for clarity
-      window.speechSynthesis.speak(utterance);
+    if (typeof window === 'undefined' || !isMounted) return;
+    
+    try {
+      if (window.speechSynthesis) {
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 0.9; // Slightly slower for clarity
+        window.speechSynthesis.speak(utterance);
+      }
+    } catch (error) {
+      console.error('Speech synthesis error:', error);
     }
   };
 

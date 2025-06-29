@@ -20,15 +20,25 @@ import Link from 'next/link';
 export default function UserMenu() {
   // Add voice control state
   const [voiceEnabled, setVoiceEnabled] = useState(() => {
-    if (typeof window === 'undefined') {
-      return false;
-    } else {
-      return localStorage.getItem('voiceEnabled') === 'true';
-    }
+    return false;  // Default state
   });
   const { user, isAuthenticated } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const locale = useLocale();
+  const [mounted, setMounted] = useState(false);
+  
+  useEffect(() => {
+    setMounted(true);
+    // Now safe to read from localStorage
+    if (typeof window !== 'undefined') {
+      try {
+        const storedValue = localStorage.getItem('voiceEnabled') === 'true';
+        setVoiceEnabled(storedValue);
+      } catch (error) {
+        console.error('Error reading from localStorage:', error);
+      }
+    }
+  }, []);
 
   const getLocalizedPath = (path: string) => {
     return locale === 'en' ? path : `/${locale}${path}`;
@@ -104,7 +114,13 @@ export default function UserMenu() {
           className="cursor-pointer"
           onClick={() => {
             setVoiceEnabled(!voiceEnabled);
-            localStorage.setItem('voiceEnabled', (!voiceEnabled).toString());
+            if (mounted && typeof window !== 'undefined') {
+              try {
+                localStorage.setItem('voiceEnabled', (!voiceEnabled).toString());
+              } catch (error) {
+                console.error('Error writing to localStorage:', error);
+              }
+            }
             // Announce the change
             if (!voiceEnabled) {
               const utterance = new SpeechSynthesisUtterance("Voice control enabled");

@@ -16,36 +16,51 @@ export default function ChatPage() {
   const [currentLocation, setCurrentLocation] = useState('');
   const [isMinimized, setIsMinimized] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useState(() => {
-    if (typeof window === 'undefined') {
-      return false;
-    } else {
-      return localStorage.getItem('voiceEnabled') === 'true';
-    }
+    return false; // Default state, will update in useEffect
     return false;
   });
   const [globalListening, setGlobalListening] = useState(false);
   const recognitionRef = useRef<any>(null);
   
   const t = useTranslations();
+  const locale = useLocale();
   const testElevenLabs = trpc.audio.testElevenLabs.useQuery();
+  
+  // Update state from localStorage after mount
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const storedValue = localStorage.getItem('voiceEnabled') === 'true';
+        setVoiceEnabled(storedValue);
+      } catch (error) {
+        console.error('Error reading from localStorage:', error);
+      }
+    }
+  }, []);
   
   // Check for browser speech recognition support
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window === 'undefined') return;
+    
+    try {
       const hasSpeechRecognition = 'webkitSpeechRecognition' in window || 
-                                  'SpeechRecognition' in window;
+                                'SpeechRecognition' in window;
       if (!hasSpeechRecognition) {
         console.log('Speech recognition not supported in this browser');
       }
+    } catch (error) {
+      console.error('Error checking speech recognition support:', error);
     }
   }, []);
 
   
   // Initialize speech recognition
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    
-    if ('webkitSpeechRecognition' in window) {
+    if (typeof window === 'undefined' || !window) return;
+
+    try {
+      if (!('webkitSpeechRecognition' in window)) return;
+      
       const SpeechRecognition = (window as any).webkitSpeechRecognition;
       recognitionRef.current = new SpeechRecognition();
       recognitionRef.current.continuous = false;
@@ -96,6 +111,8 @@ export default function ChatPage() {
       recognitionRef.current.onend = () => {
         setGlobalListening(false);
       };
+    } catch (error) {
+      console.error('Error initializing speech recognition:', error);
     }
   }, []);
 

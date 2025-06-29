@@ -1,6 +1,6 @@
 import { embeddingService } from './embeddings';
 import { hybridAI } from './hybridAI';
-import { mockChromeDb } from './mockChromeDb'; // Import mock ChromaDB
+import { mockChromeDb } from './mock-chromadb'; // Updated import
 
 export interface KnowledgeBaseEntry {
   id: string;
@@ -89,7 +89,7 @@ export class DynamicKnowledgeBase {
       
       // Add to ChromaDB
       await mockChromeDb.addDocuments(COLLECTIONS.DESTINATIONS, [{
-        id,
+        id: id as string,
         document,
         metadata: {
           type: 'destination',
@@ -125,7 +125,7 @@ export class DynamicKnowledgeBase {
       
       // Determine collection
       let collection: string;
-      switch (insightData.insightType) {
+      switch (insightData.insightType as string) {
         case 'law':
           collection = COLLECTIONS.LAWS;
           break;
@@ -167,8 +167,9 @@ export class DynamicKnowledgeBase {
       
       const results: KnowledgeBaseEntry[] = [];
       
-      // Search each collection in parallel
-      const searchPromises = collectionsToSearch.map(async (collection) => {
+      // Sequentially search each collection to avoid issues
+      for (const collection of collectionsToSearch) {
+        try {
         const collectionResults = await mockChromeDb.queryCollection(
           collection,
           options.query,
@@ -192,7 +193,7 @@ export class DynamicKnowledgeBase {
             coordinates: result.metadata.coordinates ? this.parseCoordinates(result.metadata.coordinates) : undefined,
             metadata: result.metadata,
             createdAt: new Date(result.metadata.createdAt || Date.now()),
-            updatedAt: new Date(result.metadata.updatedAt || result.metadata.createdAt || Date.now())
+            } as KnowledgeBaseEntry);
           });
         });
       });

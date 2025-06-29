@@ -102,16 +102,16 @@ class MockPrismaClient {
   };
 
   // Mock raw queries
-  $queryRaw = async () => [];
-  $queryRawUnsafe = async () => [];
-  $executeRaw = async () => 0;
-  $executeRawUnsafe = async () => 0;
-  $transaction = async (fn: any) => fn(this);
+  $queryRaw: any = async () => [];
+  $queryRawUnsafe: any = async () => [];
+  $executeRaw: any = async () => 0;
+  $executeRawUnsafe: any = async () => 0;
+  $transaction: any = async (fn: any) => fn(this);
 
   // Mock connection methods
-  $connect = async () => {};
-  $disconnect = async () => {};
-  $on = () => {};
+  $connect: any = async () => {};
+  $disconnect: any = async () => {};
+  $on: any = () => {};
 }
 
 const prismaClientSingleton = () => {
