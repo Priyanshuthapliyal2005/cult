@@ -5,7 +5,7 @@ import { motion } from 'framer-motion';
 import { Search, MapPin, Globe, Filter, Star, Clock, Users, ArrowLeft, AlertCircle, Volume2, ChevronRight, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -14,11 +14,15 @@ import { useTranslations, useLocale } from 'next-intl';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { trpc } from '@/lib/trpc';
 import { getCitiesByFilter, getCityById, type CityData } from '@/lib/cityDatabase';
+import { dynamicCityService } from '@/lib/dynamicCityService';
 import AudioPlayer from '@/components/AudioPlayer';
 import TripPlanner from '@/components/TripPlanner';
 import DynamicCityMap from '@/components/DynamicCityMap';
+import MapComponent from '@/components/MapComponent';
+import RouteMapper from '@/components/RouteMapper';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import UserMenu from '@/components/UserMenu';
+import TravelLawsAssistant from '@/components/TravelLawsAssistant';
 import Link from 'next/link';
 
 export default function ExplorePage() {
@@ -28,6 +32,8 @@ export default function ExplorePage() {
   const [culturalInsights, setCulturalInsights] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
   const [cities, setCities] = useState<CityData[]>([]);
+  const [isGeneratingCity, setIsGeneratingCity] = useState(false);
+  const [newCityError, setNewCityError] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     country: 'all',
     costLevel: 'all' as 'all' | 'budget' | 'moderate' | 'expensive',
@@ -49,7 +55,17 @@ export default function ExplorePage() {
     const query = searchParams?.get('q');
     if (query) {
       setSearchQuery(query);
-      handleSearch(query);
+      
+      // Use a timeout to avoid immediate search during initial load
+      setTimeout(() => {
+        handleSearch(query);
+      }, 100);
+    }
+    
+    // Check for tab parameter
+    const tab = searchParams?.get('tab');
+    if (tab) {
+      // Will be used later for tab selection
     }
   }, [searchParams, filters]);
 
@@ -71,23 +87,63 @@ export default function ExplorePage() {
   const handleSearch = (query = searchQuery) => {
     if (!query.trim()) return;
     
+    setIsGeneratingCity(false);
+    setNewCityError(null);
+    
     const filteredCities = getCitiesByFilter({
       country: filters.country === 'all' ? undefined : filters.country,
       costLevel: filters.costLevel === 'all' ? undefined : filters.costLevel,
       minRating: filters.minRating || undefined,
       searchTerm: query
     });
-    setCities(filteredCities);
-    
-    if (filteredCities.length > 0) {
+
+    if (filteredCities.length === 0) {
+      // City not found in local database, try to generate it using AI
+      handleGenerateNewCity(query);
+    } else {
+      setCities(filteredCities);
       handleCitySelect(filteredCities[0]);
+    }
+  };
+
+  const handleGenerateNewCity = async (cityName: string) => {
+    try {
+      setIsGeneratingCity(true);
+      setError(null);
+      
+      console.log(`City "${cityName}" not found in local database. Generating using AI...`);
+      
+      // Use the dynamic city service to generate city data
+      const generatedCity = await dynamicCityService.searchCity(cityName);
+      
+      if (generatedCity) {
+        // Add the generated city to the cities list
+        setCities([generatedCity]);
+        handleCitySelect(generatedCity);
+        
+        // Show success message
+        setError(`Successfully generated information for ${cityName}. This city has been added to our database.`);
+      } else {
+        setNewCityError(`Could not generate information for "${cityName}". Please try a different city name.`);
+        // Load some default cities as fallback
+        const defaultCities = getCitiesByFilter({ limit: 8 });
+        setCities(defaultCities);
+      }
+    } catch (err) {
+      console.error("Error generating city:", err);
+      setNewCityError(`Error generating data for "${cityName}". Please try a different city name.`);
+      // Load some default cities as fallback
+      const defaultCities = getCitiesByFilter({ limit: 8 });
+      setCities(defaultCities);
+    } finally {
+      setIsGeneratingCity(false);
     }
   };
 
   const handleCitySelect = async (city: CityData) => {
     setSelectedCity(city);
     setIsLoading(true);
-    setError(null);
+    setNewCityError(null);
     setCulturalInsights(null);
     
     try {
@@ -107,6 +163,14 @@ export default function ExplorePage() {
 
   const getLocalizedPath = (path: string) => {
     return locale === 'en' ? path : `/${locale}${path}`;
+  };
+  
+  // Determine which tab to show based on searchParams
+  const getInitialTab = () => {
+    const tab = searchParams?.get('tab');
+    if (tab === 'laws') return 'recommendations';
+    if (tab === 'map') return 'map';
+    return 'overview';
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -158,8 +222,8 @@ export default function ExplorePage() {
       </header>
 
       <div className="flex flex-col lg:flex-row h-[calc(100vh-73px)]">
-        {/* Sidebar */}
-        <div className="w-full lg:w-80 p-4 overflow-y-auto border-r bg-white/50">
+        {/* Sidebar - City Selection */}
+        <div className="w-full lg:w-80 p-4 overflow-y-auto border-r bg-white/50 flex flex-col">
           <div className="space-y-4">
             {/* Search */}
             <form onSubmit={handleSubmit} className="flex gap-2">
@@ -206,9 +270,40 @@ export default function ExplorePage() {
               </div>
             </div>
 
+            {/* Loading State */}
+            {isGeneratingCity && (
+              <Card className="p-4">
+                <div className="animate-pulse space-y-3">
+                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
+                  <div className="h-10 bg-gray-200 rounded"></div>
+                  <div className="h-20 bg-gray-200 rounded"></div>
+                  <div className="h-20 bg-gray-200 rounded"></div>
+                </div>
+                <div className="mt-3 text-sm text-gray-600 text-center">
+                  Generating new city data using AI...
+                </div>
+              </Card>
+            )}
+            
+            {/* Error State */}
+            {newCityError && !isGeneratingCity && (
+              <Alert className="border-red-200 bg-red-50">
+                <AlertCircle className="h-4 w-4 text-red-500" />
+                <AlertDescription>{newCityError}</AlertDescription>
+              </Alert>
+            )}
+            
             {/* Cities List */}
             <div className="space-y-3">
-              <h3 className="font-semibold text-sm">Cities ({cities.length})</h3>
+              <div className="flex justify-between items-center">
+                <h3 className="font-semibold text-sm">Cities ({cities.length})</h3>
+                {cities.length > 0 && !isGeneratingCity && (
+                  <Badge variant="outline" className="text-xs">
+                    {cities.some(c => c.id.includes('-generated')) ? 'AI Enhanced' : 'Database'}
+                  </Badge>
+                )}
+              </div>
+              
               {cities.map((city) => (
                 <motion.div
                   key={city.id}
@@ -229,7 +324,7 @@ export default function ExplorePage() {
                         <div className="w-16 h-16 rounded-lg overflow-hidden shrink-0">
                           <img
                             src={city.image}
-                            alt={city.name}
+                            alt={`${city.name} image`}
                             className="w-full h-full object-cover"
                           />
                         </div>
@@ -259,6 +354,11 @@ export default function ExplorePage() {
                           </div>
                         </div>
                       </div>
+                      {city.id.includes('-generated') && (
+                        <div className="mt-1">
+                          <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">AI Generated</Badge>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 </motion.div>
@@ -269,7 +369,7 @@ export default function ExplorePage() {
 
         {/* Main Content */}
         <div className="flex-1 p-4 overflow-y-auto">
-          <div className="max-w-4xl mx-auto space-y-6">
+          <div className="max-w-5xl mx-auto space-y-6">
             {/* Error Display */}
             {error && (
               <Alert className="border-red-200 bg-red-50">
@@ -302,7 +402,7 @@ export default function ExplorePage() {
                   <div className="h-64 rounded-xl overflow-hidden">
                     <img
                       src={selectedCity.image}
-                      alt={selectedCity.name}
+                      alt={`${selectedCity.name} skyline`}
                       className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
@@ -331,7 +431,7 @@ export default function ExplorePage() {
                 </div>
 
                 {/* Main Tabs */}
-                <Tabs defaultValue="overview" className="w-full">
+                <Tabs defaultValue={getInitialTab()} className="w-full">
                   <TabsList className="grid w-full grid-cols-6">
                     <TabsTrigger value="overview">{t('explore.tabs.overview')}</TabsTrigger>
                     <TabsTrigger value="customs">{t('explore.tabs.customs')}</TabsTrigger>
@@ -602,19 +702,109 @@ export default function ExplorePage() {
                   </TabsContent>
 
                   {/* Enhanced Map Tab */}
-                  <TabsContent value="map" className="space-y-4">
-                    <DynamicCityMap
-                      center={[selectedCity.latitude, selectedCity.longitude]}
-                      zoom={12}
-                      onCitySelect={handleCitySelect}
-                      selectedCityId={selectedCity.id}
-                      showSearch={true}
-                      showNearby={true}
-                      filters={{ country: selectedCity.country }}
-                    />
+                  <TabsContent value="map" className="space-y-6">
+                    <div className="grid gap-6 lg:grid-cols-7">
+                      <Card className="lg:col-span-5">
+                        <CardHeader className="pb-2">
+                          <CardTitle>{selectedCity.name} Interactive Map</CardTitle>
+                          <CardDescription>Explore cultural points of interest and plan your routes</CardDescription>
+                        </CardHeader>
+                        <CardContent className="p-0">
+                          <DynamicCityMap
+                            center={[selectedCity.latitude, selectedCity.longitude]}
+                            zoom={12}
+                            height="500px"
+                            onCitySelect={handleCitySelect}
+                            selectedCityId={selectedCity.id}
+                            showSearch={true}
+                            showNearby={true}
+                            filters={{ country: selectedCity.country }}
+                          />
+                        </CardContent>
+                      </Card>
+                      
+                      <Card className="lg:col-span-2">
+                        <CardHeader className="pb-2">
+                          <CardTitle className="text-base">Nearby Cities</CardTitle>
+                        </CardHeader>
+                        <CardContent className="max-h-[400px] overflow-y-auto">
+                          <div className="space-y-3">
+                            {getCitiesByFilter({
+                              country: selectedCity.country,
+                              limit: 5,
+                              exclude: [selectedCity.id]
+                            }).map((city) => (
+                              <Button 
+                                key={city.id}
+                                variant="outline" 
+                                className="w-full justify-start h-auto p-2"
+                                onClick={() => handleCitySelect(city)}
+                              >
+                                <div className="flex items-center space-x-2 w-full">
+                                  <div className="w-8 h-8 rounded overflow-hidden flex-shrink-0">
+                                    <img 
+                                      src={city.image} 
+                                      alt={city.name} 
+                                      className="w-full h-full object-cover"
+                                    />
+                                  </div>
+                                  <div className="flex-1 text-left">
+                                    <div className="font-medium text-sm">{city.name}</div>
+                                    <div className="text-xs text-gray-500">{city.region}</div>
+                                  </div>
+                                </div>
+                              </Button>
+                            ))}
+                          </div>
+                        </CardContent>
+                        <CardFooter className="pt-0">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full"
+                            onClick={() => {
+                              // Open the RouteMapper panel
+                              const routeMapperSection = document.getElementById('route-mapper');
+                              if (routeMapperSection) {
+                                routeMapperSection.scrollIntoView({ behavior: 'smooth' });
+                              }
+                            }}
+                          >
+                            Plan a Route
+                          </Button>
+                        </CardFooter>
+                      </Card>
+                    </div>
+                    
+                    <div id="route-mapper">
+                      <RouteMapper
+                        center={[selectedCity.latitude, selectedCity.longitude]}
+                        zoom={12}
+                        height="600px"
+                      />
+                    </div>
                   </TabsContent>
                 </Tabs>
               </>
+            )}
+            
+            {/* Laws Tab (when accessed via laws link) */}
+            {searchParams?.get('tab') === 'laws' && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center">
+                    <Scale className="h-5 w-5 mr-2" />
+                    Travel Laws Assistant
+                  </CardTitle>
+                  <CardDescription>Get reliable information about local laws and regulations</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <TravelLawsAssistant
+                    selectedCity={selectedCity}
+                    onCityChange={handleCitySelect}
+                  />
+                </CardContent>
+              </Card>
             )}
           </div>
         </div>

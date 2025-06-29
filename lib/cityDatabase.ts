@@ -1023,13 +1023,16 @@ export function getCitiesByFilter(filters: {
   culture?: string;
   minRating?: number;
   searchTerm?: string;
+  limit?: number;
+  exclude?: string[];
 }): CityData[] {
-  return cityDatabase.filter(city => {
+  let results = cityDatabase.filter(city => {
     if (filters.country && city.country !== filters.country) return false;
     if (filters.region && city.region !== filters.region) return false;
     if (filters.costLevel && city.costLevel !== filters.costLevel) return false;
     if (filters.culture && !city.culture.toLowerCase().includes(filters.culture.toLowerCase())) return false;
     if (filters.minRating && city.rating < filters.minRating) return false;
+    if (filters.exclude && filters.exclude.includes(city.id)) return false;
     if (filters.searchTerm) {
       const term = filters.searchTerm.toLowerCase();
       return city.name.toLowerCase().includes(term) || 
@@ -1039,6 +1042,13 @@ export function getCitiesByFilter(filters: {
     }
     return true;
   });
+  
+  // Apply limit if specified
+  if (filters.limit && filters.limit > 0) {
+    results = results.slice(0, filters.limit);
+  }
+  
+  return results;
 }
 
 // Function to get trip plans for a city

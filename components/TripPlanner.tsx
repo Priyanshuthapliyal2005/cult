@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { getTripPlans, getCityById, type TripPlan, type DayPlan, type Activity } from '@/lib/cityDatabase';
+import { dynamicCityService } from '@/lib/dynamicCityService';
 import { useTranslations } from 'next-intl';
 
 interface TripPlannerProps {
@@ -23,9 +24,44 @@ export default function TripPlanner({ cityId, onPlanSelect, className = '' }: Tr
   const [expandedDay, setExpandedDay] = useState<number | null>(null);
   const [budgetType, setBudgetType] = useState<'budget' | 'moderate' | 'luxury'>('moderate');
   
-  const city = getCityById(cityId);
-  const tripPlans = getTripPlans(cityId);
   const t = useTranslations();
+  
+  const city = getCityById(cityId);
+  const [tripPlans, setTripPlans] = useState<TripPlan[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  
+  // Fetch trip plans
+  useEffect(() => {
+    async function fetchTripPlans() {
+      setIsLoading(true);
+      
+      try {
+        // Try to get plans from database first
+        const plans = getTripPlans(cityId);
+        
+        if (plans && plans.length > 0) {
+          setTripPlans(plans);
+        } else {
+          // If no plans in database, try to get from vector store
+          const vectorPlans = await dynamicCityService.getTripPlans(cityId);
+          
+          if (vectorPlans && vectorPlans.plans) {
+            setTripPlans(vectorPlans.plans);
+          } else {
+            // Fallback to empty array
+            setTripPlans([]);
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching trip plans:', error);
+        setTripPlans([]);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    
+    fetchTripPlans();
+  }, [cityId]);
 
   useEffect(() => {
     const plan = tripPlans.find(p => p.duration === selectedDuration);
@@ -33,7 +69,20 @@ export default function TripPlanner({ cityId, onPlanSelect, className = '' }: Tr
     setExpandedDay(null);
   }, [selectedDuration, tripPlans]);
 
-  if (!city || tripPlans.length === 0) {
+  if (isLoading) {
+    return (
+      <Card className={className}>
+        <CardContent className="p-6">
+          <div className="flex items-center justify-center space-x-3">
+            <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-gray-900"></div>
+            <div className="text-gray-600">Loading trip plans...</div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!city || (!isLoading && tripPlans.length === 0)) {
     return (
       <Card className={className}>
         <CardContent className="p-6 text-center">

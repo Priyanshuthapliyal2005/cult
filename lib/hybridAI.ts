@@ -182,9 +182,9 @@ export class HybridAIService {
   async generateLocationSummary(location: string): Promise<string> {
     try {
       // Try Groq first for quick summaries
-      const summary = await groqService.generateQuickResponse(
-        `Write a brief, engaging 2-sentence summary of ${location} highlighting its cultural significance and what makes it special for travelers.`
-      );
+      const prompt = `Write a brief, engaging 2-3 sentence summary of ${location} highlighting its cultural significance, main attractions, and what makes it special for travelers. Focus on authentic cultural experiences.`;
+      
+      const summary = await groqService.generateQuickResponse(prompt);
       return summary;
     } catch (groqError) {
       try {
@@ -193,6 +193,91 @@ export class HybridAIService {
         return summary;
       } catch (geminiError) {
         return `${location} is a culturally rich destination with unique local traditions and experiences waiting to be discovered.`;
+      }
+    }
+  }
+
+  /**
+   * Generate comprehensive city data for a location
+   */
+  async generateCityData(cityName: string, countryName?: string): Promise<any> {
+    try {
+      const prompt = `Generate comprehensive travel and cultural data for ${cityName}${countryName ? `, ${countryName}` : ''} in JSON format.
+
+Please provide detailed information with the following structure:
+{
+  "id": "${cityName.toLowerCase().replace(/\s+/g, '-')}${countryName ? `-${countryName.toLowerCase().replace(/\s+/g, '-')}` : ''}-generated",
+  "name": "${cityName}",
+  "country": "${countryName || ''}",
+  "region": "",
+  "latitude": 0,
+  "longitude": 0,
+  "population": 0,
+  "timezone": "",
+  "language": [""],
+  "currency": "",
+  "culture": "",
+  "image": "https://images.pexels.com/photos/1285625/pexels-photo-1285625.jpeg?auto=compress&cs=tinysrgb&w=600",
+  "description": "",
+  "highlights": [""],
+  "rating": 4.5,
+  "costLevel": "moderate",
+  "bestTimeToVisit": [""],
+  "averageStay": 3,
+  "mainAttractions": [""],
+  "localCuisine": [""],
+  "transportOptions": [""],
+  "safetyRating": 8.0,
+  "touristFriendly": 8.5,
+  "emergencyNumbers": {
+    "police": "",
+    "medical": "",
+    "fire": "",
+    "tourist": ""
+  }
+}
+
+Focus on accuracy for location, cultural details, and practical information. If exact data is unavailable, provide reasonable estimates based on similar locations. Fill ALL fields with meaningful information.
+
+Return ONLY valid JSON with no explanation or comments.`;
+
+      // Try Groq first for structured data generation
+      const result = await groqService.generateQuickResponse(prompt);
+      
+      try {
+        // Clean any markdown formatting and parse JSON
+        const cleanResponse = result.replace(/```json\s*|\s*```/g, '').trim();
+        return JSON.parse(cleanResponse);
+      } catch (parseError) {
+        console.error('Failed to parse city data JSON:', parseError);
+        throw new Error('Invalid format received from AI service');
+      }
+      
+    } catch (groqError) {
+      console.error('Groq service failed, trying Gemini fallback:', groqError);
+      
+      try {
+        // Fallback to Gemini
+        const result = await geminiService.generateChatResponse([
+          { 
+            role: 'user', 
+            content: `Generate detailed travel data for ${cityName}${countryName ? `, ${countryName}` : ''} in JSON format including: name, country, region, coordinates, language, currency, attractions, cuisine, etc. Return ONLY valid JSON.`
+          }
+        ]);
+        
+        // Parse JSON from Gemini response
+        const jsonMatch = result.match(/```json\s*([\s\S]*?)\s*```/) || 
+                        result.match(/\{[\s\S]*\}/);
+                        
+        if (jsonMatch) {
+          const jsonStr = jsonMatch[0].replace(/```json\s*|\s*```/g, '');
+          return JSON.parse(jsonStr);
+        } else {
+          throw new Error('No valid JSON found in response');
+        }
+      } catch (geminiError) {
+        console.error('Both AI services failed to generate city data:', geminiError);
+        throw new Error('Failed to generate city data');
       }
     }
   }

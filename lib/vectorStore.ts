@@ -34,27 +34,44 @@ export class VectorStore {
 
   async storeContent(content: ContentToStore): Promise<string> {
     try {
-      // Generate embedding for the content
-      const embeddingResponse = await embeddingService.generateEmbedding({
-        text: `${content.title}\n\n${content.content}`,
-        title: content.title,
-        taskType: 'RETRIEVAL_DOCUMENT'
-      });
+      let embedding = content.embedding;
+      
+      // Generate embedding if not provided
+      if (!embedding) {
+        try {
+          const embeddingResponse = await embeddingService.generateEmbedding({
+            text: `${content.title}\n\n${content.content}`,
+            title: content.title,
+            taskType: 'RETRIEVAL_DOCUMENT'
+          });
+          embedding = embeddingResponse.embedding;
+        } catch (embeddingError) {
+          console.error('Error generating embedding, storing without vector:', embeddingError);
+          // Continue without embedding in case of error
+        }
+      }
 
-      // Store in database
-      const stored = await prisma.vectorContent.create({
-        data: {
-          contentId: content.contentId,
-          contentType: content.contentType,
-          title: content.title,
-          content: content.content,
-          metadata: content.metadata || {},
-          embedding: embeddingResponse.embedding as any,
-        },
-      });
-
+      // Store in database (may or may not have embedding)
+      try {
+        const stored = await prisma.vectorContent.create({
+          data: {
+            contentId: content.contentId,
+            contentType: content.contentType,
+            title: content.title,
+            content: content.content,
+            metadata: content.metadata || {},
+            ...(embedding ? { embedding: embedding as any } : {}),
+          },
+        });
+        
+        return stored.id;
+      } catch (dbError) {
+        // If database fails, log the error but don't fail completely
+        console.error('Error storing in database:', dbError);
+        return 'temp-' + Date.now().toString();
+      }
+      
       console.log(`✅ Stored vector content: ${content.contentType}/${content.title}`);
-      return stored.id;
     } catch (error) {
       console.error('Error storing vector content:', error);
       throw new Error(`Failed to store content: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -91,75 +108,109 @@ export class VectorStore {
   async searchSimilar(request: VectorSearchRequest): Promise<VectorSearchResult[]> {
     try {
       // Generate query embedding
-      const queryEmbedding = await embeddingService.generateEmbedding({
-        text: request.query,
-        taskType: 'RETRIEVAL_QUERY'
-      });
+      try {
+        const queryEmbedding = await embeddingService.generateEmbedding({
+          text: request.query,
+          taskType: 'RETRIEVAL_QUERY'
+        });
 
-      // Build SQL query with vector similarity search
-      const contentTypeFilter = request.contentTypes 
-        ? `AND "contentType" = ANY($2::text[])`
-        : '';
-      
-      const metadataFilter = request.metadata
-        ? `AND metadata @> $${request.contentTypes ? 3 : 2}::jsonb`
-        : '';
+        // Build SQL query with vector similarity search
+        const contentTypeFilter = request.contentTypes 
+          ? `AND "contentType" = ANY($2::text[])`
+          : '';
+        
+        const metadataFilter = request.metadata
+          ? `AND metadata @> $${request.contentTypes ? 3 : 2}::jsonb`
+          : '';
 
-      let paramIndex = 1;
-      const params: any[] = [queryEmbedding.embedding];
-      
-      if (request.contentTypes) {
-        params.push(request.contentTypes);
-        paramIndex++;
+        let paramIndex = 1;
+        const params: any[] = [queryEmbedding.embedding];
+        
+        if (request.contentTypes) {
+          params.push(request.contentTypes);
+          paramIndex++;
+        }
+        
+        if (request.metadata) {
+          params.push(JSON.stringify(request.metadata));
+          paramIndex++;
+        }
+
+        params.push(request.threshold || 0.5);
+        params.push(request.limit || 10);
+
+        const query = `
+          SELECT 
+            id,
+            "contentId",
+            "contentType", 
+            title,
+            content,
+            metadata,
+            "createdAt",
+            "updatedAt",
+            (1 - (embedding <=> $1::vector)) as similarity
+          FROM vector_content
+          WHERE (1 - (embedding <=> $1::vector)) > $${paramIndex + 1}
+          ${contentTypeFilter}
+          ${metadataFilter}
+          ORDER BY embedding <=> $1::vector
+          LIMIT $${paramIndex + 2}
+        `;
+
+        const results = await prisma.$queryRawUnsafe(query, ...params) as any[];
+
+        return results.map(row => ({
+          id: row.id,
+          contentId: row.contentId,
+          contentType: row.contentType,
+          title: row.title,
+          content: row.content,
+          metadata: row.metadata,
+          similarity: parseFloat(row.similarity),
+          createdAt: new Date(row.createdAt),
+          updatedAt: new Date(row.updatedAt)
+        }));
+      } catch (vectorError) {
+        throw new Error('Vector search failed');
       }
-      
-      if (request.metadata) {
-        params.push(JSON.stringify(request.metadata));
-        paramIndex++;
-      }
-
-      params.push(request.threshold || 0.5);
-      params.push(request.limit || 10);
-
-      const query = `
-        SELECT 
-          id,
-          "contentId",
-          "contentType", 
-          title,
-          content,
-          metadata,
-          "createdAt",
-          "updatedAt",
-          (1 - (embedding <=> $1::vector)) as similarity
-        FROM vector_content
-        WHERE (1 - (embedding <=> $1::vector)) > $${paramIndex + 1}
-        ${contentTypeFilter}
-        ${metadataFilter}
-        ORDER BY embedding <=> $1::vector
-        LIMIT $${paramIndex + 2}
-      `;
-
-      const results = await prisma.$queryRawUnsafe(query, ...params) as any[];
-
-      return results.map(row => ({
-        id: row.id,
-        contentId: row.contentId,
-        contentType: row.contentType,
-        title: row.title,
-        content: row.content,
-        metadata: row.metadata,
-        similarity: parseFloat(row.similarity),
-        createdAt: new Date(row.createdAt),
-        updatedAt: new Date(row.updatedAt)
-      }));
     } catch (error) {
       console.error('Error searching vectors:', error);
       
       // Fallback to simple text search if vector search fails
       try {
-        console.log('Vector search failed, using text search fallback');
-        return [];
+        console.log('Vector search failed, using text search fallback', error);
+        
+        // Try to find content with a text-based approach
+        const conditions: any = {};
+        
+        if (request.contentTypes && request.contentTypes.length > 0) {
+          conditions.contentType = { in: request.contentTypes };
+        }
+        
+        const results = await prisma.vectorContent.findMany({
+          where: {
+            OR: [
+              { title: { contains: request.query, mode: 'insensitive' } },
+              { content: { contains: request.query, mode: 'insensitive' } }
+            ],
+            ...conditions
+          },
+          take: request.limit || 10,
+          orderBy: { createdAt: 'desc' }
+        });
+        
+        return results.map(row => ({
+          id: row.id,
+          contentId: row.contentId,
+          contentType: row.contentType,
+          title: row.title,
+          content: row.content,
+          metadata: row.metadata as any,
+          similarity: 0.5, // Default similarity for text search
+          createdAt: row.createdAt,
+          updatedAt: row.updatedAt
+        }));
       } catch (textError) {
         console.error('Text search fallback also failed:', textError);
         return [];

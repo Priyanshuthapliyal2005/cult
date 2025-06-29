@@ -1,6 +1,6 @@
 import { embeddingService } from './embeddings';
 import { vectorStore } from './vectorStore';
-import { groqService } from './groq';
+import { hybridAI } from './hybridAI';
 import { prisma } from './prisma';
 import { CityData } from './cityDatabase';
 
@@ -30,29 +30,29 @@ export class DynamicCityService {
     try {
       console.log(`🔍 Searching for city: ${cityName}${countryName ? ` in ${countryName}` : ''}`);
       
+      // Convert city name to standard format
+      const formattedCityName = cityName.trim();
+      if (!formattedCityName) return null;
+      
       // 1. First check vector database
-      const existingCity = await this.searchVectorDB(cityName, countryName);
+      const existingCity = await this.searchVectorDB(formattedCityName, countryName);
       if (existingCity) {
-        console.log(`✅ Found ${cityName} in vector database`);
+        console.log(`✅ Found ${formattedCityName} in vector database`);
         return existingCity;
       }
 
       // 2. If not found, fetch from external sources
-      console.log(`🌐 Fetching ${cityName} from external sources...`);
-      const externalData = await this.fetchExternalData(cityName, countryName);
+      console.log(`🌐 Fetching ${formattedCityName} from external sources...`);
+      const externalData = await this.fetchExternalData(formattedCityName, countryName);
       
-      if (!externalData.wikipedia) {
-        console.log(`❌ No data found for ${cityName}`);
-        return null;
-      }
-
       // 3. Generate comprehensive city data using AI
-      const cityData = await this.generateCityDataWithAI(cityName, externalData);
+      console.log(`🤖 Generating AI data for ${formattedCityName}...`);
+      const cityData = await this.generateCityDataWithAI(formattedCityName, externalData, countryName);
       
       // 4. Store in vector database for future use
       await this.storeCityInVectorDB(cityData);
       
-      console.log(`✅ Generated and stored data for ${cityName}`);
+      console.log(`✅ Generated and stored data for ${formattedCityName}`);
       return cityData;
       
     } catch (error) {
@@ -175,78 +175,28 @@ export class DynamicCityService {
   /**
    * Generate comprehensive city data using AI
    */
-  private async generateCityDataWithAI(cityName: string, externalData: ExternalCityData): Promise<CityData> {
-    const prompt = `Based on the following information about ${cityName}, generate comprehensive travel and cultural data in JSON format.
-
-Wikipedia Data: ${JSON.stringify(externalData.wikipedia, null, 2)}
-
-Please provide a detailed response with the following structure:
-{
-  "id": "city-country",
-  "name": "${cityName}",
-  "country": "country name",
-  "region": "region/state name",
-  "latitude": number,
-  "longitude": number,
-  "population": number,
-  "timezone": "timezone",
-  "language": ["primary language", "other languages"],
-  "currency": "currency code",
-  "culture": "brief culture description",
-  "description": "detailed description for travelers",
-  "highlights": ["key attraction 1", "key attraction 2", ...],
-  "rating": 4.5,
-  "costLevel": "budget|moderate|expensive",
-  "bestTimeToVisit": ["month1", "month2", ...],
-  "averageStay": number,
-  "mainAttractions": ["attraction1", "attraction2", ...],
-  "localCuisine": ["dish1", "dish2", ...],
-  "transportOptions": ["option1", "option2", ...],
-  "safetyRating": 8.5,
-  "touristFriendly": 9.0,
-  "localLaws": {
-    "legal": ["important law 1", "important law 2", ...],
-    "cultural": ["cultural rule 1", "cultural rule 2", ...],
-    "guidelines": ["guideline 1", "guideline 2", ...],
-    "penalties": ["penalty info 1", "penalty info 2", ...]
-  },
-  "culturalTaboos": ["taboo 1", "taboo 2", ...],
-  "dressCode": {
-    "general": "dress code description",
-    "religious": "religious site dress code",
-    "business": "business attire"
-  },
-  "tippingEtiquette": "tipping customs",
-  "businessHours": {
-    "general": "general business hours",
-    "restaurants": "restaurant hours",
-    "shops": "shop hours",
-    "government": "government office hours"
-  },
-  "emergencyNumbers": {
-    "police": "police number",
-    "medical": "medical emergency",
-    "fire": "fire department",
-    "tourist": "tourist helpline"
-  }
-}
-
-Focus especially on:
-1. Local laws and regulations that tourists should know
-2. Cultural customs and taboos
-3. Practical information for travelers
-4. Accurate geographical and demographic data
-5. Real attractions and cuisine
-
-Provide only the JSON response, no additional text.`;
-
+  private async generateCityDataWithAI(cityName: string, externalData: ExternalCityData, countryName?: string): Promise<CityData> {
     try {
-      const response = await groqService.generateQuickResponse(prompt);
+      // Use hybridAI to generate comprehensive city data
+      const cityData = await hybridAI.generateCityData(cityName, countryName);
       
-      // Try to parse the AI response
-      const cleanResponse = response.replace(/```json\s*|\s*```/g, '').trim();
-      const cityData = JSON.parse(cleanResponse);
-      
+      // Enrich with external data if available
+      if (externalData.wikipedia) {
+        if (!cityData.description || cityData.description === '') {
+          cityData.description = externalData.wikipedia.extract || 
+            `${cityName} is a destination worth exploring with its unique cultural heritage and attractions.`;
+        }
+        
+        if (externalData.wikipedia.coordinates) {
+          cityData.latitude = externalData.wikipedia.coordinates.lat;
+          cityData.longitude = externalData.wikipedia.coordinates.lon;
+        }
+        
+        if (externalData.wikipedia.thumbnail) {
+          cityData.image = externalData.wikipedia.thumbnail;
+        }
+      }
+
       // Validate and set defaults for required fields
       return this.validateAndFixCityData(cityData);
       
@@ -254,7 +204,7 @@ Provide only the JSON response, no additional text.`;
       console.error('Error generating AI city data:', error);
       
       // Fallback: create basic city data from Wikipedia
-      return this.createFallbackCityData(cityName, externalData);
+      return this.createFallbackCityData(cityName, externalData, countryName);
     }
   }
 
@@ -317,13 +267,14 @@ Provide only the JSON response, no additional text.`;
   /**
    * Create fallback city data when AI generation fails
    */
-  private createFallbackCityData(cityName: string, externalData: ExternalCityData): CityData {
+  private createFallbackCityData(cityName: string, externalData: ExternalCityData, countryName?: string): CityData {
     const wiki = externalData.wikipedia;
+    const countryStr = countryName || 'Unknown';
     
     return {
-      id: `${cityName.toLowerCase().replace(/\s+/g, '-')}-generated`,
+      id: `${cityName.toLowerCase().replace(/\s+/g, '-')}-${countryStr.toLowerCase().replace(/\s+/g, '-')}-generated`,
       name: cityName,
-      country: 'Unknown',
+      country: countryStr,
       region: 'Unknown',
       latitude: wiki?.coordinates?.lat || 0,
       longitude: wiki?.coordinates?.lon || 0,
@@ -377,37 +328,125 @@ Provide only the JSON response, no additional text.`;
    */
   private async storeCityInVectorDB(cityData: CityData): Promise<void> {
     try {
-      // Generate embedding for the city data
-      const contentForEmbedding = `${cityData.name} ${cityData.country} ${cityData.region} ${cityData.culture} ${cityData.description} ${cityData.highlights.join(' ')} ${cityData.localLaws.legal.join(' ')} ${cityData.localLaws.cultural.join(' ')}`;
-      
-      const embedding = await embeddingService.generateEmbedding({
-        text: contentForEmbedding,
-        taskType: 'RETRIEVAL_DOCUMENT',
-        title: `${cityData.name}, ${cityData.country}`
-      });
-
       // Store in vector database
-      await vectorStore.storeContent({
-        contentId: cityData.id,
-        contentType: 'city',
-        title: `${cityData.name}, ${cityData.country}`,
-        content: JSON.stringify(cityData),
-        metadata: {
-          country: cityData.country,
-          region: cityData.region,
-          costLevel: cityData.costLevel,
-          rating: cityData.rating,
-          culture: cityData.culture,
-          generated: true,
-          timestamp: new Date().toISOString()
-        },
-        embedding: embedding.embedding
-      });
+      try {
+        await vectorStore.storeContent({
+          contentId: cityData.id,
+          contentType: 'city',
+          title: `${cityData.name}, ${cityData.country}`,
+          content: JSON.stringify(cityData),
+          metadata: {
+            country: cityData.country,
+            region: cityData.region,
+            costLevel: cityData.costLevel,
+            rating: cityData.rating,
+            culture: cityData.culture,
+            generated: true,
+            timestamp: new Date().toISOString()
+          }
+        });
+        console.log(`✅ Stored ${cityData.name} in vector database`);
+      } catch (vectorError) {
+        console.error('Error storing in vector database:', vectorError);
+      }
+      
+      // Also try to store trip plans for this city if possible
+      try {
+        this.generateAndStoreTripPlans(cityData);
+      } catch (tripError) {
+        console.error('Error generating trip plans:', tripError);
+      }
+    } catch (error) {
+      console.error('Error in storeCityInVectorDB:', error);
+    }
+  }
+  
+  /**
+   * Generate trip plans for a city using AI and store them
+   */
+  private async generateAndStoreTripPlans(cityData: CityData): Promise<void> {
+    try {
+      const prompt = `Create travel itineraries for ${cityData.name}, ${cityData.country} with 1-day, 2-day, and 3-day plans in JSON format.
+Include morning to evening activities, meals, accommodations, and transportation options.
+Focus on authentic cultural experiences, local cuisine, and must-see attractions.
+Return valid JSON in this exact format:
+{
+  "plans": [
+    {
+      "duration": 1,
+      "title": "Essential ${cityData.name} in a Day",
+      "days": [{"day": 1, "title": "Highlights Tour", "activities": [...], "meals": [...]}]
+    },
+    {
+      "duration": 2,
+      "title": "Weekend in ${cityData.name}",
+      "days": [{"day": 1, "title": "...", "activities": [...]}, {"day": 2, "title": "...", "activities": [...]}]
+    },
+    {
+      "duration": 3,
+      "title": "Complete ${cityData.name} Experience",
+      "days": [...]
+    }
+  ]
+}`;
 
-      console.log(`✅ Stored ${cityData.name} in vector database`);
+      const planData = await hybridAI.generateChatResponse([
+        { role: 'user', content: prompt }
+      ]);
+      
+      // Parse the JSON data from the response
+      const jsonMatch = planData.match(/```json\s*([\s\S]*?)\s*```/) || planData.match(/\{[\s\S]*\}/);
+      
+      if (jsonMatch) {
+        const jsonStr = jsonMatch[0].replace(/```json\s*|\s*```/g, '');
+        const tripPlans = JSON.parse(jsonStr);
+        
+        // Store the trip plans in the vector database
+        await vectorStore.storeContent({
+          contentId: `trips-${cityData.id}`,
+          contentType: 'trip_plans',
+          title: `Trip Plans for ${cityData.name}, ${cityData.country}`,
+          content: JSON.stringify(tripPlans),
+          metadata: {
+            cityId: cityData.id,
+            cityName: cityData.name,
+            country: cityData.country,
+            generated: true,
+            timestamp: new Date().toISOString()
+          }
+        });
+        
+        console.log(`✅ Generated and stored trip plans for ${cityData.name}`);
+      }
+    } catch (error) {
+      console.error('Error generating trip plans:', error);
+    }
+  }
+
+  /**
+   * Fetch trip plans for a city from the vector database
+   */
+  async getTripPlans(cityId: string): Promise<any> {
+    try {
+      const results = await vectorStore.searchSimilar({
+        query: `trip plans ${cityId}`,
+        contentTypes: ['trip_plans'],
+        limit: 1,
+        threshold: 0.1,
+        metadata: {
+          cityId: cityId
+        }
+      });
+      
+      if (results.length > 0) {
+        return JSON.parse(results[0].content);
+      }
+      
+      return null;
       
     } catch (error) {
-      console.error('Error storing city in vector DB:', error);
+      console.error('Error fetching trip plans:', error);
+      return null;
     }
   }
 
