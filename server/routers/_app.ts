@@ -347,7 +347,7 @@ export const appRouter = router({
         const fallbackResponse = `I apologize for the technical difficulty. I can help you with cultural insights about many destinations including ${availableCities} and many more. What specific cultural question can I assist you with?`;
         
         return {
-          conversationId: conversationId || 'temp-' + Date.now().toString(),
+          conversationId: input.conversationId || 'temp-' + Date.now().toString(),
           response: fallbackResponse,
         };
       }
@@ -386,8 +386,8 @@ export const appRouter = router({
               orderBy: { createdAt: 'asc' },
             },
           },
-      } catch (qualityError) {
-        console.error('Error getting quality report:', qualityError);
+        });
+      } catch (error) {
         console.error('Error getting conversation:', error);
         return null;
       }
