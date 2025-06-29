@@ -1,4 +1,4 @@
-import { ChromaClient, Collection, OpenAIEmbeddingFunction } from '@xenova/chromadb';
+import { ChromaClient, Collection } from 'chromadb';
 import { embeddingService } from './embeddings';
 
 export interface ChromaDocument {
