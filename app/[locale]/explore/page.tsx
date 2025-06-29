@@ -24,7 +24,7 @@ const handleGenerateNewCity = async (cityName: string) => {
         setCities(defaultCities);
       }
     } catch (error) {
-      console.error('Error generating city:', error);
+      setNewCityError(`Error generating data for "${cityName}". Please try a different city name.`);
       setNewCityError(`Error generating data for "${cityName}". Please try a different city name.`);
       const defaultCities = getCitiesByFilter({ limit: 8 });
       setCities(defaultCities);
