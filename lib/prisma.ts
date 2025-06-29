@@ -99,19 +99,19 @@ class MockPrismaClient {
     update: async (args: any) => ({ id: 'mock-audit-id', ...args.data }),
     upsert: async (args: any) => ({ id: 'mock-audit-id', ...args.data }),
     delete: async () => ({ id: 'mock-audit-id' })
-  },
+  };
 
   // Mock raw queries
-  $queryRaw: async () => [],
-  $queryRawUnsafe: async () => [],
-  $executeRaw: async () => 0,
-  $executeRawUnsafe: async () => 0,
-  $transaction: async (fn: any) => fn(this),
+  $queryRaw = async () => [];
+  $queryRawUnsafe = async () => [];
+  $executeRaw = async () => 0;
+  $executeRawUnsafe = async () => 0;
+  $transaction = async (fn: any) => fn(this);
 
   // Mock connection methods
-  $connect: async () => {},
-  $disconnect: async () => {},
-  $on: () => {},
+  $connect = async () => {};
+  $disconnect = async () => {};
+  $on = () => {};
 }
 
 const prismaClientSingleton = () => {
