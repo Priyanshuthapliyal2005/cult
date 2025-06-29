@@ -1,8 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Scale, MapPin, AlertTriangle, Search, FileText, Shield, Book, Filter, Info, CheckCircle } from 'lucide-react';
+import { MapPin, AlertTriangle, Search, FileText, Shield, Book, Filter, Info, CheckCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -11,12 +10,13 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { cityDatabase, type CityData } from '@/lib/cityDatabase';
+import { cityDatabase, getCityById, type CityData } from '@/lib/cityDatabase';
 import { trpc } from '@/lib/trpc';
+import { Scale } from '@/components/Scale';
 
 interface TravelLawsAssistantProps {
-  selectedCity?: CityData;
-  onCityChange?: (city: CityData) => void;
+  selectedCity?: CityData | null;
+  onCityChange?: (city: CityData) => void; 
   className?: string;
 }
 
@@ -38,7 +38,7 @@ export default function TravelLawsAssistant({
   const handleCitySearch = (query: string) => {
     if (!query.trim()) return;
     
-    const foundCity = cityDatabase.find(city =>
+    const foundCity = cityDatabase.find((city: CityData) =>
       city.name.toLowerCase().includes(query.toLowerCase()) ||
       city.country.toLowerCase().includes(query.toLowerCase()) ||
       city.region.toLowerCase().includes(query.toLowerCase())
@@ -52,7 +52,7 @@ export default function TravelLawsAssistant({
   const handleLegalQuestion = async () => {
     if (!legalQuestion.trim() || !selectedCity) return;
     
-    setIsAsking(true);
+    setIsAsking(true); 
     setFeedbackGiven(false);
     
     try {
@@ -343,7 +343,7 @@ export default function TravelLawsAssistant({
                 <div className="space-y-3">
                   {selectedCity.travelLaws.penalties.commonViolations.map((violation, index) => (
                     <div key={index} className={`p-4 rounded-lg border ${getSeverityColor(violation.severity)}`}>
-                      <div className="flex items-start justify-between">
+                      <div className="flex items-start justify-between"> 
                         <div className="flex-1">
                           <h4 className="font-semibold">{violation.violation}</h4>
                           <p className="text-sm mt-1">{violation.penalty}</p>
@@ -366,7 +366,7 @@ export default function TravelLawsAssistant({
                 <CardHeader>
                   <CardTitle className="text-sm">Visa Requirements</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent> 
                   <ul className="space-y-1">
                     {selectedCity.travelLaws.immigration.visaRequirements.map((req, index) => (
                       <li key={index} className="text-sm">• {req}</li>
@@ -379,7 +379,7 @@ export default function TravelLawsAssistant({
                 <CardHeader>
                   <CardTitle className="text-sm">Entry Restrictions</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent> 
                   <ul className="space-y-1">
                     {selectedCity.travelLaws.immigration.entryRestrictions.map((restriction, index) => (
                       <li key={index} className="text-sm">• {restriction}</li>
@@ -392,7 +392,7 @@ export default function TravelLawsAssistant({
                 <CardHeader>
                   <CardTitle className="text-sm">Customs Regulations</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent> 
                   <ul className="space-y-1">
                     {selectedCity.travelLaws.immigration.customsRegulations.map((regulation, index) => (
                       <li key={index} className="text-sm">• {regulation}</li>
@@ -409,7 +409,7 @@ export default function TravelLawsAssistant({
                 <CardHeader>
                   <CardTitle className="text-sm">Driving Laws</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent> 
                   <ul className="space-y-1">
                     {selectedCity.travelLaws.transportation.drivingLaws.map((law, index) => (
                       <li key={index} className="text-sm">• {law}</li>
@@ -422,7 +422,7 @@ export default function TravelLawsAssistant({
                 <CardHeader>
                   <CardTitle className="text-sm">Public Transport</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent> 
                   <ul className="space-y-1">
                     {selectedCity.travelLaws.transportation.publicTransportRules.map((rule, index) => (
                       <li key={index} className="text-sm">• {rule}</li>
@@ -435,7 +435,7 @@ export default function TravelLawsAssistant({
                 <CardHeader>
                   <CardTitle className="text-sm">Ride Sharing</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent> 
                   <ul className="space-y-1">
                     {selectedCity.travelLaws.transportation.rideSharingRegulations.map((regulation, index) => (
                       <li key={index} className="text-sm">• {regulation}</li>
@@ -452,7 +452,7 @@ export default function TravelLawsAssistant({
                 <CardHeader>
                   <CardTitle className="text-sm">Alcohol & Smoking</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent> 
                   <div className="space-y-2">
                     <div>
                       <h4 className="font-medium text-xs mb-1">Alcohol Restrictions:</h4>
@@ -478,7 +478,7 @@ export default function TravelLawsAssistant({
                 <CardHeader>
                   <CardTitle className="text-sm">Public Conduct</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent> 
                   <div className="space-y-2">
                     <div>
                       <h4 className="font-medium text-xs mb-1">Noise Ordinances:</h4>
@@ -508,7 +508,7 @@ export default function TravelLawsAssistant({
                 <CardHeader>
                   <CardTitle className="text-sm text-red-600">Restricted Areas</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent> 
                   <ul className="space-y-1">
                     {selectedCity.travelLaws.photography.restrictedAreas.map((area, index) => (
                       <li key={index} className="text-sm">• {area}</li>
@@ -521,7 +521,7 @@ export default function TravelLawsAssistant({
                 <CardHeader>
                   <CardTitle className="text-sm text-orange-600">Permits Required</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent> 
                   <ul className="space-y-1">
                     {selectedCity.travelLaws.photography.permitsRequired.map((permit, index) => (
                       <li key={index} className="text-sm">• {permit}</li>
@@ -534,7 +534,7 @@ export default function TravelLawsAssistant({
                 <CardHeader>
                   <CardTitle className="text-sm text-blue-600">Privacy Laws</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent> 
                   <ul className="space-y-1">
                     {selectedCity.travelLaws.photography.privacyLaws.map((law, index) => (
                       <li key={index} className="text-sm">• {law}</li>
@@ -551,7 +551,7 @@ export default function TravelLawsAssistant({
                 <CardTitle className="flex items-center text-red-700">
                   <AlertTriangle className="w-5 h-5 mr-2" />
                   Emergency Contacts & Legal Help
-                </CardTitle>
+                </CardTitle> 
                 <CardDescription>
                   Important numbers for legal emergencies and assistance
                 </CardDescription>
@@ -563,15 +563,15 @@ export default function TravelLawsAssistant({
                     <div className="space-y-2">
                       <div className="flex justify-between items-center p-2 bg-red-50 rounded">
                         <span>Police Emergency</span>
-                        <Badge variant="destructive">{selectedCity.emergencyNumbers.police}</Badge>
+                        <Badge variant="destructive">{selectedCity.emergencyNumbers?.police || '911'}</Badge>
                       </div>
                       <div className="flex justify-between items-center p-2 bg-blue-50 rounded">
                         <span>Medical Emergency</span>
-                        <Badge variant="secondary">{selectedCity.emergencyNumbers.medical}</Badge>
+                        <Badge variant="secondary">{selectedCity.emergencyNumbers?.medical || '911'}</Badge>
                       </div>
                       <div className="flex justify-between items-center p-2 bg-orange-50 rounded">
                         <span>Tourist Helpline</span>
-                        <Badge variant="outline">{selectedCity.emergencyNumbers.tourist}</Badge>
+                        <Badge variant="outline">{selectedCity.emergencyNumbers?.tourist || 'Contact local tourism office'}</Badge>
                       </div>
                     </div>
                   </div>
