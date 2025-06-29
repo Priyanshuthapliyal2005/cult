@@ -8,6 +8,7 @@ import { trpc } from '@/lib/trpc';
 import { NextIntlClientProvider } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { locales } from '@/i18n';
+import { VoiceCommandProvider } from '@/components/VoiceCommandProvider';
 import { notFound } from 'next/navigation';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -66,12 +67,18 @@ function LocaleLayout({
       <head>
         <title>CulturalCompass - AI-Powered Travel Assistant</title>
         <meta name="description" content="Your intelligent travel companion with deep cultural insights and personalized recommendations" />
+        <meta name="theme-color" content="#6B7AFF" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <link rel="manifest" href="/manifest.json" />
       </head>
       <body className={inter.className}>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <SessionProvider>
             <AuthProvider>
-              {children}
+              <VoiceCommandProvider>
+                {children}
+              </VoiceCommandProvider>
             </AuthProvider>
           </SessionProvider>
         </NextIntlClientProvider>
