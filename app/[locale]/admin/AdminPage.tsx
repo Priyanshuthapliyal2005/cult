@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Database, Users, RefreshCw, Search, BarChart3, Layers, AlertCircle, CheckCircle, Circle, FileUp } from 'lucide-react';
+import { Database, Users, RefreshCw, Search, BarChart3, Layers, AlertCircle, CheckCircle, Circle, FileUp, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -12,6 +12,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useTranslations, useLocale } from 'next-intl';
 import { trpc } from '@/lib/trpc';
 import { VectorStatsResponse } from '@/types/vector';
+import dynamic from 'next/dynamic';
+
+// Dynamically import KnowledgeBaseUploader to avoid SSR issues
+const KnowledgeBaseUploader = dynamic(() => import('./KnowledgeBaseUploader'), {
+  ssr: false,
+  loading: () => <div className="p-4">Loading knowledge base uploader...</div>
+});
 
 interface Issue {
   type: string;
@@ -30,6 +37,9 @@ export default function AdminPage() {
   const locale = useLocale();
   const [searchQuery, setSearchQuery] = useState('');
   const [updateRunning, setUpdateRunning] = useState(false);
+
+  const tabs = ["overview", "vector-database", "content", "dynamic-kb", "analytics"];
+  const [activeAdminTab, setActiveAdminTab] = useState('overview');
 
   const systemStatus = trpc.knowledgeBase.getSystemStatus.useQuery(undefined, {
     refetchInterval: 60000 // Refresh every minute
@@ -86,10 +96,19 @@ export default function AdminPage() {
 
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="vector-database">Vector Database</TabsTrigger>
-          <TabsTrigger value="content">Content</TabsTrigger>
-          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          {tabs.map(tab => (
+            <TabsTrigger 
+              key={tab}
+              value={tab} 
+              onClick={() => setActiveAdminTab(tab)}
+            >
+              {tab === 'overview' && 'Overview'}
+              {tab === 'vector-database' && 'Vector Database'}
+              {tab === 'content' && 'Content'}
+              {tab === 'dynamic-kb' && 'Dynamic KB'}
+              {tab === 'analytics' && 'Analytics'}
+            </TabsTrigger>
+          ))}
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
@@ -297,6 +316,25 @@ export default function AdminPage() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* Dynamic Knowledge Base Tab */}
+        <TabsContent value="dynamic-kb" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Dynamic Knowledge Base</CardTitle>
+              <CardDescription>
+                ChromaDB-powered knowledge base management for real-time updates
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {activeAdminTab === 'dynamic-kb' && (
+                <div className="dynamic-knowledge-base-container">
+                  <KnowledgeBaseUploader />
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </TabsContent>
         
         <TabsContent value="vector-database" className="space-y-4">

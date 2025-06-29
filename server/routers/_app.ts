@@ -8,6 +8,7 @@ import { userRouter } from './user';
 import { vectorRouter } from './vector';
 import { ragService } from '@/lib/ragService';
 import { knowledgeBaseRouter } from './knowledgeBase';
+import { dynamicKnowledgeBaseRouter } from './dynamicKnowledgeBase';
 
 // Define explicit types to prevent deep type instantiation
 type CulturalInsightData = {
@@ -35,6 +36,9 @@ export const appRouter = router({
 
   // Include knowledge base router
   knowledgeBase: knowledgeBaseRouter,
+
+  // Include dynamic knowledge base router
+  dynamicKnowledgeBase: dynamicKnowledgeBaseRouter,
 
   // Test endpoint to verify database connection
   testConnection: publicProcedure
