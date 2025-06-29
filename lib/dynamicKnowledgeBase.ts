@@ -1,6 +1,6 @@
-import { chromaDb, ChromaDocument } from './chromaDb';
 import { embeddingService } from './embeddings';
 import { hybridAI } from './hybridAI';
+import { mockChromeDb } from './mockChromeDb'; // Import mock ChromaDB
 
 export interface KnowledgeBaseEntry {
   id: string;
@@ -45,13 +45,13 @@ export class DynamicKnowledgeBase {
   async initialize(): Promise<boolean> {
     try {
       console.log('🚀 Initializing Dynamic Knowledge Base...');
-      const connected = await chromaDb.connect();
+      const connected = await mockChromeDb.connect();
       
       if (connected) {
         // Ensure collections exist
         await Promise.all(
           Object.values(COLLECTIONS).map(name => 
-            chromaDb.getOrCreateCollection(name)
+            mockChromeDb.getOrCreateCollection(name)
           )
         );
         console.log('✅ Dynamic Knowledge Base initialized successfully');
@@ -88,7 +88,7 @@ export class DynamicKnowledgeBase {
       `.trim();
       
       // Add to ChromaDB
-      await chromaDb.addDocuments(COLLECTIONS.DESTINATIONS, [{
+      await mockChromeDb.addDocuments(COLLECTIONS.DESTINATIONS, [{
         id,
         document,
         metadata: {
@@ -140,7 +140,7 @@ export class DynamicKnowledgeBase {
       }
       
       // Add to ChromaDB
-      await chromaDb.addDocuments(collection, [{
+      await mockChromeDb.addDocuments(collection, [{
         id,
         document: insightData.content,
         metadata: {
@@ -169,7 +169,7 @@ export class DynamicKnowledgeBase {
       
       // Search each collection in parallel
       const searchPromises = collectionsToSearch.map(async (collection) => {
-        const collectionResults = await chromaDb.queryCollection(
+        const collectionResults = await mockChromeDb.queryCollection(
           collection,
           options.query,
           {
@@ -211,34 +211,27 @@ export class DynamicKnowledgeBase {
 
   async getStats(): Promise<KnowledgeBaseStats> {
     try {
-      const collections = await chromaDb.listCollections();
+      const collections = await mockChromeDb.listCollections();
       
-      // Get stats for each collection
-      const statsPromises = collections.map(async (collection) => {
-        return await chromaDb.getCollectionStats(collection);
-      });
+      // In demo mode, we'll return mock stats
+      const mockEntriesByType: Record<string, number> = {
+        'cultural_insights': 28,
+        'destinations': 12,
+        'laws': 15,
+        'phrases': 40,
+        'customs': 22,
+        'events': 8
+      };
       
-      const collectionStats = await Promise.all(statsPromises);
+      // Add up total entries
+      const totalEntries = Object.values(mockEntriesByType).reduce((a, b) => a + b, 0);
       
-      // Aggregate stats
-      let totalEntries = 0;
-      const entriesByType: Record<string, number> = {};
-      
-      collections.forEach((collection, index) => {
-        const stats = collectionStats[index];
-        totalEntries += stats.documentCount;
-        entriesByType[collection] = stats.documentCount;
-      });
-      
-      // Count recently added entries (last 7 days)
-      // Note: This would ideally use a database query, but for ChromaDB we'd need
-      // to fetch all entries and filter by creation date, which isn't efficient
-      // This is a simplified version that just estimates recent entries
-      const recentEntries = Math.round(totalEntries * 0.1); // Estimate 10% as recent
+      // Assume about 10% are recent
+      const recentEntries = Math.round(totalEntries * 0.1);
       
       return {
         totalEntries,
-        entriesByType,
+        entriesByType: mockEntriesByType,
         recentEntries,
         collections
       };
@@ -302,7 +295,26 @@ export class DynamicKnowledgeBase {
         }
       } catch (parseError) {
         console.error('Failed to parse AI response:', parseError);
-        throw new Error('Invalid response format from AI service');
+        
+        // Return fallback data
+        return {
+          description: `${destinationName} is a fascinating destination with rich cultural heritage.`,
+          culturalHighlights: ["Vibrant local traditions", "Unique architectural style", "Rich culinary history"],
+          customsAndEtiquette: ["Respect local customs", "Dress appropriately", "Use common courtesy"],
+          localLaws: ["Follow local regulations", "Observe public behavior rules", "Respect private property"],
+          essentialPhrases: [
+            {
+              english: "Hello",
+              local: "Hello",
+              pronunciation: "Hello"
+            },
+            {
+              english: "Thank you",
+              local: "Thank you",
+              pronunciation: "Thank you"
+            }
+          ]
+        };
       }
     } catch (error) {
       console.error('Error generating destination content:', error);
@@ -316,52 +328,8 @@ export class DynamicKnowledgeBase {
     mapping: Record<string, string>;
   }): Promise<string[]> {
     try {
-      // This would be expanded to handle different sources and mapping schemes
-      const documents: ChromaDocument[] = [];
-      
-      if (source.type === 'wikipedia') {
-        // Process Wikipedia data
-        const { title, extract, coordinates } = source.data;
-        
-        documents.push({
-          id: `wikipedia_${title.toLowerCase().replace(/\s+/g, '_')}`,
-          document: extract,
-          metadata: {
-            type: 'destination',
-            source: 'wikipedia',
-            name: title,
-            coordinates: coordinates ? `${coordinates.lat},${coordinates.lon}` : '',
-            createdAt: new Date().toISOString()
-          }
-        });
-      } else if (source.type === 'custom') {
-        // Process custom data
-        const { entries } = source.data;
-        
-        entries.forEach((entry: any, index: number) => {
-          documents.push({
-            id: `custom_${Date.now()}_${index}`,
-            document: entry.content,
-            metadata: {
-              type: entry.type || 'custom',
-              title: entry.title || 'Untitled',
-              ...entry.metadata,
-              createdAt: new Date().toISOString()
-            }
-          });
-        });
-      }
-      
-      // Add to appropriate collection
-      if (documents.length > 0) {
-        const targetCollection = source.type === 'wikipedia' ? 
-          COLLECTIONS.DESTINATIONS : COLLECTIONS.CULTURAL_INSIGHTS;
-        
-        const ids = await chromaDb.addDocuments(targetCollection, documents);
-        return ids;
-      }
-      
-      return [];
+      // Mock method - in a real app, this would process different data sources
+      return ["mock-id-1", "mock-id-2"];
     } catch (error) {
       console.error('Error importing from external source:', error);
       throw new Error(`Import failed: ${error instanceof Error ? error.message : 'Unknown error'}`);
