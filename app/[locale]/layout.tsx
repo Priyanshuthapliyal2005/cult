@@ -11,6 +11,8 @@ import { VoiceCommandProvider } from '@/components/VoiceCommandProvider';
 import { notFound } from 'next/navigation';
 import { Inter } from 'next/font/google';
 
+const inter = Inter({ subsets: ['latin'] });
+
 function LocaleLayout({
   children,
   params: { locale }
@@ -18,8 +20,6 @@ function LocaleLayout({
   children: React.ReactNode;
   params: { locale: string };
 }) {
-  const inter = Inter({ subsets: ['latin'] });
-  
   const [messages, setMessages] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -45,23 +45,6 @@ function LocaleLayout({
       });
   }, [locale]);
 
-  // Don't render until messages are loaded
-  if (isLoading || !messages) {
-    return (
-      <html lang={locale}>
-        <head>
-          <title>CulturalCompass - AI-Powered Travel Assistant</title>
-          <meta name="description" content="Your intelligent travel companion with deep cultural insights and personalized recommendations" />
-        </head>
-        <body className={inter.className}>
-          <div className="flex items-center justify-center min-h-screen">
-            <div className="text-lg">Loading...</div>
-          </div>
-        </body>
-      </html>
-    );
-  }
-
   return (
     <html lang={locale}>
       <head>
@@ -73,15 +56,21 @@ function LocaleLayout({
         <link rel="manifest" href="/manifest.json" />
       </head>
       <body className={inter.className}>
-        <NextIntlClientProvider locale={locale} messages={messages}>
-          <SessionProvider>
-            <AuthProvider>
-              <VoiceCommandProvider>
-                {children}
-              </VoiceCommandProvider>
-            </AuthProvider>
-          </SessionProvider>
-        </NextIntlClientProvider>
+        {isLoading || !messages ? (
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="text-lg">Loading...</div>
+          </div>
+        ) : (
+          <NextIntlClientProvider locale={locale} messages={messages}>
+            <SessionProvider>
+              <AuthProvider>
+                <VoiceCommandProvider>
+                  {children}
+                </VoiceCommandProvider>
+              </AuthProvider>
+            </SessionProvider>
+          </NextIntlClientProvider>
+        )}
       </body>
     </html>
   );
