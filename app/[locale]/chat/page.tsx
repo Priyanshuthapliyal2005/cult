@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Globe, Mic, Volume2, Settings } from 'lucide-react';
+import { ArrowLeft, Globe, Mic, Volume2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useTranslations, useLocale } from 'next-intl';
 import RealTimeAssistant from '@/components/RealTimeAssistant';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
@@ -15,14 +15,19 @@ import { trpc } from '@/lib/trpc';
 export default function ChatPage() {
   const [currentLocation, setCurrentLocation] = useState('');
   const [isMinimized, setIsMinimized] = useState(false);
-  const [isVoiceEnabled, setIsVoiceEnabled] = useState(true);
+  const [voiceEnabled, setVoiceEnabled] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('voiceEnabled') === 'true';
+    }
+    return false;
+  });
   const [globalListening, setGlobalListening] = useState(false);
-  const [voiceEnabled, setVoiceEnabled] = useState(false);
   const recognitionRef = useRef<any>(null);
   
   const t = useTranslations();
   const locale = useLocale();
   const testElevenLabs = trpc.audio.testElevenLabs.useQuery();
+  
   // Check for browser speech recognition support
   useEffect(() => {
     const hasSpeechRecognition = 'webkitSpeechRecognition' in window || 
@@ -204,7 +209,7 @@ export default function ChatPage() {
         </motion.div>
       </div>
       
-      {/* Add a hidden folder with mp3 files for sound effects */}
+      {/* Hidden audio resources */}
       <audio src="/sounds/message-complete.mp3" style={{ display: 'none' }} preload="auto" />
     </div>
   );

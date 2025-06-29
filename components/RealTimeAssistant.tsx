@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { motion, useAnimation } from 'framer-motion';
+import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { Send, Bot, User, MapPin, Volume2, Copy, ThumbsUp, ThumbsDown, Mic, MicOff, Settings, Minimize2, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,6 +38,7 @@ interface RealTimeAssistantProps {
   isMinimized?: boolean;
   onToggleSize?: () => void;
   className?: string;
+  voiceEnabled?: boolean;
 }
 
 export default function RealTimeAssistant({
