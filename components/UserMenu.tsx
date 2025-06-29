@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { signOut } from 'next-auth/react';
-import { User, Settings, LogOut, Heart, MessageCircle } from 'lucide-react';
+import { User, Settings, LogOut, Heart, MessageCircle, Volume2, VolumeX } from 'lucide-react';
 import { useLocale } from 'next-intl';
 import {
   DropdownMenu,
@@ -18,6 +18,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import Link from 'next/link';
 
 export default function UserMenu() {
+  // Add voice control state
+  const [voiceEnabled, setVoiceEnabled] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('voiceEnabled') === 'true';
+    }
+    return false;
+  });
   const { user, isAuthenticated } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const locale = useLocale();
@@ -90,6 +97,33 @@ export default function UserMenu() {
             <Settings className="mr-2 h-4 w-4 text-tangarine" />
             <span>Settings</span>
           </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem
+          className="cursor-pointer"
+          onClick={() => {
+            setVoiceEnabled(!voiceEnabled);
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('voiceEnabled', (!voiceEnabled).toString());
+            }
+            // Announce the change
+            if (!voiceEnabled) {
+              const utterance = new SpeechSynthesisUtterance("Voice control enabled");
+              window.speechSynthesis.speak(utterance);
+            }
+          }}
+        >
+          {voiceEnabled ? (
+            <>
+              <VolumeX className="mr-2 h-4 w-4 text-green-600" />
+              <span>Disable Voice Control</span>
+            </>
+          ) : (
+            <>
+              <Volume2 className="mr-2 h-4 w-4 text-gray-600" />
+              <span>Enable Voice Control</span>
+            </>
+          )}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem

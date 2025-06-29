@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useAnimation } from 'framer-motion';
 import { Send, Bot, User, MapPin, Volume2, Copy, ThumbsUp, ThumbsDown, Mic, MicOff, Phone, VideoIcon, Settings, Minimize2, Maximize2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -73,9 +73,11 @@ export default function RealTimeAssistant({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const recognitionRef = useRef<any>(null);
   const t = useTranslations();
+  const animationControls = useAnimation();
   
   const sendMessage = trpc.sendMessage.useMutation();
   const generateAudio = trpc.audio.generatePhraseAudio.useMutation();
+  const testElevenLabs = trpc.audio.testElevenLabs.useQuery();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -84,6 +86,41 @@ export default function RealTimeAssistant({
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Function to handle voice control commands
+  const handleVoiceCommand = (transcript: string) => {
+    const lowerTranscript = transcript.toLowerCase();
+    
+    // Command patterns
+    if (lowerTranscript.includes('search for') || lowerTranscript.includes('find')) {
+      const searchTerm = lowerTranscript.replace(/search for|find/i, '').trim();
+      if (searchTerm) {
+        setInput(`Tell me about ${searchTerm}`);
+        // Auto-submit after a short delay
+        setTimeout(() => handleSubmit(new Event('submit') as any), 500);
+      }
+    } else if (lowerTranscript.includes('clear chat') || lowerTranscript.includes('start over')) {
+      setMessages([
+        {
+          id: Date.now().toString(),
+          role: 'assistant',
+          content: "I've cleared our conversation. How can I help you with cultural information today?",
+          timestamp: new Date(),
+        }
+      ]);
+    } else if (lowerTranscript.includes('change location') || lowerTranscript.includes('set location')) {
+      // Extract location after command
+      const locationMatch = lowerTranscript.match(/(?:change|set) location (?:to )?(.*)/i);
+      if (locationMatch && locationMatch[1]) {
+        handleLocationChange(locationMatch[1]);
+        // Confirm location change via voice
+        playAudio(`I've set your location to ${locationMatch[1]}`);
+      }
+    } else {
+      // If no command pattern detected, treat as regular input
+      setInput(transcript);
+    }
+  };
 
   // Initialize speech recognition
   useEffect(() => {
@@ -96,7 +133,7 @@ export default function RealTimeAssistant({
       
       recognitionRef.current.onresult = (event: any) => {
         const transcript = event.results[0][0].transcript;
-        setInput(transcript);
+        handleVoiceCommand(transcript);
         setIsListening(false);
       };
       
@@ -113,6 +150,12 @@ export default function RealTimeAssistant({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!input.trim() || isLoading) return;
+    
+    // Trigger typing animation
+    animationControls.start({
+      opacity: [0.4, 1, 0.4],
+      transition: { repeat: Infinity, duration: 1 }
+    });
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -162,7 +205,7 @@ export default function RealTimeAssistant({
 
       // Auto-speak if enabled
       if (settings.autoSpeak && settings.voice) {
-        await playAudio(response.response);
+        playAudio(response.response.slice(0, 200)); // Limit to first 200 chars for quicker audio
       }
 
     } catch (error) {
@@ -179,6 +222,9 @@ export default function RealTimeAssistant({
     } finally {
       setIsLoading(false);
       setIsTyping(false);
+      
+      // Stop typing animation
+      animationControls.stop();
     }
   };
 
@@ -208,6 +254,13 @@ export default function RealTimeAssistant({
                    settings.responseSpeed === 'normal' ? 100 : 150;
       await new Promise(resolve => setTimeout(resolve, delay));
     }
+    
+    // Announce completion via small audio cue if voice is enabled
+    if (settings.voice && i === words.length - 1) {
+      const audio = new Audio('/sounds/message-complete.mp3');
+      audio.volume = 0.2;
+      try { await audio.play(); } catch (e) { console.log('Audio play failed silently'); }
+    }
   };
 
   const toggleVoiceInput = () => {
@@ -226,6 +279,16 @@ export default function RealTimeAssistant({
 
   const playAudio = async (text: string) => {
     try {
+      // Check if ElevenLabs is available
+      if (testElevenLabs.data?.status !== 'success') {
+        // For demo mode, use browser's built-in speech synthesis
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 0.9; // Slightly slower for better clarity
+        window.speechSynthesis.speak(utterance);
+        setIsPlaying(false);
+        return;
+      }
+
       const result = await generateAudio.mutateAsync({
         text: text.slice(0, 200), // Limit for demo
         language: settings.language,
@@ -400,14 +463,17 @@ export default function RealTimeAssistant({
                       <Card className={`${message.role === 'user' ? 'bg-blue-600 text-white' : 'bg-white border-gray-200'}`}>
                         <CardContent className="p-3">
                           {message.isTyping ? (
-                            <div className="flex items-center space-x-1">
+                            <motion.div
+                              className="flex items-center space-x-1"
+                              animate={animationControls}
+                            >
                               <span className="text-sm">{message.content}</span>
                               <div className="flex space-x-1">
                                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" />
                                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }} />
                                 <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }} />
                               </div>
-                            </div>
+                            </motion.div>
                           ) : (
                             <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                           )}
@@ -489,7 +555,7 @@ export default function RealTimeAssistant({
                   <Textarea
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
-                    placeholder="Ask me anything about local culture, customs, or travel advice..."
+                    placeholder="Ask me anything or tap the mic icon for voice control..."
                     className="min-h-[44px] max-h-32 resize-none pr-20 border-2 border-gray-200 focus:border-blue-500"
                     rows={1}
                     disabled={isLoading}
@@ -509,7 +575,16 @@ export default function RealTimeAssistant({
                       onClick={toggleVoiceInput}
                       disabled={isLoading}
                     >
-                      {isListening ? <MicOff className="w-4 h-4 text-red-500" /> : <Mic className="w-4 h-4" />}
+                      {isListening ? (
+                        <motion.div
+                          animate={{ scale: [1, 1.2, 1] }}
+                          transition={{ repeat: Infinity, duration: 1 }}
+                        >
+                          <MicOff className="w-4 h-4 text-red-500" />
+                        </motion.div>
+                      ) : (
+                        <Mic className="w-4 h-4" />
+                      )}
                     </Button>
                   </div>
                 </div>
@@ -533,15 +608,26 @@ export default function RealTimeAssistant({
                 <label className="text-sm font-medium">Assistant Personality</label>
                 <div className="grid grid-cols-2 gap-2">
                   {Object.entries(personalities).map(([key, personality]) => (
-                    <Button
+                    <motion.div
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
                       key={key}
-                      variant={settings.personality === key ? 'default' : 'outline'}
-                      onClick={() => setSettings(prev => ({ ...prev, personality: key as any }))}
-                      className="flex flex-col h-auto py-3"
                     >
-                      <span className="text-lg mb-1">{personality.emoji}</span>
-                      <span className="text-xs">{personality.name}</span>
-                    </Button>
+                      <Button
+                        variant={settings.personality === key ? 'default' : 'outline'}
+                        onClick={() => {
+                          setSettings(prev => ({ ...prev, personality: key as any }));
+                          // Announce personality change if voice enabled
+                          if (settings.voice) {
+                            playAudio(`Assistant personality changed to ${personality.name}`);
+                          }
+                        }}
+                        className="flex flex-col h-auto py-3 w-full"
+                      >
+                        <span className="text-lg mb-1">{personality.emoji}</span>
+                        <span className="text-xs">{personality.name}</span>
+                      </Button>
+                    </motion.div>
                   ))}
                 </div>
               </div>
@@ -552,8 +638,17 @@ export default function RealTimeAssistant({
                 <div className="flex items-center justify-between">
                   <span className="text-sm">Enable voice responses</span>
                   <Switch
+                    aria-label="Enable voice responses"
                     checked={settings.voice}
-                    onCheckedChange={(checked) => setSettings(prev => ({ ...prev, voice: checked }))}
+                    onCheckedChange={(checked) => {
+                      setSettings(prev => ({ ...prev, voice: checked }));
+                      // Announce the change
+                      if (checked) {
+                        const utterance = new SpeechSynthesisUtterance("Voice responses enabled");
+                        utterance.rate = 0.9;
+                        window.speechSynthesis.speak(utterance);
+                      }
+                    }}
                   />
                 </div>
                 <div className="flex items-center justify-between">

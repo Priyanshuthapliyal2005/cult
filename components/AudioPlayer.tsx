@@ -48,7 +48,19 @@ export default function AudioPlayer({
       // Check if ElevenLabs is available
       if (testElevenLabs.data?.status !== 'success') {
         // Show demo message
-        alert(`🔊 Audio pronunciation for "${text}" would play here!\n\nTo enable real audio, add your ElevenLabs API key to the environment variables.`);
+        // Use browser's speech synthesis API as fallback
+        const utterance = new SpeechSynthesisUtterance(text);
+        
+        // Set language if provided
+        if (language) {
+          utterance.lang = language.includes('-') ? language : mapLanguageCode(language);
+        }
+        
+        // Adjust voice parameters
+        utterance.rate = 0.9; // Slightly slower for better pronunciation
+        utterance.pitch = 1.0;
+        
+        window.speechSynthesis.speak(utterance);
         setIsPlaying(false);
         return;
       }
@@ -79,6 +91,28 @@ export default function AudioPlayer({
     sm: 'h-6 w-6 p-0',
     md: 'h-8 w-8 p-0',
     lg: 'h-10 w-10 p-0'
+  };
+  
+  // Helper function to map common language names to BCP 47 language codes
+  const mapLanguageCode = (lang: string): string => {
+    const languageMap: Record<string, string> = {
+      'english': 'en-US',
+      'en': 'en-US',
+      'hindi': 'hi-IN',
+      'hi': 'hi-IN',
+      'spanish': 'es-ES',
+      'es': 'es-ES',
+      'french': 'fr-FR',
+      'fr': 'fr-FR',
+      'japanese': 'ja-JP',
+      'ja': 'ja-JP',
+      'chinese': 'zh-CN',
+      'zh': 'zh-CN',
+      'german': 'de-DE',
+      'de': 'de-DE'
+    };
+    
+    return languageMap[lang.toLowerCase()] || 'en-US';
   };
 
   const iconSizes = {

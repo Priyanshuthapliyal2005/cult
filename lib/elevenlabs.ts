@@ -93,15 +93,17 @@ export class ElevenLabsService {
   async generatePhraseAudio(
     text: string, 
     language: string = 'en',
-    voiceId?: string
+    voiceId?: string,
+    stability: number = 0.6,
+    similarityBoost: number = 0.8
   ): Promise<string> {
     try {
       const audioBuffer = await this.textToSpeech({
         text,
         voice_id: voiceId,
         voice_settings: {
-          stability: 0.6,
-          similarity_boost: 0.8,
+          stability,
+          similarity_boost: similarityBoost,
           style: 0.2,
           use_speaker_boost: true,
         },
@@ -124,7 +126,7 @@ export class ElevenLabsService {
       'en-GB': 'N2lVS1w4EtoT3dr4eOWO', // Callum - British English
       'hi': 'pNInz6obpgDQGcFmaJgB', // Using Adam for Hindi (can be customized)
       'es': 'VR6AewLTigWG4xSOukaG', // Antoni - Spanish
-      'fr': 'TxGEqnHWrfWFTfGW9XjX', // Josh - French
+      'fr': 'QDwYtRuNnU7EJ2bnLimR', // Nicole - French
       'de': 'ErXwobaYiN019PkySvjV', // Antoni - German
       'it': 'AZnzlk1XvdvUeBnXmlld', // Domi - Italian
       'pt': 'yoZ06aMxZJJ28mfd3POQ', // Sam - Portuguese
@@ -140,8 +142,8 @@ export class ElevenLabsService {
   async testConnection(): Promise<{ status: string; message: string }> {
     if (!this.apiKey) {
       return {
-        status: 'demo',
-        message: 'ElevenLabs API key not configured - using demo mode'
+        status: 'fallback',
+        message: 'ElevenLabs API key not configured - using browser speech synthesis as fallback'
       };
     }
 
