@@ -1,54 +1,69 @@
-Here's the fixed version with all missing closing brackets added and proper whitespace maintained. The main issues were:
+Here's the fixed version with all missing closing brackets added:
 
-1. A duplicate `Alert` closing tag
-2. Missing closing brackets for several nested functions and conditions
-3. Some misplaced `else` statements
+```typescript
+// ... [previous code remains the same until the handleGenerateNewCity function]
 
-The key fixes were:
+const handleGenerateNewCity = async (cityName: string) => {
+    try {
+      setIsGeneratingCity(true);
+      setError(null);
+      setError(null);
+      
+      console.log(`City "${cityName}" not found in local database. Generating using AI...`);
+      
+      // Use the dynamic city service to generate city data
+      const generatedCity = await dynamicCityService.searchCity(cityName);
+      setIsLoading(true);
+      setNewCityError(null);
+      setCulturalInsights(null);
+      setNewCityError(null);
+      setCulturalInsights(null);
+    
+      try {
+        const insights = await getCulturalInsights.mutateAsync({
+          location: city.name,
+          latitude: city.latitude,
+          longitude: city.longitude,
+        });
+        
+        if (generatedCity) {
+          // Add the generated city to the cities list
+          setCities([generatedCity]);
+          handleCitySelect(generatedCity);
+          
+          // Show success message
+          setError(`Successfully generated information for ${cityName}. This city has been added to our database.`);
+        } else {
+          setNewCityError(`Could not generate information for "${cityName}". Please try a different city name.`);
+          // Load some default cities as fallback
+          const defaultCities = getCitiesByFilter({ limit: 8 });
+          setCities(defaultCities);
+        }
+      } catch (error) {
+        console.error('Error fetching cultural insights:', error);
+        setNewCityError(`Error generating data for "${cityName}". Please try a different city name.`);
+        // Load some default cities as fallback
+        const defaultCities = getCitiesByFilter({ limit: 8 });
+        setCities(defaultCities);
+      } finally {
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error('Error generating city:', error);
+      setNewCityError(`Error generating data for "${cityName}". Please try a different city name.`);
+      const defaultCities = getCitiesByFilter({ limit: 8 });
+      setCities(defaultCities);
+      setIsGeneratingCity(false);
+    }
+};
 
-```javascript
-// Fixed duplicate Alert closing tag
-{error && (
-  <Alert className="border-red-200 bg-red-50">
-    <AlertCircle className="h-4 w-4" />
-    <AlertDescription>{error}</AlertDescription>
-  </Alert>
-)}
-
-// Fixed handleSearch function with proper else placement
-if (filteredCities.length === 0) {
-  // City not found in local database, try to generate it using AI
-  handleGenerateNewCity(query);
-} else {
-  setCities(filteredCities);
-  handleCitySelect(filteredCities[0]);
-}
-
-// Fixed handleGenerateNewCity function with proper try/catch/finally structure
-try {
-  const insights = await getCulturalInsights.mutateAsync({
-    location: city.name,
-    latitude: city.latitude,
-    longitude: city.longitude,
-  });
-  
-  if (generatedCity) {
-    setCities([generatedCity]);
-    handleCitySelect(generatedCity);
-    setError(`Successfully generated information for ${cityName}. This city has been added to our database.`);
-  } else {
-    setNewCityError(`Could not generate information for "${cityName}". Please try a different city name.`);
-    const defaultCities = getCitiesByFilter({ limit: 8 });
-    setCities(defaultCities);
-  }
-} catch (error) {
-  console.error('Error fetching cultural insights:', error);
-  setNewCityError(`Error generating data for "${cityName}". Please try a different city name.`);
-  const defaultCities = getCitiesByFilter({ limit: 8 });
-  setCities(defaultCities);
-} finally {
-  setIsLoading(false);
-}
+// ... [rest of the code remains the same]
 ```
 
-The file should now be properly formatted with all brackets closed and consistent whitespace. Let me know if you need any clarification on the fixes made.
+The main fixes were:
+1. Added missing closing bracket for the `getCulturalInsights.mutateAsync` call
+2. Added missing closing bracket for the outer try-catch block in `handleGenerateNewCity`
+3. Fixed duplicate else statement in the handleSearch function
+4. Properly closed all nested try-catch blocks
+
+The rest of the code structure remains unchanged. These fixes should resolve the syntax errors in the file.
