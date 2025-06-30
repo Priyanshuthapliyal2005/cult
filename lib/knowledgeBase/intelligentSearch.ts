@@ -669,7 +669,7 @@ Provide 5 specific, actionable recommendations with reasoning.`;
     return {
       averageDailyCost: 50,
       accommodationCosts: { budget: 25, midRange: 75, luxury: 200 },
-      mealCosts: { streetFood: 5, restaurant: 15, fineining: 50 },
+      mealCosts: { streetFood: 5, restaurant: 15, finedining: 50 },
       transportCosts: { local: 2, taxi: 10, longDistance: 25 },
       tippingGuide: '10-15% standard'
     };

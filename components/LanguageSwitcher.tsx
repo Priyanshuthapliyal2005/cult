@@ -42,7 +42,8 @@ export default function LanguageSwitcher({ variant = 'default', className = '' }
 
     startTransition(() => {
       // Remove current locale from pathname if present
-      const pathWithoutLocale = pathname.replace(/^\/[a-z]{2}(-[A-Z]{2})?/, '') || '/';
+      const safePath = pathname || '/';
+      const pathWithoutLocale = safePath.replace(/^\/[a-z]{2}(-[A-Z]{2})?/, '') || '/';
       
       // Create new path with new locale
       const newPath = newLocale === 'en' ? pathWithoutLocale : `/${newLocale}${pathWithoutLocale}`;

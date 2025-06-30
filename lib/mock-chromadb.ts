@@ -50,7 +50,7 @@ export class MockChromaDB {
     // Add documents to collection
     documents.forEach(doc => {
       // Check if document with this ID already exists
-      const existingIndex = collection.documents.findIndex(d => d.id === doc.id);
+      const existingIndex = collection.documents.findIndex((d: MockDocument) => d.id === doc.id);
       if (existingIndex >= 0) {
         // Update existing document
         collection.documents[existingIndex] = doc;
@@ -131,7 +131,7 @@ export class MockChromaDB {
     const collection = await this.getOrCreateCollection(collectionName);
     
     const initialLength = collection.documents.length;
-    collection.documents = collection.documents.filter(doc => doc.id !== id);
+    collection.documents = collection.documents.filter((doc: MockDocument) => doc.id !== id);
     
     return collection.documents.length < initialLength;
   }
@@ -146,7 +146,7 @@ export class MockChromaDB {
   ): Promise<boolean> {
     const collection = await this.getOrCreateCollection(collectionName);
     
-    const docIndex = collection.documents.findIndex(doc => doc.id === id);
+    const docIndex = collection.documents.findIndex((doc: MockDocument) => doc.id === id);
     if (docIndex === -1) return false;
     
     if (updates.document) {
@@ -173,7 +173,7 @@ export class MockChromaDB {
     
     // Get unique metadata keys
     const metadataKeys = new Set<string>();
-    collection.documents.forEach(doc => {
+    collection.documents.forEach((doc: MockDocument) => {
       Object.keys(doc.metadata).forEach(key => metadataKeys.add(key));
     });
     

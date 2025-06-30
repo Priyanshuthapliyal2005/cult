@@ -259,24 +259,20 @@ export default function RealTimeAssistant({
     
     for (let i = 0; i < words.length; i++) {
       currentContent += (i > 0 ? ' ' : '') + words[i];
-      
       setMessages(prev => prev.map(m => 
         m.id === message.id 
           ? { ...m, content: currentContent, isTyping: i < words.length - 1 }
           : m
       ));
-      
       // Vary typing speed based on settings
       const delay = settings.responseSpeed === 'fast' ? 50 : 
                    settings.responseSpeed === 'normal' ? 100 : 150;
       await new Promise(resolve => setTimeout(resolve, delay));
-    }
-    
-    // Announce completion via small audio cue if voice is enabled
-    if (settings.voice && i === words.length - 1) {
-      const audio = new Audio('/sounds/message-complete.mp3');
-      audio.volume = 0.2;
-      try { await audio.play(); } catch (e) { console.log('Audio play failed silently'); }
+      if (settings.voice && i === words.length - 1) {
+        const audio = new Audio('/sounds/message-complete.mp3');
+        audio.volume = 0.2;
+        try { await audio.play(); } catch (e) { console.log('Audio play failed silently'); }
+      }
     }
   };
 

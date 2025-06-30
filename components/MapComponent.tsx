@@ -328,15 +328,17 @@ export default function MapComponent({
         <Card className="p-3">
           <h4 className="text-xs font-semibold mb-2">Legend</h4>
           <div className="space-y-1">
-            {Object.entries(markerIcons).slice(0, -1).map(([type, icon]) => (
-              <div key={type} className="flex items-center space-x-2 text-xs">
-                <div className="w-4 h-4 flex items-center justify-center">
-                  <div dangerouslySetInnerHTML={{ __html: icon.options.html }} 
-                       style={{ transform: 'scale(0.5)' }} />
+            {Object.entries(markerIcons).slice(0, -1).map(([type, icon]) => {
+              const html = icon.options.html ?? '';
+              return (
+                <div key={type} className="flex items-center space-x-2 text-xs">
+                  <div className="w-4 h-4 flex items-center justify-center">
+                    <div dangerouslySetInnerHTML={{ __html: typeof html === 'string' ? html : '' }} style={{ transform: 'scale(0.5)' }} />
+                  </div>
+                  <span className="capitalize">{type}</span>
                 </div>
-                <span className="capitalize">{type}</span>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </Card>
       </div>

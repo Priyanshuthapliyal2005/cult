@@ -239,7 +239,7 @@ export class QualityAssuranceSystem {
       return {
         averageRating: 0,
         totalRatings: 0,
-        distribution: {}
+        distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
       };
     }
   }
@@ -342,7 +342,7 @@ export class QualityAssuranceSystem {
       recommendations: ['System unable to generate recommendations at this time'],
       criticalIssues: ['Quality assessment system temporarily unavailable'],
       dataFreshness: { recent: 0, current: 0, stale: 0 },
-      userSatisfaction: { averageRating: 0, totalRatings: 0, distribution: {} }
+      userSatisfaction: { averageRating: 0, totalRatings: 0, distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 } }
     };
   }
 }

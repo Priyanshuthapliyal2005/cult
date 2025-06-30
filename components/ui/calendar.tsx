@@ -9,6 +9,69 @@ import { buttonVariants } from '@/components/ui/button';
 
 export type CalendarProps = React.ComponentProps<typeof DayPicker>;
 
+// Custom navigation component for DayPicker v9
+function CustomNavigation({
+  displayMonth,
+  previousMonth,
+  nextMonth,
+  onMonthChange,
+  className,
+}: {
+  displayMonth: Date;
+  previousMonth?: Date;
+  nextMonth?: Date;
+  onMonthChange: (month: Date) => void;
+  className?: string;
+}) {
+  return (
+    <div className={cn('space-x-1 flex items-center', className)}>
+      <button
+        type="button"
+        onClick={() => previousMonth && onMonthChange(previousMonth)}
+        disabled={!previousMonth}
+        className={cn(
+          buttonVariants({ variant: 'outline' }),
+          'h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100',
+          'absolute left-1'
+        )}
+        aria-label="Previous Month"
+      >
+        <ChevronLeft className="h-4 w-4" />
+      </button>
+      <button
+        type="button"
+        onClick={() => nextMonth && onMonthChange(nextMonth)}
+        disabled={!nextMonth}
+        className={cn(
+          buttonVariants({ variant: 'outline' }),
+          'h-7 w-7 bg-transparent p-0 opacity-50 hover:opacity-100',
+          'absolute right-1'
+        )}
+        aria-label="Next Month"
+      >
+        <ChevronRight className="h-4 w-4" />
+      </button>
+    </div>
+  );
+}
+
+// Custom previous and next month button components for DayPicker v9
+function CustomPreviousMonthButton(props: React.ComponentProps<'button'>) {
+  return (
+    <button {...props} aria-label="Previous Month">
+      <ChevronLeft className="h-4 w-4" />
+    </button>
+  );
+}
+
+function CustomNextMonthButton(props: React.ComponentProps<'button'>) {
+  return (
+    <button {...props} aria-label="Next Month">
+      <ChevronRight className="h-4 w-4" />
+    </button>
+  );
+}
+
 function Calendar({
   className,
   classNames,
@@ -54,8 +117,8 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        IconLeft: ({ ...props }) => <ChevronLeft className="h-4 w-4" />,
-        IconRight: ({ ...props }) => <ChevronRight className="h-4 w-4" />,
+        PreviousMonthButton: CustomPreviousMonthButton,
+        NextMonthButton: CustomNextMonthButton,
       }}
       {...props}
     />

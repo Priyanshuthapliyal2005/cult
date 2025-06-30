@@ -64,7 +64,7 @@ export default function TravelLawsPage() {
   const [resultSources, setResultSources] = useState<DataSource[]>([]);
   const [activeLegalFilters, setActiveLegalFilters] = useState<string[]>([]);
   const [isWikipediaLoading, setIsWikipediaLoading] = useState(false);
-  const searchInputRef = useRef<HTMLInputElement>(null);
+  const searchInputRef = useRef<HTMLTextAreaElement>(null);
   const locationInputRef = useRef<HTMLInputElement>(null);
   
   const t = useTranslations();

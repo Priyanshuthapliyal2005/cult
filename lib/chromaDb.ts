@@ -1,4 +1,4 @@
-import { ChromaClient, Collection } from 'chromadb';
+import { ChromaClient, Collection, IncludeEnum } from 'chromadb';
 import { embeddingService } from './embeddings';
 
 export interface ChromaDocument {
@@ -54,7 +54,7 @@ export class ChromaDBService {
     try {
       // Check if collection exists
       const collections = await this.client.listCollections();
-      const exists = collections.some(col => col.name === name);
+      const exists = collections.some(col => col === name);
 
       let collection;
       if (exists) {
@@ -187,11 +187,11 @@ export class ChromaDBService {
         queryTexts: [query],
         nResults: limit,
         where: Object.keys(formattedFilters).length > 0 ? formattedFilters : undefined,
-        include: {
-          metadatas: includeMetadata,
-          documents: includeDocuments,
-          distances: true,
-        }
+        include: [
+          ...(includeMetadata ? [IncludeEnum.Metadatas] : []),
+          ...(includeDocuments ? [IncludeEnum.Documents] : []),
+          IncludeEnum.Distances,
+        ],
       });
 
       // Format results
@@ -275,19 +275,20 @@ export class ChromaDBService {
       // Get all documents to analyze metadata keys
       // Note: In a production system, you'd want to sample this for large collections
       const allDocs = await collection.get({ 
-        include: { metadatas: true, documents: false }
+        include: [IncludeEnum.Metadatas],
       });
-      
       // Extract unique metadata keys
       const metadataKeys = new Set<string>();
-      allDocs.metadatas?.forEach((metadata: Record<string, any>) => {
-        Object.keys(metadata).forEach(key => metadataKeys.add(key));
+      allDocs.metadatas?.forEach((metadata) => {
+        if (metadata) {
+          Object.keys(metadata).forEach(key => metadataKeys.add(key));
+        }
       });
       
       return {
         documentCount: count,
         metadataKeys: Array.from(metadataKeys),
-        collectionInfo: await collection.getMetadata()
+        collectionInfo: collection.metadata
       };
     } catch (error) {
       console.error(`Error getting stats for collection ${collectionName}:`, error);
@@ -306,7 +307,7 @@ export class ChromaDBService {
 
     try {
       const collections = await this.client.listCollections();
-      return collections.map(col => col.name);
+      return collections;
     } catch (error) {
       console.error('Error listing collections:', error);
       return [];

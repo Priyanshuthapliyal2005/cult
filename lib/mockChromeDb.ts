@@ -7,6 +7,7 @@ export interface MockDocument {
   id: string;
   document: string;
   metadata: Record<string, any>;
+  similarity?: number;
 }
 
 export interface MockCollection {
@@ -48,9 +49,9 @@ export class MockChromaDB {
     const ids = documents.map(doc => doc.id);
     
     // Add documents to collection
-    documents.forEach(doc => {
+    documents.forEach((doc: MockDocument) => {
       // Check if document with this ID already exists
-      const existingIndex = collection.documents.findIndex(d => d.id === doc.id);
+      const existingIndex = collection.documents.findIndex((d: MockDocument) => d.id === doc.id);
       if (existingIndex >= 0) {
         // Update existing document
         collection.documents[existingIndex] = doc;
@@ -96,7 +97,7 @@ export class MockChromaDB {
     );
     
     // Assign mock similarity scores - in real ChromaDB this would be actual cosine similarity
-    results.forEach(doc => {
+    results.forEach((doc: MockDocument) => {
       // Count the occurrences of query terms in the document
       const queryTerms = query.toLowerCase().split(/\s+/);
       const docText = doc.document.toLowerCase();
@@ -131,7 +132,7 @@ export class MockChromaDB {
     const collection = await this.getOrCreateCollection(collectionName);
     
     const initialLength = collection.documents.length;
-    collection.documents = collection.documents.filter(doc => doc.id !== id);
+    collection.documents = collection.documents.filter((doc: MockDocument) => doc.id !== id);
     
     return collection.documents.length < initialLength;
   }
@@ -146,7 +147,7 @@ export class MockChromaDB {
   ): Promise<boolean> {
     const collection = await this.getOrCreateCollection(collectionName);
     
-    const docIndex = collection.documents.findIndex(doc => doc.id === id);
+    const docIndex = collection.documents.findIndex((doc: MockDocument) => doc.id === id);
     if (docIndex === -1) return false;
     
     if (updates.document) {
@@ -173,7 +174,7 @@ export class MockChromaDB {
     
     // Get unique metadata keys
     const metadataKeys = new Set<string>();
-    collection.documents.forEach(doc => {
+    collection.documents.forEach((doc: MockDocument) => {
       Object.keys(doc.metadata).forEach(key => metadataKeys.add(key));
     });
     
