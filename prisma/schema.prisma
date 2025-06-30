@@ -133,7 +133,7 @@ model VectorContent {
   title       String
   content     String   @db.Text
   metadata    Json     // Store additional context like location, category, etc.
-  embedding   Unsupported("vector(1536)")
+  embedding   Unsupported("vector(1536)")?
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -147,7 +147,7 @@ model ConversationContext {
   id             String   @id @default(cuid())
   conversationId String
   retrievedContent Json   // Store retrieved context for debugging
-  embedding      Unsupported("vector(1536)")
+  embedding      Unsupported("vector(1536)")?
   relevanceScore Float?
   createdAt      DateTime @default(now())
 

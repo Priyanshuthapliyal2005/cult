@@ -49,10 +49,11 @@ export const userRouter = {
           prisma.conversation.count({
             where: { userId },
           }),
-          prisma.conversation.count({
+          prisma.conversation.findMany({
             where: { userId, location: { not: null } },
             distinct: ['location'],
-          }),
+            select: { location: true },
+          }).then(locations => locations.length),
         ]);
 
         return {

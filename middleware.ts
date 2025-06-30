@@ -41,7 +41,7 @@ const authMiddleware = withAuth(
   }
 );
 
-export default function middleware(req: any) {
+export default function middleware(req: any, event: any) {
   const publicPatterns = [
     // These paths should be publicly accessible
     '/',
@@ -63,7 +63,7 @@ export default function middleware(req: any) {
     return intlMiddleware(req);
   }
 
-  return authMiddleware(req);
+  return authMiddleware(req, event);
 }
 export const config = {
   matcher: [

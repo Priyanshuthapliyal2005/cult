@@ -52,19 +52,21 @@ export class VectorStore {
         }
       }
 
-      // Store in database (may or may not have embedding)
+      // Store in database (embedding handled separately)
+      let storedRecord;
       try {
-        const storedRecord = await prisma.vectorContent.create({
+        storedRecord = await prisma.vectorContent.create({
           data: {
             contentId: content.contentId,
             contentType: content.contentType,
             title: content.title,
             content: content.content,
-            metadata: content.metadata || {},
-            ...(embedding ? { embedding: embedding as any } : {}),
+            metadata: content.metadata || {}
           },
         });
-
+        if (embedding) {
+          await this._updateEmbedding(storedRecord.id, embedding);
+        }
         return storedRecord.contentId;
       } catch (dbError) {
         // If database fails, log the error but don't fail completely
@@ -222,27 +224,17 @@ export class VectorStore {
 
   async updateContent(id: string, updates: Partial<ContentToStore>): Promise<void> {
     try {
-      const existing = await prisma.vectorContent.findFirst({
-        where: { id }
-      });
-
-      if (!existing) {
-        throw new Error('Content not found');
-      }
-
-      let newEmbedding: number[] | undefined;
+      let newEmbedding = updates.embedding;
+      let newTitle = updates.title || '';
+      let newContent = updates.content || '';
       
-      // Regenerate embedding if title or content changed
-      if (updates.title || updates.content) {
-        const newTitle = updates.title || existing.title;
-        const newContent = updates.content || existing.content;
-        
+      // Generate new embedding if content or title is updated and embedding not provided
+      if (!newEmbedding && (updates.title || updates.content)) {
         const embeddingResponse = await embeddingService.generateEmbedding({
           text: `${newTitle}\n\n${newContent}`,
           title: newTitle,
           taskType: 'RETRIEVAL_DOCUMENT'
         });
-        
         newEmbedding = embeddingResponse.embedding;
       }
 
@@ -253,10 +245,13 @@ export class VectorStore {
           ...(updates.contentType && { contentType: updates.contentType }),
           ...(updates.title && { title: updates.title }),
           ...(updates.content && { content: updates.content }),
-          ...(updates.metadata && { metadata: updates.metadata }),
-          ...(newEmbedding && { embedding: newEmbedding as any })
+          ...(updates.metadata && { metadata: updates.metadata })
         }
       });
+
+      if (newEmbedding) {
+        await this._updateEmbedding(id, newEmbedding);
+      }
 
       console.log(`✅ Updated vector content: ${id}`);
     } catch (error) {
@@ -315,6 +310,18 @@ export class VectorStore {
         contentTypes: {},
         recentContent: 0
       };
+    }
+  }
+
+  private async _updateEmbedding(id: string, embedding: number[]): Promise<void> {
+    try {
+      await prisma.$executeRawUnsafe(
+        'UPDATE vector_content SET embedding = $1::vector WHERE id = $2',
+        embedding,
+        id
+      );
+    } catch (error) {
+      console.error(`Error updating embedding for id ${id}:`, error);
     }
   }
 }

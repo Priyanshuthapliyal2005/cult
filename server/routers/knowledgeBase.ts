@@ -19,9 +19,19 @@ export const knowledgeBaseRouter = router({
           end: z.date()
         }).optional(),
         budget: z.enum(['budget', 'moderate', 'luxury']).optional(),
-        interests: z.array(z.string()).optional(),
-        culturalPreferences: z.array(z.string()).optional(),
-        legalConcerns: z.array(z.string()).optional(),
+        interests: z.array(z.enum([
+          'adventure', 'culture', 'food', 'history', 'nature',
+          'nightlife', 'shopping', 'spiritual', 'art', 'music',
+          'architecture', 'beaches', 'mountains', 'urban', 'rural',
+        ])).optional(),
+        culturalPreferences: z.array(z.enum([
+          'traditional', 'modern', 'conservative', 'liberal',
+          'religious', 'secular', 'multilingual', 'english-friendly',
+        ])).optional(),
+        legalConcerns: z.array(z.enum([
+          'photography', 'alcohol', 'dress-codes', 'religious-sites',
+          'driving', 'medications', 'customs', 'behavior', 'business',
+        ])).optional(),
         groupSize: z.number().optional(),
         travelStyle: z.enum(['adventure', 'cultural', 'relaxed', 'business', 'family']).optional()
       }).optional(),
@@ -40,9 +50,19 @@ export const knowledgeBaseRouter = router({
     }))
     .mutation(async ({ input }) => {
       try {
+        // Map context fields to correct types and cast to SearchContext
+        let context = input.context;
+        if (context) {
+          context = {
+            ...context,
+            interests: context.interests ? context.interests.map(x => x as import('@/lib/knowledgeBase/types').TravelInterest) : undefined,
+            culturalPreferences: context.culturalPreferences ? context.culturalPreferences.map(x => x as import('@/lib/knowledgeBase/types').CulturalPreference) : undefined,
+            legalConcerns: context.legalConcerns ? context.legalConcerns.map(x => x as import('@/lib/knowledgeBase/types').LegalConcern) : undefined,
+          } as import('@/lib/knowledgeBase/types').SearchContext;
+        }
         const searchRequest: SearchRequest = {
           query: input.query,
-          context: input.context,
+          context,
           filters: input.filters,
           limit: input.limit,
           includeRecommendations: input.includeRecommendations

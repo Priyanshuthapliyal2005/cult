@@ -38,15 +38,38 @@ export default function KnowledgeBasePage() {
     return locale === 'en' ? path : `/${locale}${path}`;
   };
 
+  const allowedInterests = [
+    'adventure', 'culture', 'food', 'history', 'nature',
+    'nightlife', 'shopping', 'spiritual', 'art', 'music',
+    'architecture', 'beaches', 'mountains', 'urban', 'rural'
+  ];
+
   const handleSearch = async () => {
     if (!searchQuery.trim()) return;
     
     setIsSearching(true);
     try {
+      const filteredInterests = selectedInterests.filter(i => allowedInterests.includes(i)) as (
+        | 'adventure'
+        | 'culture'
+        | 'food'
+        | 'history'
+        | 'nature'
+        | 'nightlife'
+        | 'shopping'
+        | 'spiritual'
+        | 'art'
+        | 'music'
+        | 'architecture'
+        | 'beaches'
+        | 'mountains'
+        | 'urban'
+        | 'rural'
+      )[];
       const searchRequest = {
         query: searchQuery,
         context: {
-          interests: selectedInterests.length > 0 ? selectedInterests : undefined,
+          interests: filteredInterests.length > 0 ? filteredInterests : undefined,
         },
         filters: {
           countries: selectedCountry !== 'all' ? [selectedCountry] : undefined,

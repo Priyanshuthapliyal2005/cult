@@ -61,7 +61,6 @@ export default function TravelLawsAssistant({
         const response = await knowledgeBaseSearch.mutateAsync({
           query: `${legalQuestion} in ${selectedCity.name}, ${selectedCity.country}`,
           context: {
-            interests: ["legal", "safety"],
             legalConcerns: ["behavior", "alcohol", "dress-codes", "photography"]
           }
         });
