@@ -83,13 +83,13 @@ export const appRouter = router({
     }))
     .mutation(async ({ input }): Promise<CulturalInsightData> => {
       try {
-        // Get data from city database
+        // 1. Check static city database for known cities
         const city = cityDatabase.find(c => 
           c.name.toLowerCase().includes(input.location.toLowerCase())
         );
 
-        // If we found a city in the database, use it
         if (city) {
+          // Use static DB for known cities
           try {
             await prisma.culturalInsight.create({
               data: {
@@ -135,7 +135,6 @@ export const appRouter = router({
                     local_tips: [`Best time to visit: ${city.bestTimeToVisit.slice(0, 3).join(', ')}`, `Budget level: ${city.costLevel}`]
                   }
                 },
-                embedding: [],
               },
             });
           } catch (dbError) {
@@ -180,28 +179,36 @@ export const appRouter = router({
           };
         }
 
-        // Check database cache if mock data not available
+        // 2. Check database cache for AI-generated insights (for new/AI cities)
         try {
-          const cached = await prisma.culturalInsight.findFirst({
+          // Use findMany only if available, fallback to empty array if not
+          const cachedArr = Array.isArray(await prisma.culturalInsight.findMany?.({
             where: {
               location: input.location,
               category: input.category || 'general',
             },
             orderBy: { createdAt: 'desc' },
-          });
-
-          if (cached && cached.createdAt > new Date(Date.now() - 24 * 60 * 60 * 1000)) {
+            take: 1,
+          })) ? await prisma.culturalInsight.findMany({
+            where: {
+              location: input.location,
+              category: input.category || 'general',
+            },
+            orderBy: { createdAt: 'desc' },
+            take: 1,
+          }) : [];
+          const cached = cachedArr[0] as any;
+          if (cached && cached.createdAt && cached.content && cached.createdAt > new Date(Date.now() - 24 * 60 * 60 * 1000)) {
             return cached.content as CulturalInsightData;
           }
         } catch (dbError) {
           console.log('Database not available for cache check');
         }
 
-        // Try OpenAI if available
+        // 3. Use hybridAI (Gemini primary, Groq fallback) for new/AI-generated cities
         try {
           const insights = await hybridAI.getCulturalInsights(input);
-          
-          // Try to store in database
+          // Store in DB for caching
           try {
             await prisma.culturalInsight.create({
               data: {
@@ -212,19 +219,17 @@ export const appRouter = router({
                 title: `Cultural Insights for ${input.location}`,
                 description: `Comprehensive cultural information for ${input.location}`,
                 content: insights as any,
-                embedding: [],
-              },
+              }
             });
           } catch (dbError) {
             console.log('Database not available for storing insights');
           }
-
           return insights;
         } catch (aiError) {
-          console.log('AI services failed, using mock fallback:', aiError);
+          console.log('AI services failed, using fallback:', aiError);
         }
 
-        // Fallback response
+        // 4. Fallback: No data available
         throw new Error(`No cultural data available for "${input.location}". Try searching from our database of 1000+ cities worldwide, including major destinations like Delhi, Mumbai, Tokyo, Paris, New York, London, and many more.`);
       } catch (error) {
         console.error('Error in getCulturalInsights:', error);
@@ -288,7 +293,7 @@ export const appRouter = router({
             where: { conversationId },
             orderBy: { createdAt: 'asc' },
             take: 10,
-          });
+          }) as Array<{ role: string; content: string }>;
           chatMessages = messages.map(msg => ({
             role: msg.role as 'user' | 'assistant' | 'system',
             content: msg.content,
@@ -336,7 +341,7 @@ export const appRouter = router({
         }
 
         return {
-          conversationId,
+          conversationId: conversationId || 'temp-' + Date.now().toString(),
           response,
         };
       } catch (error) {

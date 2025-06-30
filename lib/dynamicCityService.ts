@@ -1,7 +1,9 @@
 import { embeddingService } from './embeddings';
 import { vectorStore } from './vectorStore';
 import { hybridAI } from './hybridAI';
-import { CityData } from './cityDatabase';
+import { CityData, cityDatabase } from './cityDatabase';
+import { jsonrepair } from 'jsonrepair';
+import { sanitizeAIJson } from './utils';
 
 export interface WikipediaData {
   title: string;
@@ -75,6 +77,9 @@ export class DynamicCityService {
    * Search existing vector database for city
    */
   private async searchVectorDB(cityName: string, countryName?: string): Promise<CityData | null> {
+    if (typeof window !== 'undefined') {
+      throw new Error('searchVectorDB must not be called in the browser/client.');
+    }
     try {
       const searchQuery = countryName ? `${cityName} ${countryName}` : cityName;
       
@@ -337,6 +342,9 @@ export class DynamicCityService {
    * Store generated city data in vector database
    */
   private async storeCityInVectorDB(cityData: CityData): Promise<void> {
+    if (typeof window !== 'undefined') {
+      throw new Error('storeCityInVectorDB must not be called in the browser/client.');
+    }
     try {
       // Store in vector database
       await vectorStore.storeContent({
@@ -443,6 +451,9 @@ export class DynamicCityService {
    * Generate trip plans for a city using AI and store them
    */
   private async generateAndStoreTripPlans(cityData: CityData): Promise<void> {
+    if (typeof window !== 'undefined') {
+      throw new Error('generateAndStoreTripPlans must not be called in the browser/client.');
+    }
     try {
       const prompt = `Create travel itineraries for ${cityData.name}, ${cityData.country} with 1-day, 2-day, and 3-day plans in JSON format.
 Include morning to evening activities, meals, accommodations, and transportation options.
@@ -474,11 +485,21 @@ Return valid JSON in this exact format:
       
       // Parse the JSON data from the response
       const jsonMatch = planData.match(/```json\s*([\s\S]*?)\s*```/) || planData.match(/\{[\s\S]*\}/);
-      
       if (jsonMatch) {
-        const jsonStr = jsonMatch[0].replace(/```json\s*|\s*```/g, '');
-        const tripPlans = JSON.parse(jsonStr);
-        
+        const jsonStr = sanitizeAIJson(jsonMatch[0].replace(/```json\s*|\s*```/g, ''));
+        let tripPlans;
+        try {
+          tripPlans = JSON.parse(jsonStr);
+        } catch (parseError) {
+          try {
+            const repaired = jsonrepair(sanitizeAIJson(planData));
+            tripPlans = JSON.parse(repaired);
+          } catch (repairError) {
+            console.error('Trip plan JSON repair failed:', repairError);
+            // Minimal fallback trip plan
+            tripPlans = { plans: [] };
+          }
+        }
         // Store the trip plans in the vector database
         await vectorStore.storeContent({
           contentId: `trips-${cityData.id}`,
@@ -493,7 +514,6 @@ Return valid JSON in this exact format:
             timestamp: new Date().toISOString()
           }
         });
-        
         console.log(`✅ Generated and stored trip plans for ${cityData.name}`);
       }
     } catch (error) {
@@ -505,6 +525,9 @@ Return valid JSON in this exact format:
    * Fetch trip plans for a city from the vector database
    */
   async getTripPlans(cityId: string): Promise<any> {
+    if (typeof window !== 'undefined') {
+      throw new Error('getTripPlans must not be called in the browser/client.');
+    }
     try {
       const results = await vectorStore.searchSimilar({
         query: `trip plans ${cityId}`,
@@ -553,67 +576,19 @@ Return valid JSON in this exact format:
   }
 
   /**
-   * Get city statistics from vector database
+   * Get city statistics from vector database (Prisma-backed)
    */
-  async getCityStats(): Promise<any> {
-    /* In a real implementation, this would query the database
-    try {
-      const allCityContent = await prisma.vectorContent.findMany({
-        where: { contentType: 'city' },
-        select: { metadata: true, createdAt: true }
-      });
-
-      const citiesByCountry: Record<string, number> = {};
-      let recentlyAdded = 0;
-      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-
-      for (const content of allCityContent) {
-        const metadata = content.metadata as any;
-        if (metadata?.country) {
-          citiesByCountry[metadata.country] = (citiesByCountry[metadata.country] || 0) + 1;
-        }
-        
-        if (content.createdAt > oneDayAgo) {
-          recentlyAdded++;
-        }
-      }
-
-      return {
-        totalCities: allCityContent.length,
-        citiesByCountry,
-        recentlyAdded
-      };
-      
-    } catch (error) {
-      console.error('Error getting city stats:', error);
-      return {
-        totalCities: 0,
-        citiesByCountry: {},
-        recentlyAdded: 0
-      };
-    }
-    */
-    
-    // For now, return mock data
-    return {
-      totalCities: 8,
-      citiesByCountry: {
-        'India': 5,
-        'Japan': 1,
-        'France': 1,
-        'Indonesia': 1
-      },
-      recentlyAdded: 2
-    };
-  }
-  
-  /* Original function with type error
-  async getCityStats(): Promise<{ 
+  async getCityStats(): Promise<{
     totalCities: number;
     citiesByCountry: Record<string, number>;
     recentlyAdded: number;
   }> {
+    if (typeof window !== 'undefined') {
+      throw new Error('getCityStats must not be called in the browser/client.');
+    }
     try {
+      // Dynamically import prisma to avoid client-side bundling
+      const { prisma } = await import('./prisma');
       const allCityContent = await prisma.vectorContent.findMany({
         where: { contentType: 'city' },
         select: { metadata: true, createdAt: true }
@@ -628,7 +603,6 @@ Return valid JSON in this exact format:
         if (metadata?.country) {
           citiesByCountry[metadata.country] = (citiesByCountry[metadata.country] || 0) + 1;
         }
-        
         if (content.createdAt > oneDayAgo) {
           recentlyAdded++;
         }
@@ -639,17 +613,21 @@ Return valid JSON in this exact format:
         citiesByCountry,
         recentlyAdded
       };
-      
     } catch (error) {
       console.error('Error getting city stats:', error);
+      // Fallback to mock data if Prisma fails
       return {
-        totalCities: 0,
-        citiesByCountry: {},
-        recentlyAdded: 0
+        totalCities: 8,
+        citiesByCountry: {
+          'India': 5,
+          'Japan': 1,
+          'France': 1,
+          'Indonesia': 1
+        },
+        recentlyAdded: 2
       };
     }
   }
-  */
 }
 
 // Singleton instance

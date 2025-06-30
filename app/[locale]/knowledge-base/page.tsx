@@ -90,8 +90,48 @@ export default function KnowledgeBasePage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      {/* Rest of the component code... */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 p-4">
+      {/* Loading and error states for system status */}
+      {systemStatus.isLoading && (
+        <div className="flex items-center justify-center h-32">
+          <span className="text-gray-500">Loading system status...</span>
+        </div>
+      )}
+      {systemStatus.error && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-5 w-5" />
+          <AlertDescription>
+            Error loading system status: {systemStatus.error.message}
+          </AlertDescription>
+        </Alert>
+      )}
+      {/* Loading and error states for quality report */}
+      {qualityReport.isLoading && (
+        <div className="flex items-center justify-center h-16">
+          <span className="text-gray-500">Loading quality report...</span>
+        </div>
+      )}
+      {qualityReport.error && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-5 w-5" />
+          <AlertDescription>
+            Error loading quality report: {qualityReport.error.message}
+          </AlertDescription>
+        </Alert>
+      )}
+      {/* Main UI only if data is available */}
+      {systemStatus.data && qualityReport.data ? (
+        <div>
+          {/* ...existing main UI code here... */}
+          <div className="text-gray-700">Knowledge base loaded successfully.</div>
+        </div>
+      ) : null}
+      {/* Fallback if no data and not loading or error */}
+      {!systemStatus.isLoading && !systemStatus.data && !systemStatus.error && (
+        <div className="flex items-center justify-center h-32">
+          <span className="text-gray-400">No system status data available.</span>
+        </div>
+      )}
     </div>
   );
 }

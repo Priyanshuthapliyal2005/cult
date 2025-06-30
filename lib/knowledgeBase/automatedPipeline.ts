@@ -98,7 +98,7 @@ export class AutomatedDataPipeline {
     
     /* In a real implementation, this would query the database
      try {
-      const cities = await prisma.vectorContent.findMany({
+      const cities = await prisma.VectorContent.findMany({
         where: { 
           contentType: 'enhanced_city',
           updatedAt: {

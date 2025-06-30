@@ -159,7 +159,7 @@ export default function Home() {
           <Link href={getLocalizedPath('/explore')} className="text-gray-600 hover:text-gray-900 transition-colors">
             {tNavigation('explore')}
           </Link>
-          <Link href={getLocalizedPath('/explore?tab=laws')} className="text-gray-600 hover:text-gray-900 transition-colors">
+          <Link href={getLocalizedPath('/laws')} className="text-gray-600 hover:text-gray-900 transition-colors">
             {tNavigation('laws')}
           </Link>
           <Link href={getLocalizedPath('/knowledge-base')} className="text-gray-600 hover:text-gray-900 transition-colors">

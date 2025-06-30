@@ -1,10 +1,11 @@
-'use client';
+'use client'
 import { trpc } from '@/lib/trpc';
 import { NextIntlClientProvider } from 'next-intl';
 import { useEffect, useState } from 'react';
 import { locales } from '@/i18n';
 import { Inter } from 'next/font/google';
 import dynamic from 'next/dynamic';
+import { notFound } from 'next/navigation';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -46,27 +47,17 @@ function LocaleLayout({
   }, [locale]);
 
   return (
-    <html lang={locale}>
-      <head>
-        <title>CulturalCompass - AI-Powered Travel Assistant</title>
-        <meta name="description" content="Your intelligent travel companion with deep cultural insights and personalized recommendations" />
-        <meta name="theme-color" content="#6B7AFF" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <link rel="manifest" href="/manifest.json" />
-      </head>
-      <body className={inter.className}>
-        {isLoading || !messages ? (
-          <div className="flex items-center justify-center min-h-screen">
-            <div className="text-lg">Loading...</div>
-          </div>
-        ) : (
-          <NextIntlClientProvider locale={locale} messages={messages}>
-            {children}
-          </NextIntlClientProvider>
-        )}
-      </body>
-    </html>
+    <div className={inter.className}>
+      {isLoading || !messages ? (
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-lg">Loading...</div>
+        </div>
+      ) : (
+        <NextIntlClientProvider locale={locale} messages={messages}>
+          {children}
+        </NextIntlClientProvider>
+      )}
+    </div>
   );
 }
 

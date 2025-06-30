@@ -54,7 +54,7 @@ export class VectorStore {
 
       // Store in database (may or may not have embedding)
       try {
-        const stored = await prisma.vectorContent.create({
+        const storedRecord = await prisma.vectorContent.create({
           data: {
             contentId: content.contentId,
             contentType: content.contentType,
@@ -64,8 +64,8 @@ export class VectorStore {
             ...(embedding ? { embedding: embedding as any } : {}),
           },
         });
-        
-        return stored.id;
+
+        return storedRecord.contentId;
       } catch (dbError) {
         // If database fails, log the error but don't fail completely
         console.error('Error storing in database:', dbError);
@@ -214,6 +214,7 @@ export class VectorStore {
         }));
       } catch (textError) {
         console.error('Text search fallback also failed:', textError);
+        // Always return an empty array on failure
         return [];
       }
     }
@@ -253,8 +254,7 @@ export class VectorStore {
           ...(updates.title && { title: updates.title }),
           ...(updates.content && { content: updates.content }),
           ...(updates.metadata && { metadata: updates.metadata }),
-          ...(newEmbedding && { embedding: newEmbedding as any }),
-          _all: true
+          ...(newEmbedding && { embedding: newEmbedding as any })
         }
       });
 
@@ -299,7 +299,7 @@ export class VectorStore {
       ]);
 
       const contentTypes = typeStats.reduce((acc, stat) => {
-        acc[stat.contentType] = stat._count._all;
+        acc[stat.contentType] = stat._count.id;
         return acc;
       }, {} as Record<string, number>);
 

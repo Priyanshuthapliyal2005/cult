@@ -1,5 +1,7 @@
 import { vectorStore, ContentToStore } from '@/lib/vectorStore';
 import { cityDatabase } from '@/lib/cityDatabase';
+import { prisma } from './prisma';
+import { embeddingService } from './embeddings';
 
 export interface IngestionResult {
   success: boolean;

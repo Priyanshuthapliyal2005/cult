@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
@@ -11,14 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Search, MapPin, Navigation, Star, DollarSign } from 'lucide-react';
 import { getCitiesByFilter, getNearbyCities, type CityData } from '@/lib/cityDatabase';
 import { useTranslations } from 'next-intl';
-
-// Fix for default markers
-delete (L.Icon.Default.prototype as any)._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
+import styles from './DynamicCityMap.module.css';
 
 // Custom marker icons based on city characteristics
 const createCityIcon = (city: CityData) => {
@@ -248,11 +241,29 @@ export default function DynamicCityMap({
   const mapRef = useRef<L.Map | null>(null);
   const t = useTranslations();
 
+  const loadCities = useCallback(() => {
+    const filteredCities = getCitiesByFilter({
+      ...filters,
+      searchTerm: searchTerm || undefined
+    });
+    setCities(filteredCities);
+  }, [filters, searchTerm]);
+
   useEffect(() => {
+    // Fix for default markers, runs only on client
+    delete (L.Icon.Default.prototype as any)._getIconUrl;
+    L.Icon.Default.mergeOptions({
+      iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
+      iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+      shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
+    });
     setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
     // Load all cities with applied filters
-    loadCities();
-  }, [filters]);
+    if (isMounted) loadCities();
+  }, [isMounted, loadCities]);
 
   useEffect(() => {
     if (selectedCityId) {
@@ -264,14 +275,6 @@ export default function DynamicCityMap({
       }
     }
   }, [selectedCityId, cities]);
-
-  const loadCities = () => {
-    const filteredCities = getCitiesByFilter({
-      ...filters,
-      searchTerm: searchTerm || undefined
-    });
-    setCities(filteredCities);
-  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -329,8 +332,7 @@ export default function DynamicCityMap({
   if (!isMounted) {
     return (
       <div 
-        className="w-full bg-gray-100 rounded-lg animate-pulse flex items-center justify-center"
-        style={{ height }}
+        className="w-full bg-gray-100 rounded-lg animate-pulse flex items-center justify-center dynamic-city-map-loading"
       >
         <div className="text-gray-500 flex items-center space-x-2">
           <MapPin className="w-5 h-5" />

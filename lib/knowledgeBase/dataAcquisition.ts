@@ -1,7 +1,7 @@
 import { EnhancedCityData, DataSource, QualityMetrics } from './types';
 import { vectorStore } from '@/lib/vectorStore';
 import { embeddingService } from '@/lib/embeddings';
-import { groqService } from '@/lib/groq';
+import { getGroqService } from '@/lib/groq';
 
 export interface CityDataSources {
   wikipedia?: WikipediaData;
@@ -273,7 +273,7 @@ Focus on accuracy and practical utility for travelers. Include specific laws, pe
 Respond with valid JSON only.`;
 
     try {
-      const response = await groqService.generateQuickResponse(prompt);
+      const response = await getGroqService().generateQuickResponse(prompt);
       const cleanResponse = response.replace(/```json\s*|\s*```/g, '').trim();
       const aiData = JSON.parse(cleanResponse);
       

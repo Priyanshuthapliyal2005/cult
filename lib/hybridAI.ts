@@ -1,6 +1,8 @@
 import { geminiService } from './gemini';
-import { groqService } from './groq';
+import { getGroqService } from './groq';
 import { cityDatabase, type CityData } from './cityDatabase';
+import { jsonrepair } from 'jsonrepair';
+import { sanitizeAIJson } from './utils';
 
 export interface CulturalInsightRequest {
   location: string;
@@ -79,20 +81,41 @@ export class HybridAIService {
       try {
         const structuredPrompt = `Generate comprehensive cultural insights for ${request.location} in JSON format. Include customs (dos/donts), laws, events, essential phrases with pronunciation, and recommendations for restaurants/attractions. Make it detailed and culturally sensitive.`;
         
-        const groqResponse = await groqService.generateQuickResponse(structuredPrompt);
+        const groqResponse = await getGroqService().generateQuickResponse(structuredPrompt);
         
-        // Try to parse Groq response as JSON
+        // Try to parse Groq response as JSON, using jsonrepair if needed
         try {
-          const parsedResponse = JSON.parse(groqResponse);
+          let parsedResponse: CulturalInsightResponse;
+          try {
+            parsedResponse = JSON.parse(sanitizeAIJson(groqResponse));
+          } catch (parseError) {
+            // Try to repair and parse
+            const repaired = jsonrepair(sanitizeAIJson(groqResponse));
+            parsedResponse = JSON.parse(repaired);
+          }
           console.log('✅ Cultural insights generated using Groq fallback');
           return parsedResponse;
         } catch (parseError) {
-          console.log('❌ Groq response not valid JSON, using mock fallback');
-          throw new Error('Both AI services failed to generate valid cultural insights');
+          console.log('❌ Groq response not valid JSON, returning minimal fallback');
+          // Minimal fallback object
+          return {
+            customs: { title: '', description: '', dos: [], donts: [] },
+            laws: { title: '', legal: [], cultural: [], guidelines: [], penalties: [] },
+            events: { title: '', current_events: [], seasonal_festivals: [] },
+            phrases: { title: '', essential_phrases: [] },
+            recommendations: { title: '', restaurants: [], attractions: [], local_tips: [] }
+          };
         }
       } catch (groqError) {
         console.log('❌ Both AI services failed:', groqError);
-        throw new Error('AI services are currently unavailable for cultural insights');
+        // Minimal fallback object
+        return {
+          customs: { title: '', description: '', dos: [], donts: [] },
+          laws: { title: '', legal: [], cultural: [], guidelines: [], penalties: [] },
+          events: { title: '', current_events: [], seasonal_festivals: [] },
+          phrases: { title: '', essential_phrases: [] },
+          recommendations: { title: '', restaurants: [], attractions: [], local_tips: [] }
+        };
       }
     }
   }
@@ -106,7 +129,7 @@ export class HybridAIService {
   ): Promise<string> {
     // Try Groq first for fast conversational responses
     try {
-      const response = await groqService.generateChatResponse(messages, context);
+      const response = await getGroqService().generateChatResponse(messages, context);
       console.log('✅ Chat response generated using Groq');
       return response;
     } catch (groqError) {
@@ -150,7 +173,7 @@ export class HybridAIService {
   }> {
     const [geminiTest, groqTest] = await Promise.all([
       geminiService.testConnection(),
-      groqService.testConnection()
+      getGroqService().testConnection()
     ]);
 
     const successCount = [geminiTest, groqTest].filter(test => test.status === 'success').length;
@@ -184,7 +207,7 @@ export class HybridAIService {
       // Try Groq first for quick summaries
       const prompt = `Write a brief, engaging 2-3 sentence summary of ${location} highlighting its cultural significance, main attractions, and what makes it special for travelers. Focus on authentic cultural experiences.`;
       
-      const summary = await groqService.generateQuickResponse(prompt);
+      const summary = await getGroqService().generateQuickResponse(prompt);
       return summary;
     } catch (groqError) {
       try {
@@ -202,82 +225,99 @@ export class HybridAIService {
    */
   async generateCityData(cityName: string, countryName?: string): Promise<CityData> {
     try {
-      const prompt = `Generate comprehensive travel and cultural data for ${cityName}${countryName ? `, ${countryName}` : ''} in JSON format.
-
-Please provide detailed information with the following structure:
-{
-  "id": "${cityName.toLowerCase().replace(/\s+/g, '-')}${countryName ? `-${countryName.toLowerCase().replace(/\s+/g, '-')}` : ''}-generated",
-  "name": "${cityName}",
-  "country": "${countryName || ''}",
-  "region": "",
-  "latitude": 0,
-  "longitude": 0,
-  "population": 0,
-  "timezone": "",
-  "language": [""],
-  "currency": "",
-  "culture": "",
-  "image": "https://images.pexels.com/photos/1285625/pexels-photo-1285625.jpeg?auto=compress&cs=tinysrgb&w=600",
-  "description": "",
-  "highlights": [""],
-  "rating": 4.5,
-  "costLevel": "moderate",
-  "bestTimeToVisit": [""],
-  "averageStay": 3,
-  "mainAttractions": [""],
-  "localCuisine": [""],
-  "transportOptions": [""],
-  "safetyRating": 8.0,
-  "touristFriendly": 8.5,
-  "emergencyNumbers": {
-    "police": "",
-    "medical": "",
-    "fire": "",
-    "tourist": ""
-  }
-}
-
-Focus on accuracy for location, cultural details, and practical information. If exact data is unavailable, provide reasonable estimates based on similar locations. Fill ALL fields with meaningful information.
-
-Return ONLY valid JSON with no explanation or comments.`;
-
-      // Try Groq first for structured data generation
-      const result = await groqService.generateQuickResponse(prompt);
-      
-      try {
-        // Clean any markdown formatting and parse JSON
-        const cleanResponse = result.replace(/```json\s*|\s*```/g, '').trim();
-        return JSON.parse(cleanResponse);
-      } catch (parseError) {
-        console.error('Failed to parse city data JSON:', parseError);
-        throw new Error('Invalid format received from AI service');
-      }
-      
-    } catch (groqError) {
-      console.error('Groq service failed, trying Gemini fallback:', groqError);
-      
-      try {
-        // Fallback to Gemini
-        const result = await geminiService.generateChatResponse([
-          { 
-            role: 'user', 
-            content: `Generate detailed travel data for ${cityName}${countryName ? `, ${countryName}` : ''} in JSON format including: name, country, region, coordinates, language, currency, attractions, cuisine, etc. Return ONLY valid JSON.`
-          }
-        ]);
-        
-        // Parse JSON from Gemini response
-        const jsonMatch = result.match(/```json\s*([\s\S]*?)\s*```/) || 
-                        result.match(/\{[\s\S]*\}/);
-                        
-        if (jsonMatch) {
-          const jsonStr = jsonMatch[0].replace(/```json\s*|\s*```/g, '');
-          return JSON.parse(jsonStr);
-        } else {
-          throw new Error('No valid JSON found in response');
+      // Try Gemini first for structured data generation
+      const result = await geminiService.generateChatResponse([
+        {
+          role: 'user',
+          content: `Generate detailed travel data for ${cityName}${countryName ? `, ${countryName}` : ''} in JSON format including: name, country, region, coordinates, language, currency, attractions, cuisine, etc. Return ONLY valid JSON.`
         }
-      } catch (geminiError) {
-        console.error('Both AI services failed to generate city data:', geminiError);
-        throw new Error('Failed to generate city data');
+      ]);
+      console.log('Gemini raw response:', result);
+      // Parse JSON from Gemini response
+      const jsonMatch = result.match(/```json\s*([\s\S]*?)\s*```/) || 
+                        result.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        const jsonStr = jsonMatch[0].replace(/```json\s*|\s*```/g, '');
+        return JSON.parse(jsonStr);
+      } else {
+        throw new Error('No valid JSON found in response');
+      }
+    } catch (geminiError) {
+      console.error('Gemini service failed, trying Groq fallback:', geminiError);
+      try {
+        const prompt = `Generate comprehensive travel and cultural data for ${cityName}${countryName ? `, ${countryName}` : ''} in JSON format.\n\nPlease provide detailed information with the following structure:\n{\n  "id": "${cityName.toLowerCase().replace(/\\s+/g, '-')}${countryName ? `-${countryName.toLowerCase().replace(/\\s+/g, '-')}` : ''}-generated",\n  "name": "${cityName}",\n  "country": "${countryName || ''}",\n  "region": "",\n  "latitude": 0,\n  "longitude": 0,\n  "population": 0,\n  "timezone": "",\n  "language": [""],\n  "currency": "",\n  "culture": "",\n  "image": "https://images.pexels.com/photos/1285625/pexels-photo-1285625.jpeg?auto=compress&cs=tinysrgb&w=600",\n  "description": "",\n  "highlights": [""],\n  "rating": 4.5,\n  "costLevel": "moderate",\n  "bestTimeToVisit": [""],\n  "averageStay": 3,\n  "mainAttractions": [""],\n  "localCuisine": [""],\n  "transportOptions": [""],\n  "safetyRating": 8.0,\n  "touristFriendly": 8.5,\n  "emergencyNumbers": {\n    "police": "",\n    "medical": "",\n    "fire": "",\n    "tourist": ""\n  }\n}\n\nFocus on accuracy for location, cultural details, and practical information. If exact data is unavailable, provide reasonable estimates based on similar locations. Fill ALL fields with meaningful information.\n\nReturn ONLY valid JSON with no explanation or comments.`;
+        const groqResult = await getGroqService().generateQuickResponse(prompt);
+        console.log('Groq raw response:', groqResult);
+        try {
+          // Clean any markdown formatting and parse JSON, using jsonrepair if needed
+          let cityObj: CityData;
+          try {
+            const cleanResponse = sanitizeAIJson(groqResult.replace(/```json\s*|\s*```/g, '').trim());
+            cityObj = JSON.parse(cleanResponse);
+          } catch (parseError) {
+            const repaired = jsonrepair(sanitizeAIJson(groqResult));
+            cityObj = JSON.parse(repaired);
+          }
+          return cityObj;
+        } catch (parseError) {
+          console.error('Failed to parse city data JSON from Groq:', parseError, 'Raw:', groqResult);
+          // Fallback: return a minimal city object
+          return {
+            id: `${cityName.toLowerCase().replace(/\s+/g, '-')}${countryName ? `-${countryName.toLowerCase().replace(/\s+/g, '-')}` : ''}-generated`,
+            name: cityName,
+            country: countryName || '',
+            region: '',
+            latitude: 0,
+            longitude: 0,
+            population: 0,
+            timezone: '',
+            language: [''],
+            currency: '',
+            culture: '',
+            image: '',
+            description: '',
+            highlights: [''],
+            rating: 0,
+            costLevel: 'moderate',
+            bestTimeToVisit: [''],
+            averageStay: 0,
+            mainAttractions: [''],
+            localCuisine: [''],
+            transportOptions: [''],
+            safetyRating: 0,
+            touristFriendly: 0,
+            emergencyNumbers: { police: '', medical: '', fire: '', tourist: '' }
+          };
+        }
+      } catch (groqError) {
+        console.error('Both AI services failed to generate city data:', groqError);
+        // Fallback: return a minimal city object
+        return {
+          id: `${cityName.toLowerCase().replace(/\s+/g, '-')}${countryName ? `-${countryName.toLowerCase().replace(/\s+/g, '-')}` : ''}-generated`,
+          name: cityName,
+          country: countryName || '',
+          region: '',
+          latitude: 0,
+          longitude: 0,
+          population: 0,
+          timezone: '',
+          language: [''],
+          currency: '',
+          culture: '',
+          image: '',
+          description: '',
+          highlights: [''],
+          rating: 0,
+          costLevel: 'moderate',
+          bestTimeToVisit: [''],
+          averageStay: 0,
+          mainAttractions: [''],
+          localCuisine: [''],
+          transportOptions: [''],
+          safetyRating: 0,
+          touristFriendly: 0,
+          emergencyNumbers: { police: '', medical: '', fire: '', tourist: '' }
+        };
       }
     }
   }
@@ -296,10 +336,10 @@ Return ONLY valid JSON with no explanation or comments.`;
       
       Format as: Translation | Pronunciation | Notes`;
       
-      return await groqService.generateQuickResponse(contextualPrompt);
+      return await getGroqService().generateQuickResponse(contextualPrompt);
     } catch (error) {
       // Simple fallback
-      return await groqService.translatePhrase(phrase, targetLanguage);
+      return await getGroqService().translatePhrase(phrase, targetLanguage);
     }
   }
 }

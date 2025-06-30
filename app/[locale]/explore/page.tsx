@@ -111,29 +111,27 @@ export default function ExplorePage() {
     try {
       setIsGeneratingCity(true);
       setError(null);
-      
-      console.log(`City "${cityName}" not found in local database. Generating using AI...`);
-      
-      // Use the dynamic city service to generate city data
-      const generatedCity = await dynamicCityService.searchCity(cityName);
-      
-      if (generatedCity) {
-        // Add the generated city to the cities list
-        setCities([generatedCity]);
-        handleCitySelect(generatedCity);
-        
-        // Show success message
+      setNewCityError(null);
+      console.log(`City "${cityName}" not found in local database. Generating using AI via API...`);
+      // Use the API route to generate city data on the server
+      const res = await fetch('/api/city/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cityName }),
+      });
+      const data = await res.json();
+      if (res.ok && data.city) {
+        setCities([data.city]);
+        handleCitySelect(data.city);
         setError(`Successfully generated information for ${cityName}. This city has been added to our database.`);
       } else {
-        setNewCityError(`Could not generate information for "${cityName}". Please try a different city name.`);
-        // Load some default cities as fallback
+        setNewCityError(data.error || `Could not generate information for "${cityName}". Please try a different city name.`);
         const defaultCities = getCitiesByFilter({ limit: 8 });
         setCities(defaultCities);
       }
     } catch (error) {
       console.error("Error generating city:", error);
       setNewCityError(`Error generating data for "${cityName}". Please try a different city name.`);
-      // Load some default cities as fallback
       const defaultCities = getCitiesByFilter({ limit: 8 });
       setCities(defaultCities);
     } finally {
@@ -493,6 +491,7 @@ export default function ExplorePage() {
                   {/* Trip Planner Tab */}
                   <TabsContent value="trip-planner" className="space-y-4">
                     <TripPlanner 
+                      key={selectedCity.id}
                       cityId={selectedCity.id}
                       onPlanSelect={(plan) => console.log('Selected plan:', plan)}
                     />
@@ -620,11 +619,15 @@ export default function ExplorePage() {
                                 Legal Requirements & Restrictions
                               </h4>
                               <div className="space-y-2">
-                                {culturalInsights.laws.legal.map((law: string, index: number) => (
-                                  <div key={index} className="bg-red-50 border border-red-200 rounded p-3">
-                                    <p className="text-sm text-red-800">{law}</p>
-                                  </div>
-                                ))}
+                                {Array.isArray(culturalInsights?.laws?.legal) && culturalInsights.laws.legal.length > 0 ? (
+                                  culturalInsights.laws.legal.map((law: string, index: number) => (
+                                    <div key={index} className="bg-red-50 border border-red-200 rounded p-3">
+                                      <p className="text-sm text-red-800">{law}</p>
+                                    </div>
+                                  ))
+                                ) : (
+                                  <div className="text-gray-500 text-sm">No legal requirements found.</div>
+                                )}
                               </div>
                             </div>
 
@@ -632,11 +635,15 @@ export default function ExplorePage() {
                             <div>
                               <h4 className="font-semibold text-orange-700 mb-3">Cultural Rules & Expectations</h4>
                               <div className="space-y-2">
-                                {culturalInsights.laws.cultural.map((rule: string, index: number) => (
-                                  <div key={index} className="bg-orange-50 border border-orange-200 rounded p-3">
-                                    <p className="text-sm text-orange-800">{rule}</p>
-                                  </div>
-                                ))}
+                                {Array.isArray(culturalInsights?.laws?.cultural) && culturalInsights.laws.cultural.length > 0 ? (
+                                  culturalInsights.laws.cultural.map((rule: string, index: number) => (
+                                    <div key={index} className="bg-orange-50 border border-orange-200 rounded p-3">
+                                      <p className="text-sm text-orange-800">{rule}</p>
+                                    </div>
+                                  ))
+                                ) : (
+                                  <div className="text-gray-500 text-sm">No cultural rules found.</div>
+                                )}
                               </div>
                             </div>
 
@@ -644,11 +651,15 @@ export default function ExplorePage() {
                             <div>
                               <h4 className="font-semibold text-blue-700 mb-3">Local Guidelines & Etiquette</h4>
                               <div className="space-y-2">
-                                {culturalInsights.laws.guidelines.map((guideline: string, index: number) => (
-                                  <div key={index} className="bg-blue-50 border border-blue-200 rounded p-3">
-                                    <p className="text-sm text-blue-800">{guideline}</p>
-                                  </div>
-                                ))}
+                                {Array.isArray(culturalInsights?.laws?.guidelines) && culturalInsights.laws.guidelines.length > 0 ? (
+                                  culturalInsights.laws.guidelines.map((guideline: string, index: number) => (
+                                    <div key={index} className="bg-blue-50 border border-blue-200 rounded p-3">
+                                      <p className="text-sm text-blue-800">{guideline}</p>
+                                    </div>
+                                  ))
+                                ) : (
+                                  <div className="text-gray-500 text-sm">No local guidelines found.</div>
+                                )}
                               </div>
                             </div>
 
@@ -712,6 +723,7 @@ export default function ExplorePage() {
                         </CardHeader>
                         <CardContent className="p-0">
                           <DynamicCityMap
+                            key={selectedCity.id}
                             center={[selectedCity.latitude, selectedCity.longitude]}
                             zoom={12}
                             height="500px"

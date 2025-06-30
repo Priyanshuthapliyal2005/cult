@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState , useEffect } from 'react';
 import { signOut } from 'next-auth/react';
 import { User, Settings, LogOut, Heart, MessageCircle, Volume2, VolumeX } from 'lucide-react';
 import { useLocale } from 'next-intl';
@@ -142,10 +142,9 @@ export default function UserMenu() {
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
-          className="cursor-pointer"
+          className="cursor-pointer text-gray-700 hover:text-red-600 focus:text-red-600"
           onClick={handleSignOut}
           disabled={isLoading}
-          className="text-gray-700 hover:text-red-600 focus:text-red-600"
         >
           <LogOut className="mr-2 h-4 w-4 text-gray-600" />
           <span>{isLoading ? 'Signing out...' : 'Sign out'}</span>

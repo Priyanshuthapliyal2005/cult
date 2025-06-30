@@ -146,7 +146,7 @@ export class RAGService {
         // Try fallback search without embeddings
         try {
           // Simple text-based search as fallback
-          const fallbackResults = await prisma.vectorContent.findMany({
+          const fallbackResults = await prisma.VectorContent.findMany({
             where: {
               OR: [
                 { title: { contains: request.query, mode: 'insensitive' } },

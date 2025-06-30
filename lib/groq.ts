@@ -1,24 +1,27 @@
 import Groq from 'groq-sdk';
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY,
-});
+// WARNING: Do not import this file in any client component or shared ("use client") file.
+// Only use in server-side code.
 
 export class GroqService {
   private client: Groq;
 
   constructor() {
-    this.client = groq;
+    if (typeof window !== 'undefined') {
+      throw new Error('GroqService must not be instantiated in the browser/client.');
+    }
+    if (!process.env.GROQ_API_KEY) {
+      throw new Error('The GROQ_API_KEY environment variable is missing or empty; either provide it, or instantiate the Groq client with an apiKey option, like new Groq({ apiKey: "My API Key" }).');
+    }
+    this.client = new Groq({
+      apiKey: process.env.GROQ_API_KEY,
+    });
   }
 
   async generateChatResponse(
     messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }>,
     context?: any
   ): Promise<string> {
-    if (!process.env.GROQ_API_KEY) {
-      throw new Error('Groq API key is not configured');
-    }
-
     try {
       const systemMessage = {
         role: 'system' as const,
@@ -64,10 +67,6 @@ Respond in a warm, helpful tone that makes travelers feel confident about explor
   }
 
   async generateQuickResponse(prompt: string): Promise<string> {
-    if (!process.env.GROQ_API_KEY) {
-      throw new Error('Groq API key is not configured');
-    }
-
     try {
       const chatCompletion = await this.client.chat.completions.create({
         messages: [{
@@ -87,13 +86,6 @@ Respond in a warm, helpful tone that makes travelers feel confident about explor
   }
 
   async testConnection(): Promise<{ status: string; message: string }> {
-    if (!process.env.GROQ_API_KEY) {
-      return {
-        status: 'demo',
-        message: 'Groq API key not configured - using demo mode'
-      };
-    }
-
     try {
       await this.generateQuickResponse('Hello, this is a test message. Respond with "Connection successful".');
       return {
@@ -109,10 +101,6 @@ Respond in a warm, helpful tone that makes travelers feel confident about explor
   }
 
   async summarizeConversation(messages: Array<{ role: string; content: string }>): Promise<string> {
-    if (!this.client) {
-      throw new Error('Groq API not configured');
-    }
-
     const conversationText = messages
       .map(msg => `${msg.role}: ${msg.content}`)
       .join('\n');
@@ -128,10 +116,6 @@ Respond in a warm, helpful tone that makes travelers feel confident about explor
   }
 
   async translatePhrase(phrase: string, targetLanguage: string): Promise<string> {
-    if (!this.client) {
-      throw new Error('Groq API not configured');
-    }
-
     const prompt = `Translate this phrase to ${targetLanguage} and provide phonetic pronunciation: "${phrase}"
     
     Format your response as:
@@ -147,5 +131,7 @@ Respond in a warm, helpful tone that makes travelers feel confident about explor
   }
 }
 
-// Singleton instance
-export const groqService = new GroqService();
+// Use this function in server-only code to get a GroqService instance
+export function getGroqService() {
+  return new GroqService();
+}
