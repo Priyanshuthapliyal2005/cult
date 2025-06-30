@@ -13,6 +13,7 @@ import UserMenu from '@/components/UserMenu';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
 import { cityDatabase, type CityData } from '@/lib/cityDatabase';
 import Link from 'next/link';
+import { BoltNewIcon } from '@/components/ui/BoltNewIcon';
 
 export default function Home() {
   const [searchQuery, setSearchQuery] = useState('');
@@ -170,6 +171,9 @@ export default function Home() {
           </Link>
           <Link href={getLocalizedPath('/admin')} className="text-gray-600 hover:text-gray-900 transition-colors">
             {tNavigation('admin')}
+          </Link>
+          <Link href="https://bolt.new/" target="_blank" rel="noopener noreferrer" title="bolt.new" className="hover:scale-110 transition-transform">
+            <BoltNewIcon className="w-7 h-7" />
           </Link>
           <LanguageSwitcher variant="compact" />
           <UserMenu />
@@ -498,8 +502,12 @@ export default function Home() {
           </div>
         </div>
         
-        <div className="max-w-6xl mx-auto mt-12 pt-6 border-t border-gray-800 text-center">
+        <div className="max-w-6xl mx-auto mt-12 pt-6 border-t border-gray-800 text-center flex flex-col items-center gap-2">
           <p>&copy; 2025 CulturalCompass. All rights reserved.</p>
+          <a href="https://bolt.new/" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 text-white/80 hover:text-white transition-colors mt-2">
+            <BoltNewIcon className="w-6 h-6" />
+            <span>This project is sponsored by <span className="font-semibold">bolt.new</span></span>
+          </a>
         </div>
       </footer>
     </div>
